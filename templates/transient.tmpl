@@ -76,12 +76,15 @@ elif [[ $obsnum -ge 1191580576 ]] ; then
     timeres=4
 fi
 
+
 # Set up channel-dependent options
 chan="$(pyhead.py -p CENTCHAN ${metafits} | awk '{print $3}')"
 
 # Settings to support transient imaging / cleaning
 niter=12000
 size=2400
+# HACK FOR TRANSIENT PROJECT -- WE ALREADY KNOW WHERE IT IS
+size=250
 taper=2amin
 auto_threshold=3
 minuv_l=50
@@ -186,6 +189,9 @@ stilts tmatch1 \
             in="${obsnum}_transient_concatenated_table.fits" \
             out="${obsnum}_transient_matched_table.fits"
 test_fail $?
+
+# Make a cube and a standard deviation image
+make_time_cube.py ${obsnum}_transient
 
 # Clean up
 # rm "${obsnum}"_transient-t????-image_comp.fits
