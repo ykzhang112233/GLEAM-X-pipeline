@@ -8,9 +8,15 @@ base=BASEDIR
 obslist=OBSLIST
 ra=RAPOINT
 dec=DECPOINT
+mosaicdir=MOSAICDIR
 
 cd "${base}" || exit 1
 obss=($(sort $obslist))
+
+if [[ -z ${mosaicdir} ]]
+then
+    mosaicdir='mosaic'
+fi
 
 #n=0
 #for obsnum in ${obss[@]}
@@ -118,15 +124,17 @@ resampdir="./resamp_${low}-${high}/"
 # Update processing database
 # track_task.py start --jobid=${SLURM_JOBID} --taskid=$SLURM_ARRAY_TASK_ID --start_time=`date +%s`
 
-if [[ ! -d mosaics ]]
+if [[ ! -d ${mosaicdir} ]]
 then
-    mkdir mosaics
+    mkdir ${mosaicdir}
 fi
 
+echo "Using directory ${mosaicdir}"
+
 # Move the temporary image list to the mosaic directory and rename
-mv "$tmp" "mosaics/${imagelist}.list"
-mv "$tmp_weights" "mosaics/${imagelist}.weights.list"
-cd mosaics/ || exit 1
+mv "$tmp" "${mosaicdir}/${imagelist}.list"
+mv "$tmp_weights" "${mosaicdir}/${imagelist}.weights.list"
+cd "${mosaicdir}/" || exit 1
 
 # Was going to generate the xsize like this but it's too complicated with all the projection effects
 #first=`head -1 $imagelist`

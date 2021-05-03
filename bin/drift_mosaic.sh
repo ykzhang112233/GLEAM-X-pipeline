@@ -9,6 +9,7 @@ echo "drift_mosaic.sh [-p project] [-d dep] [-q queue] [-a account] [-t] [-r ra]
                 and then return the submission command
   -r RA       : Right Ascension (decimal hours; default = guess from observation list)
   -e dec      : Declination (decimal degrees; default = guess from observation list)
+  -m mosaicdir: Directory name for mosaics to be created (default = mosaics) 
   -o obslist  : the list of obsids to process" 1>&2;
 exit 1;
 }
@@ -21,9 +22,10 @@ queue="-p ${GXSTANDARDQ}"
 tst=
 ra=
 dec=
+mosaicdir=
 
 # parse args and set options
-while getopts ':td:p:o:r:e:' OPTION
+while getopts ':td:p:o:r:e:m:' OPTION
 do
     case "$OPTION" in
     d)
@@ -36,11 +38,11 @@ do
         ra=${OPTARG} ;;
     e)
         dec=${OPTARG} ;;
+    m) 
+        mosaicdir=${OPTARG} ;;
     t)
         tst=1 ;;
-    g)
-        gpubox=1 ;;
-        ? | : | h)
+    ? | : | h)
             usage ;;
   esac
 done
@@ -76,6 +78,7 @@ cat "${GXBASE}/templates/mosaic.tmpl" | sed -e "s:OBSLIST:${obslist}:g" \
                                       -e "s:RAPOINT:${ra}:g" \
                                       -e "s:DECPOINT:${dec}:g" \
                                       -e "s:BASEDIR:${base}:g" \
+                                      -e "s:MOSAICDIR:${mosaicdir}:g" \
                                       -e "s:PIPEUSER:${pipeuser}:g" > "${script}"
 
 output="${GXLOG}/mosaic_${listbase}.o%A_%a"
