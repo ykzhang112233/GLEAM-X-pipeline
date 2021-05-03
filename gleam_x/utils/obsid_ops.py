@@ -182,7 +182,7 @@ def mask_gp(path):
     return obsids
 
 
-def ra_ranges(path, min_ra, max_ra, ra_groups=1, write_output=False):
+def ra_ranges(path, min_ra=0, max_ra=360, ra_groups=1, write_output=False, auto=False):
     """Divide obdsids up based on RA group specifications
 
     Args:
@@ -191,6 +191,11 @@ def ra_ranges(path, min_ra, max_ra, ra_groups=1, write_output=False):
     obsids = read_obsids_file(path)
 
     df = obsids_from_db(obsids)
+
+    if auto:
+        # Padding the limits to ensure all obsids as selected below
+        min_ra = min(df["ra_pointing"]) - 1
+        max_ra = max(df["ra_pointing"]) + 1
 
     boundaries = np.linspace(min_ra, max_ra, num=ra_groups + 1, endpoint=True)
 
@@ -266,10 +271,16 @@ if __name__ == "__main__":
         "rasplit", help="Split the obsids into RA ranges"
     )
     rasplit_parser.add_argument(
-        "--min-ra", default=0, type=float, help="The lower RA limit in degrees"
+        "--min-ra",
+        default=0,
+        type=float,
+        help="The lower RA limit in degrees. Check is inclusive. ",
     )
     rasplit_parser.add_argument(
-        "--max-ra", default=360, type=float, help="The maximum RA limit in degrees"
+        "--max-ra",
+        default=360,
+        type=float,
+        help="The maximum RA limit in degrees. Check is not inclusive. ",
     )
     rasplit_parser.add_argument(
         "--ra-groups", default=1, type=int, help="The number of RA segements to form"
@@ -279,6 +290,12 @@ if __name__ == "__main__":
         default=False,
         action="store_true",
         help="Create output files of the obsids grouped by RA (auto-generated names)",
+    )
+    rasplit_parser.add_argument(
+        "--auto",
+        default=False,
+        action="store_true",
+        help="Automatically selected RA limits based on those observed by the set of obsids. Ignored any provided min-ra of max-ra options. ",
     )
 
     args = parser.parse_args()
@@ -306,10 +323,11 @@ if __name__ == "__main__":
     elif args.mode == "rasplit":
         ra_ranges(
             args.obsids,
-            args.min_ra,
-            args.max_ra,
+            min_ra=args.min_ra,
+            max_ra=args.max_ra,
             ra_groups=args.ra_groups,
             write_output=args.write_output,
+            auto=args.auto,
         )
 
     else:
