@@ -188,13 +188,11 @@ def ra_ranges(path, min_ra, max_ra, ra_groups=1, write_output=False):
     Args:
         path (str): Path to new-line delimited obsid file
     """
-    print(min_ra, max_ra, ra_groups)
     obsids = read_obsids_file(path)
 
     df = obsids_from_db(obsids)
 
     boundaries = np.linspace(min_ra, max_ra, num=ra_groups + 1, endpoint=True)
-    print(boundaries)
 
     for lower, upper in zip(boundaries[:-1], boundaries[1:]):
         obsids = clean_obsids(
