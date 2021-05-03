@@ -182,6 +182,34 @@ def mask_gp(path):
     return obsids
 
 
+def ra_ranges(path, min_ra, max_ra, ra_groups=1, write_output=False):
+    """Divide obdsids up based on RA group specifications
+
+    Args:
+        path (str): Path to new-line delimited obsid file
+    """
+    print(min_ra, max_ra, ra_groups)
+    obsids = read_obsids_file(path)
+
+    df = obsids_from_db(obsids)
+
+    boundaries = np.linspace(min_ra, max_ra, num=ra_groups + 1, endpoint=True)
+    print(boundaries)
+
+    for lower, upper in zip(boundaries[:-1], boundaries[1:]):
+        obsids = clean_obsids(
+            df["obs_id"][(lower <= df["ra_pointing"]) & (df["ra_pointing"] < upper)]
+        )
+
+        if write_output:
+            outname = path.split(".")
+            outname = (
+                f"{'.'.join(outname[:-1])}_ra_{lower:.0f}-{upper:.0f}.{outname[-1]}"
+            )
+
+            write_obsids_file(obsids, outname)
+
+
 if __name__ == "__main__":
     parser = ArgumentParser(description="Basic operations on sets of obsids")
 
@@ -215,7 +243,8 @@ if __name__ == "__main__":
     )
 
     append_parser = subparsers.add_parser(
-        "append", help="Concatenate a set of new-line delimited obsid files together"
+        "append",
+        help="Append a set of new-line delimited obsid files to the end of the primary obsid file",
     )
     append_parser.add_argument(
         "obsids",
@@ -234,6 +263,26 @@ if __name__ == "__main__":
     mask_gp_parser.add_argument(
         "-o", "--output", default=None, help="Output file to write obsids to"
     )
+
+    rasplit_parser = subparsers.add_parser(
+        "rasplit", help="Split the obsids into RA ranges"
+    )
+    rasplit_parser.add_argument(
+        "--min-ra", default=0, type=float, help="The lower RA limit in degrees"
+    )
+    rasplit_parser.add_argument(
+        "--max-ra", default=360, type=float, help="The maximum RA limit in degrees"
+    )
+    rasplit_parser.add_argument(
+        "--ra-groups", default=1, type=int, help="The number of RA segements to form"
+    )
+    rasplit_parser.add_argument(
+        "--write-output",
+        default=False,
+        action="store_true",
+        help="Create output files of the obsids grouped by RA (auto-generated names)",
+    )
+
     args = parser.parse_args()
 
     if args.mode == "split":
@@ -255,6 +304,15 @@ if __name__ == "__main__":
         obsids = mask_gp(args.obsids)
         if args.output is not None:
             write_obsids_file(obsids, args.output)
+
+    elif args.mode == "rasplit":
+        ra_ranges(
+            args.obsids,
+            args.min_ra,
+            args.max_ra,
+            ra_groups=args.ra_groups,
+            write_output=args.write_output,
+        )
 
     else:
         print(f"Directive mode {args.mode} not present. ")
