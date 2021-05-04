@@ -10,6 +10,7 @@ import astropy.units as u
 from glob import glob
 from argparse import ArgumentParser
 from astropy.coordinates import SkyCoord
+from astropy.stats.circstats import circmean
 
 try:
     from gleam_x.db import mysql_db as gxdb
@@ -101,7 +102,7 @@ def split(path, column="cenchan", *args, **kwargs):
     Args:
         path (str): Path to line-delimited obsid file 
     
-    Keywprd Args:
+    Keyword Args:
         column (str): Column name of the constructed dataframe. 
     """
     obsids = read_obsids_file(path)
@@ -213,6 +214,30 @@ def ra_ranges(path, min_ra=0, max_ra=360, ra_groups=1, write_output=False, auto=
             write_obsids_file(obsids, outname)
 
 
+def mean_position(path, print_pos=False):
+    """Calculate the mean position in a collection of obsids
+
+    Args:
+        path (str): path to text file with obsids, new line delimited
+    
+    Keyword Args:
+        print_pos (bool): print the RA, Dec out to stdout (default is False)
+    """
+    obsids = read_obsids_file(path)
+
+    df = obsids_from_db(obsids)
+
+    positions = SkyCoord(df["ra_pointing"], df["dec_pointing"], unit=(u.deg, u.deg))
+    mean_ra = circmean(positions.ra)
+    mean_dec = positions.dec.mean()
+    mean_pos = SkyCoord(mean_ra, mean_dec)
+
+    if print_pos:
+        print(f"{mean_pos.ra.deg} {mean_pos.dec.deg}")
+
+    return mean_pos.ra.deg, mean_pos.dec.deg
+
+
 if __name__ == "__main__":
     parser = ArgumentParser(description="Basic operations on sets of obsids")
 
@@ -298,6 +323,10 @@ if __name__ == "__main__":
         help="Automatically selected RA limits based on those observed by the set of obsids. Ignored any provided min-ra of max-ra options. ",
     )
 
+    meanpos_parser = subparsers.add_parser(
+        "meanpos", help="Calculate the mean position from a set of positions"
+    )
+
     args = parser.parse_args()
 
     if args.mode == "split":
@@ -329,6 +358,8 @@ if __name__ == "__main__":
             write_output=args.write_output,
             auto=args.auto,
         )
+    elif args.mode == "meanpos":
+        mean_position(args.obsids, print_pos=True)
 
     else:
         print(f"Directive mode {args.mode} not present. ")
