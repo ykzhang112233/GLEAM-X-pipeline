@@ -36,24 +36,31 @@ echo "subchan: ${subchan}"
 
 track_task.py start_mosaic  --jobid="${jobid}" --taskid="${taskid}"  --start_time="$(date +%s)"
 
-num=${#obss[@]}
-middle=${obss[$((num / 2))]}
+pos=$(obsid_ops.py "${obslist}" meanpos)
+ra=$(echo "${pos}" | cut -d1)
+dec=$(echo "${pos}" | cut -d2)
 
-# Use the middle observation of the sorted list to define the centre of the mosaic
-metafits="${middle}/${middle}.metafits"
+# num=${#obss[@]}
+# middle=${obss[$((num / 2))]}
 
-# In case we do not have a complete list and the best middle observation hasn't been downloaded...
-if [ ! -e "${metafits}" ]; then
-    # download a new one:
-    wget "http://ws.mwatelescope.org/metadata/fits/?obs_id=${middle}" -O "${middle}.metafits"
-fi
+# # Use the middle observation of the sorted list to define the centre of the mosaic
+# metafits="${middle}/${middle}.metafits"
 
-if [ -z $ra ]; then
-    ra=$(pyhead.py -p RA ${metafits} | awk '{print $3}')
-fi
-if [ -z $dec ]; then
-    dec=$(pyhead.py -p DEC ${metafits} | awk '{print $3}')
-fi
+# # In case we do not have a complete list and the best middle observation hasn't been downloaded...
+# if [ ! -e "${metafits}" ]; then
+#     # download a new one:
+#     wget "http://ws.mwatelescope.org/metadata/fits/?obs_id=${middle}" -O "${middle}.metafits"
+# fi
+
+# if [ -z $ra ]; then
+#     ra=$(pyhead.py -p RA ${metafits} | awk '{print $3}')
+# fi
+# if [ -z $dec ]; then
+#     dec=$(pyhead.py -p DEC ${metafits} | awk '{print $3}')
+# fi
+
+
+
 # Assume user has been smart and all observations have the same central channel 
 chan=$(pyhead.py -p CENTCHAN ${metafits} | awk '{print $3}')
 
