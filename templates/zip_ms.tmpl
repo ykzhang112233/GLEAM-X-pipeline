@@ -60,7 +60,7 @@ then
     if [[ -f "${MSZIP}" ]]
     then
         echo "Unzipping ${MSZIP}" && \
-        unzip "${MSZIP}" && \
+        unzip -DD "${MSZIP}" && \
         echo "Removing zipped file" && \
         rm -r "${MSZIP}"
     else
