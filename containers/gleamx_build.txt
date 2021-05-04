@@ -26,6 +26,7 @@ mwa-reduce
 echo "Updating apt repositories"
 apt update && apt upgrade -y 
 apt install -y \
+            ffmpeg \
             bc \
             rsync \
             zip \
@@ -43,6 +44,7 @@ apt install -y \
             python3-pip \
             liberfa-dev \
             casacore-dev \
+            casacore-tools \
             cmake \
             gfortran \
             libopenblas-dev \
@@ -143,6 +145,17 @@ cd / \
     && wget https://casa.nrao.edu/download/distro/casa/release/el6/casa-"${version}".tar.gz \
     && tar -xf casa-"${version}".tar.gz \
     && rm -rf casa-"${version}".tar.gz
+
+export PATH="${PATH}:/opt/casa-${version}/bin" \
+    && echo 'Updating casa data' \
+    &&  casa-config --exec update-data
+
+# Update casacore (from the apt install) with the updated measures as well
+rm -r /usr/share/casacore/data \
+     && ln -s /opt/casa-release-5.7.0-134.el6/data /usr/share/casacore/data
+
+rm -r /var/lib/casacore/data \
+     && ln -s /opt/casa-release-5.7.0-134.el6/data /var/lib/casacore/data
 # ------------------------------------------------
 
 # ------------------------------------------------
@@ -154,6 +167,7 @@ update-alternatives --install /usr/bin/python python /usr/bin/python3 10
 pip3 install --no-cache-dir \
             jedi==0.17.2 \
             ipython \
+            tqdm \
             cython \
             numpy \
             scipy \
@@ -178,6 +192,7 @@ pip3 install --no-cache-dir \
             git+https://github.com/ICRAR/manta-ray-client.git \
             git+https://github.com/tjgalvin/mwa_pb_lookup.git \
             git+https://github.com/tjgalvin/GLEAM-X-pipeline.git
+
 # ------------------------------------------------
 
 # ------------------------------------------------
