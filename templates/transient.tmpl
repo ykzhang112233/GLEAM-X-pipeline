@@ -188,13 +188,12 @@ stilts tmatch1 \
             values="ra dec" \
             in="${obsnum}_transient_concatenated_table.fits" \
             out="${obsnum}_transient_matched_table.fits"
-test_fail $?
 
 # Make a cube and a standard deviation image
 make_time_cube.py ${obsnum}_transient
 
 # Clean up
-# rm "${obsnum}"_transient-t????-image_comp.fits
+rm "${obsnum}"_transient-t????-image_comp.fits
 # rm "${obsnum}_transient_concatenated_table.fits"
 
 track_task.py finish --jobid="${jobid}" --taskid="${taskid}" --finish_time="$(date +%s)"
