@@ -13,6 +13,17 @@ mosaicdir=MOSAICDIR
 cd "${base}" || exit 1
 obss=($(sort $obslist))
 
+pos=$(obsid_ops.py "${obslist}" meanpos)
+if [ -z $ra ]
+then
+    ra=$(echo "${pos}" | cut -d1)
+fi 
+
+if [ -z $dec ]
+then
+    dec=$(echo "${pos}" | cut -d2)
+fi
+
 if [[ -z ${mosaicdir} ]]
 then
     mosaicdir='mosaic'
@@ -35,17 +46,6 @@ echo "taskid: ${taskid}"
 echo "subchan: ${subchan}"
 
 track_task.py start_mosaic  --jobid="${jobid}" --taskid="${taskid}"  --start_time="$(date +%s)"
-
-pos=$(obsid_ops.py "${obslist}" meanpos)
-if [ -z $ra ]
-then
-    ra=$(echo "${pos}" | cut -d1)
-fi 
-
-if [ -z $dec ]
-then
-    dec=$(echo "${pos}" | cut -d2)
-fi
 
 # Define output mosaic name as the first part of the input text file
 outname=$(echo ${obslist} | awk 'BEGIN {FS="_"} {print $1}')
