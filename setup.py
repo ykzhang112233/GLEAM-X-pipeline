@@ -14,6 +14,7 @@ reqs = [
     "psutil",
 ]
 
+# TODO: See if glob works here
 scripts = [
     "gleam_x/bin/pyhead.py",
     "gleam_x/bin/alt_az_corrector.py",
@@ -28,6 +29,7 @@ scripts = [
     "gleam_x/bin/generate_beam_list.py",
     "gleam_x/bin/generate_weight_map.py",
     "gleam_x/bin/iono_update.py",
+    "gleam_x/bin/make_time_cube.py",
     "gleam_x/bin/ms_flag_by_uvdist.py",
     "gleam_x/bin/multiply.py",
     "gleam_x/bin/new_fk5_template.py",
