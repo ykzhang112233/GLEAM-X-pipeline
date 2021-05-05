@@ -228,6 +228,8 @@ def mean_position(path, print_pos=False):
     df = obsids_from_db(obsids)
 
     positions = SkyCoord(df["ra_pointing"], df["dec_pointing"], unit=(u.deg, u.deg))
+    # The use of circmean is accurate only when delta(dec) is small. For the
+    # GLEAM-X declination strips this is the case.
     mean_ra = circmean(positions.ra)
     mean_dec = positions.dec.mean()
     mean_pos = SkyCoord(mean_ra, mean_dec)
