@@ -16,12 +16,12 @@ obss=($(sort $obslist))
 pos=$(obsid_ops.py "${obslist}" meanpos)
 if [ -z $ra ]
 then
-    ra=$(echo "${pos}" | cut -d1)
+    ra=$(echo "${pos}" | cut -f1)
 fi 
 
 if [ -z $dec ]
 then
-    dec=$(echo "${pos}" | cut -d2)
+    dec=$(echo "${pos}" | cut -f2)
 fi
 
 if [[ -z ${mosaicdir} ]]
