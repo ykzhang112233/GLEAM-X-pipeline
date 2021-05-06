@@ -261,15 +261,16 @@ if [[ ! -e "${outname}_ddmod.fits" ]] || [[ ! -e "${outname}_psf.fits" ]]; then
         dd_flux_mod.py "${outname}.fits" "${outname}_projpsf_psf.fits" "${outname}_ddmod.fits"
     fi
 
-    # Rerun source-finding on blur-corrected map with measured PSF map
-    BANE --noclobber "${outname}_ddmod.fits"
-    if [[ ! -e "${outname}_ddmod_comp.fits" ]]
-    then
-        aegean --seedclip=4 --maxsummits=5 --autoload --table="${outname}_ddmod.fits" --psf="${outname}_psf.fits" "${outname}_ddmod.fits"
-    fi
     # TODO: clean up intermediate files
 else
     echo "Mosaic ${outname}_ddmod.fits for ${obslist} subband $subchan already created."
+fi
+
+# Rerun source-finding on blur-corrected map with measured PSF map
+if [[ ! -e "${outname}_ddmod_comp.fits" ]]
+then
+    BANE --noclobber "${outname}_ddmod.fits"
+    aegean --seedclip=4 --maxsummits=5 --autoload --table="${outname}_ddmod.fits" --psf="${outname}_psf.fits" "${outname}_ddmod.fits"
 fi
 
 # Record whether mosaicking was successful
