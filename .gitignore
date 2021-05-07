@@ -3,3 +3,5 @@ db/GLEAM-X.sqlite
 db/database_configuration.py
 queue/*
 */*pyc
+*pyc
+.vscode
