@@ -83,12 +83,6 @@ chan="$(pyhead.py -p CENTCHAN ${metafits} | awk '{print $3}')"
 # Settings to support transient imaging / cleaning
 niter=12000
 size=2400
-# HACK FOR TRANSIENT PROJECT -- WE ALREADY KNOW WHERE IT IS
-size=250
-taper=2amin
-auto_threshold=3
-minuv_l=50
-taper_inner_tukey=50
 
 # Pixel scale
 # At least 2 pix per synth beam for each channel
