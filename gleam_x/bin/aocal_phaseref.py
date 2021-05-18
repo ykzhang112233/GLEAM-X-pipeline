@@ -2,7 +2,7 @@
 from __future__ import print_function
 
 import os, logging
-from optparse import OptionParser 
+from optparse import OptionParser
 from calplots.aocal import fromfile
 import numpy as np
 
@@ -36,7 +36,8 @@ else:
     ao = ao / ref_phasor
 
 if not opts.preserve_xterms:
-    ao[0, :, :, 1] = np.zeros(ao.shape[1:3], dtype=np.complex128)
-    ao[0, :, :, 2] = np.zeros(ao.shape[1:3], dtype=np.complex128)
+    zshape = (1, ao.n_ant, ao.n_chan)
+    ao[..., 1] = np.zeros(zshape, dtype=np.complex128)
+    ao[..., 2] = np.zeros(zshape, dtype=np.complex128)
 
 ao.tofile(outfilename)
