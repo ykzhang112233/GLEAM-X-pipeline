@@ -13,6 +13,8 @@ Divide through by phase of a single reference antenna
 parser.add_option("-v", "--verbose", action="count", default=0, dest="verbose", help="-v info, -vv debug")
 parser.add_option("--incremental", action="store_true", dest="incremental", help="incremental solution")
 parser.add_option("--preserve_xterms", action="store_true", dest="preserve_xterms", help="preserve cross-terms (default is to set them all to 0+0j)")
+parser.add_option("--xy", default=0., dest="xy", type=float, help="add this phase (in degrees) to the YY phases for all channels")
+parser.add_option("--dxy", default=0., dest="dxy", type=float, help="add this slope (in degrees per spectral channel) in xy_phase to all YY phases ")
 opts, args = parser.parse_args()
 
 if len(args) != 3:
@@ -25,6 +27,8 @@ if opts.verbose == 1:
     logging.basicConfig(level=logging.INFO)
 elif opts.verbose > 1:
     logging.basicConfig(level=logging.DEBUG)
+if (opts.xy != 0.0 or opts.dxy != 0.0) and opts.preserve_xterms:
+    parser.error("XY phase cannot be set if preserving xterms")
 
 ao = fromfile(infilename)
 
@@ -39,5 +43,11 @@ if not opts.preserve_xterms:
     zshape = (1, ao.n_ant, ao.n_chan)
     ao[..., 1] = np.zeros(zshape, dtype=np.complex128)
     ao[..., 2] = np.zeros(zshape, dtype=np.complex128)
+if opts.xy != 0.0 or opts.dxy != 0.0:
+    xy_phasor0 = np.complex(np.cos(np.radians(opts.xy)), np.sin(np.radians(opts.xy)))
+    xy_phasor1 = np.zeros((1, 1, ao.n_chan), dtype=np.complex128)
+    xy_phasor1.real += np.cos(np.radians(opts.dxy*np.arange(ao.n_chan))).reshape(1, 1, ao.n_chan)
+    xy_phasor1.imag += np.sin(np.radians(opts.dxy*np.arange(ao.n_chan))).reshape(1, 1, ao.n_chan)
+    ao[..., 3] = ao[..., 3]*xy_phasor0*xy_phasor1
 
 ao.tofile(outfilename)
