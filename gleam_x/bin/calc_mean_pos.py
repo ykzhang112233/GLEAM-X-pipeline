@@ -8,7 +8,7 @@ from astropy.io import fits
 from astropy.stats.circstats import circmean
 from astropy.coordinates import SkyCoord
 from argparse import ArgumentParser
-from typing import Iterable
+from typing import Iterable, Union
 from gleam_x.utils.obsid_ops import read_obsids_file
 
 logger = logging.getLogger(__name__)
@@ -16,8 +16,19 @@ logger.setLevel(logging.INFO)
 logger.addHandler(logging.StreamHandler())
 
 
-def filter_files_from_obsid(files: Iterable[str], obsids: Iterable[int]):
+def filter_files_from_obsid(
+    files: Iterable[str], obsids: Iterable[int]
+) -> Iterable[str]:
+    """Given a set of file paths (assuming GLEAM-X directories) and a set of obsids, filter
+    out all paths that do not have an obsid beloning to the set of obsids. 
 
+    Args:
+        files (Iterable[str]): List of files to filter out
+        obsids (Iterable[int]): List of acceptable obsids
+
+    Returns:
+        Iterable[str]: Path to files whose obsid is included in the obsid set
+    """
     filter_files = []
     for f in files:
         for obsid in obsids:
@@ -34,7 +45,19 @@ def calculate_mean(
     filter_obsids: str = None,
     ra_field: str = "CRVAL1",
     dec_field: str = "CRVAL2",
-):
+) -> Union[float, float]:
+    """Calculate the mean position based on RA/Dec values extracted from a set of FITS files
+
+    Args:
+        files (Iterable[str]): FITS files to process
+        print_pos (bool, optional): Output results to stdout. Defaults to False.
+        filter_obsids (str, optional): Path to standard GLEAm-X obsids text file (new line delimited). Defaults to None.
+        ra_field (str, optional): RA field in FITS header. Defaults to "CRVAL1".
+        dec_field (str, optional): Dec field in FITS header. Defaults to "CRVAL2".
+
+    Returns:
+        Union[float, float]: Mean RA and Dec position
+    """
 
     if filter_obsids is not None:
         logger.debug(f"Number of input files: {len(files)}")
@@ -59,7 +82,6 @@ def calculate_mean(
                 ra = in_fits[0].header[ra_field]
                 dec = in_fits[0].header[dec_field]
 
-                # print(ra, dec)
                 positions.append((file, ra, dec))
             except:
                 logger.warn(f"Position could not be read for {file}")
