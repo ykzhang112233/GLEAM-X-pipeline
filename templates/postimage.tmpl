@@ -42,7 +42,8 @@ subchans="0000 0001 0002 0003 MFS"
 method=scaled
 
 # Sky model
-MODEL_CATALOGUE="${GXBASE}/models/GGSM_sparse_unresolved.fits"
+POS_MODEL_CATALOGUE="${GXBASE}/models/NVSS_SUMSS_psfcal.fits"
+FLUX_MODEL_CATALOGUE="${GXBASE}/models/GGSM_sparse_unresolved.fits"
 # Set max separation for flux_warp crossmatch as ~ 1' -- unlikely that the ionosphere would be that brutal
 separation=$(echo "60/3600" | bc -l)
 
@@ -107,7 +108,7 @@ do
         if [[ ! -e "${obsnum}_deep-${subchan}-image-pb_warp.fits" ]]
         then
             fits_warp.py --incat "./${obsnum}_deep-${subchan}-image-pb_comp.fits" \
-            --refcat "${MODEL_CATALOGUE}" \
+            --refcat "${POS_MODEL_CATALOGUE}" \
             --corrected "./${obsnum}_deep-${subchan}-image-pb_comp_warp-corrected.fits" \
             --xm "./${obsnum}_fits_warp_xm.fits" \
             --suffix warp \
@@ -128,7 +129,7 @@ do
             # Match the image catalogue to the model table:
             match_catalogues \
             "${obsnum}_deep-${subchan}-image-pb_comp_warp-corrected.fits" \
-            "${MODEL_CATALOGUE}" \
+            "${FLUX_MODEL_CATALOGUE}" \
             --separation "${separation}" \
             --exclusion_zone "${exclusion}" \
             --outname "./${obsnum}_${subchan}_xm.fits" \
