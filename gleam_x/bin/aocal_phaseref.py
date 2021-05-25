@@ -102,6 +102,6 @@ if opts.xy != 0.0 or opts.dxy != 0.0:
     xy_phasor1 = np.zeros((1, 1, ao.n_chan), dtype=np.complex128)
     xy_phasor1.real += np.cos(np.radians(opts.dxy * freqs)).reshape(1, 1, ao.n_chan)
     xy_phasor1.imag += np.sin(np.radians(opts.dxy * freqs)).reshape(1, 1, ao.n_chan)
-    ao[..., 1] = ao[..., 1] * xy_phasor0 * xy_phasor1
+    ao[..., 3] = ao[..., 3] * xy_phasor0 * xy_phasor1
 
 ao.tofile(outfilename)
