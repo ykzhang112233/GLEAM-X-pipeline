@@ -47,7 +47,7 @@ parser.add_option(
     type=float,
     help="add this slope (in degrees per hertz) in xy_phase to all YY phases ",
 )
-parser.add_options(
+parser.add_option(
     "--ms",
     type=str,
     default=None,
@@ -87,7 +87,7 @@ if opts.xy != 0.0 or opts.dxy != 0.0:
     assert opts.ms is not None, "A measurment set has not be specified"
 
     tab = tables.table(f"{opts.ms}/SPECTRAL_WINDOW")
-    freqs = np.squeeze(np.array(tab.freqs))
+    freqs = np.squeeze(np.array(tab.CHAN_FREQ))
     tab.close()
 
     print(
