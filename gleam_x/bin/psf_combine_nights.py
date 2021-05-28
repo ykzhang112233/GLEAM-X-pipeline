@@ -34,7 +34,12 @@ def weighted_mean(maps: np.ndarray, weights: np.ndarray = None):
 
     if weights is None:
         logger.info("No weights specific, assuming equal weights. ")
-    data = np.average(maps, axis=0, weights=weights)
+    else:
+        weights = np.ma.masked_array(weights, np.isnan(weights))
+
+    masked_maps = np.ma.masked_array(maps, np.isnan(maps))
+
+    data = np.ma.average(masked_maps, axis=0, weights=weights).filled(np.nan)
 
     logger.debug(f"weight_mean averaged shape is {data.shape}")
 

@@ -13,15 +13,16 @@ mosaicdir=MOSAICDIR
 cd "${base}" || exit 1
 obss=($(sort $obslist))
 
-pos=$(obsid_ops.py "${obslist}" meanpos)
+# pos=$(obsid_ops.py "${obslist}" meanpos)
+pos=$(calc_mean_pos.py ./*/*MFS*rescaled.fits --filter-obsids "${obslist}")
 if [ -z $ra ]
 then
-    ra=$(echo "${pos}" | cut -f1)
+    ra=$(echo "${pos}" | cut -d ' ' -f1)
 fi 
 
 if [ -z $dec ]
 then
-    dec=$(echo "${pos}" | cut -f2)
+    dec=$(echo "${pos}" | cut -d ' ' -f2)
 fi
 
 if [[ -z ${mosaicdir} ]]
