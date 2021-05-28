@@ -221,46 +221,25 @@ else
 fi
 
 # Blur correction and final PSF generation
-if [[ ! -e "${outname}_ddmod.fits" ]] || [[ ! -e "${outname}_psf.fits" ]]; then
-    BANE --noclobber "${outname}.fits"
-
-    # To create the final PSF map that I will use later, run source-finding without any PSF input
-    if [[ ! -e "${outname}_comp.fits" ]]
-    then
-        aegean --seedclip=10 --maxsummits=5 --autoload --table="${outname}.fits" "${outname}.fits"
-    fi
-
-    # Generate a measured PSF map
-    if [[ ! -e "${outname}_psf.fits" ]]
-    then
-        psf_select.py --input="${outname}_comp.fits"
-        psf_create.py --input="${outname}_comp_psfcat.fits"
-    fi
-
-    # Run source-finding using the mosaicked PSF map as an input
-    if [[ ! -e "${outname}_projpsf_comp.fits" ]]
-    then
-        aegean --seedclip=10 --maxsummits=5 --autoload --table="${outname}_projpsf.fits" --psf="${outname}_psfmap.fits" "${outname}.fits"
-    fi
-
-    # Select sources and generate a new PSF map that has the right blur factor
-    if [[ ! -e "${outname}_projpsf_psf.fits" ]]
-    then
-        psf_select.py --input="${outname}_projpsf_comp.fits"
-        psf_create.py --input="${outname}_projpsf_comp_psfcat.fits"
-    fi
+if [[ ! -e "${outname}_combined_ddmod.fits" ]] ; then
 
     # Multiply by blur factor
     if [[ ! -e "${outname}_ddmod.fits" ]]
     then
-        dd_flux_mod.py "${outname}.fits" "${outname}_projpsf_psf.fits" "${outname}_ddmod.fits"
+        dd_flux_mod.py "${outname}.fits" "${outname}_psfmap.fits" "${outname}_combined_ddmod.fits"
     fi
 
     # Rerun source-finding on blur-corrected map with measured PSF map
-    BANE --noclobber "${outname}_ddmod.fits"
-    if [[ ! -e "${outname}_ddmod_comp.fits" ]]
+    BANE --noclobber "${outname}_combined_ddmod.fits"
+    if [[ ! -e "${outname}_combined_ddmod_comp.fits" ]]
     then
-        aegean --seedclip=4 --maxsummits=5 --autoload --table="${outname}_ddmod.fits" --psf="${outname}_psf.fits" "${outname}_ddmod.fits"
+        aegean \
+        --seedclip=4 \
+        --maxsummits=5 \
+        --autoload \
+        --table="${outname}_combined_ddmod.fits" \
+        --psf="${outname}_psfmap.fits" \
+        "${outname}_combined_ddmod.fits"
     fi
     # TODO: clean up intermediate files
 else
