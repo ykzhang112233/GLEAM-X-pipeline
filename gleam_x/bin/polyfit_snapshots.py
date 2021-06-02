@@ -225,6 +225,8 @@ else:
     ra_offs = np.empty(0)
     decs = np.empty(0)
 
+    obsids = []
+
     for fitsimage in infiles:
         sf = fitsimage.replace(".fits", "_comp.fits")
         sfm = fitsimage.replace(".fits", "_comp_matched.fits")
@@ -263,6 +265,8 @@ else:
         hdu = fits.open(sfm)
         cat = hdu[1].data
 
+        obsids.extend([fitsimage[:10] for _ in range(len(cat))])
+
         # RA offsets and Decs
         ras = np.append(ras, cat["RAJ2000"])
         ra_offs = np.append(
@@ -297,6 +301,7 @@ else:
     r = local_rmses[ind]
     S200 = S200s[ind]
     alpha = alphas[ind]
+    obsids = [obsids[i] for i in ind]
 
     # Get the highest S/N measurements
     if results.SNR_threshold is None:
@@ -388,9 +393,12 @@ else:
         final_c = new_c
         final_f = new_f
 
+    print("Length of h: ", len(h))
+    print("Length of obsids: ", len(obsids))
+
     # Save the results as a FITS table
     t = Table(
-        [h, a, d, f, new_f, final_f, r, S200, alpha, c, new_c, final_c],
+        [h, a, d, f, new_f, final_f, r, S200, alpha, c, new_c, final_c, obsids],
         names=(
             "RA_offset",
             "RA",
@@ -404,6 +412,7 @@ else:
             "log10ratio",
             "log10ratio_after_dec_corr",
             "log10ratio_after_full_cor",
+            "original_obsid",
         ),
     )
     t.write(concat_table, overwrite=True)
