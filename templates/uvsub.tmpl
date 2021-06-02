@@ -93,6 +93,9 @@ then
     chmod +x "${submodel}"
     ./"${submodel}"
     test_fail $?
+
+    echo "Removing outlier files"
+    rm *outlier*fits
 else
     echo "No wsclean script ${submodel} found. Exiting. "
 fi
