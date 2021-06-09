@@ -42,6 +42,7 @@ def _get_blur_slice(projpsf: str) -> Union[WCS, np.ndarray]:
     Returns:
         Union[WCS, np.ndarray]: The WCS and the blur plan of the projected PSF fits cube
     """
+    logger.debug(f"Reading {projpsf}")
     with fits.open(projpsf) as psf_fits:
         psf_wcs = WCS(psf_fits[0])
         psf_blur = psf_fits[0].data[3]
@@ -60,7 +61,7 @@ def _read_clean_table(src_cata: str) -> pd.DataFrame:
     Returns:
         pd.DataFrame: Concatenated source table with cleaned data
     """
-
+    logger.debug(f"Reading {src_cata}")
     src_cata = Table.read(src_cata).to_pandas()
     src_cata["original_obsid"] = src_cata["original_obsid"].str.decode("utf-8")
 
@@ -179,12 +180,14 @@ def filter_blurred_obsids(
         Uniona[np.ndarray,np.ndarray]: A boolean mask of equal length to `src_cata` of bad obsid (after a .groupby().describe()),
         and a list of good obsids that are not flagged
     """
-
+    logger.debug(f"Filtering blurred obsids")
     desc = src_cata.groupby(obsid_col).describe()
     mask = desc["blur_val"]["mean"] > filter_params["threshold"]
     mask = mask | (
-        (desc["blur_val"]["85%"] - desc["blur_val"]["25%"]) > filter_params["diff"]
+        (desc["blur_val"]["75%"] - desc["blur_val"]["25%"]) > filter_params["diff"]
     )
+    logger.info(f"{len(mask)} unique obsids")
+    logger.info(f"{np.sum(mask)} flagged as bad")
 
     if plot:
         outpath_plot = src_cata.replace(".fits", "_flagged.png")
@@ -215,8 +218,11 @@ def blur_filter_obsids(
     psf_wcs, psf_blur = _get_blur_slice(projpsf_path)
 
     # Get all the blur factors
+    logger.debug(f"Converting skycoordinates to pixel positions and evaluating")
     src_pix = skycoord_to_pixel(src_sky, psf_wcs)
-    src_cata["blur_val"] = psf_blur[src_pix[1].astype(int), src_pix[0].astype(int)]
+    src_cata["blur_val"] = psf_blur[
+        src_pix[1].astype(int), src_pix[0].astype(int)
+    ].astype("f8")
 
     # Get the filter specifications
     params = _get_blur_limits(src_cata_path, projpsf_path)
@@ -249,6 +255,7 @@ if __name__ == "__main__":
         default=False,
     )
     parser.add_argument(
+        "-v",
         "--verbose",
         default=False,
         action="store_true",
