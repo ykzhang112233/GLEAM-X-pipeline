@@ -127,7 +127,7 @@ def plot_blur_time(
         outpath (str): Location to write plot to
     """
     logger.info(f"Creating {outpath}")
-    markers = [int(a) for a in src_desc.index.values]
+    markers = np.array([int(a) for a in src_desc.index.values])
 
     fig, ax = plt.subplots(1, 1)
 
@@ -135,7 +135,7 @@ def plot_blur_time(
     ax.fill_between(
         markers - np.min(markers),
         src_desc["blur_val"]["25%"],
-        src_desc["blur_val"]["85%"],
+        src_desc["blur_val"]["75%"],
         color="blue",
         alpha=0.4,
         label="Interquartile",
@@ -153,6 +153,7 @@ def plot_blur_time(
         xlabel="Normalised Obsid",
         ylabel="Mean Blur Value",
         title=f"{np.sum(mask)} obsids flagged",
+        ylim=[0.9, 1.5],
     )
 
     ax.legend()
@@ -165,7 +166,7 @@ def filter_blurred_obsids(
     src_cata: pd.DataFrame,
     filter_params: Dict[str, float],
     obsid_col: str = "original_obsid",
-    plot: bool = False,
+    plot: str = None,
 ):
     """Filter out obsids that have been detected to have too much blurring, indicative of 
     bad ionosphere
@@ -174,7 +175,7 @@ def filter_blurred_obsids(
         src_cata (pd.DataFrame): Path to concatenated source catalogue produced by drift_rescale
         filter_params (Dict[str, float]): Parameters used to make obsids as bad. Must have `threshold` and `diff` keys
         obsid_col (str, optional): The obsid column stored in the `src_cata` file. Defaults to "original_obsid".
-        plot (bool, optional): Perform plotting visualisation. Defaults to False.
+        plot (str, optional): Perform plotting visualisation and save results to this path. If None dont perform. Defaults to None.
 
     Returns:
         Uniona[np.ndarray,np.ndarray]: A boolean mask of equal length to `src_cata` of bad obsid (after a .groupby().describe()),
@@ -189,9 +190,8 @@ def filter_blurred_obsids(
     logger.info(f"{len(mask)} unique obsids")
     logger.info(f"{np.sum(mask)} flagged as bad")
 
-    if plot:
-        outpath_plot = src_cata.replace(".fits", "_flagged.png")
-        plot_blur_time(desc, mask, filter_params, outpath_plot)
+    if plot is not None:
+        plot_blur_time(desc, mask, filter_params, plot)
 
     good_obsids = desc.index.values[~mask]
 
@@ -226,6 +226,7 @@ def blur_filter_obsids(
 
     # Get the filter specifications
     params = _get_blur_limits(src_cata_path, projpsf_path)
+    plot = src_cata_path.replace(".fits", "_flagged.png") if plot else None
     obsid_mask, good_obsids = filter_blurred_obsids(src_cata, params, plot=plot)
 
     if outpath_obsid is not None:
