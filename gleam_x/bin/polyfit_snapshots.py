@@ -181,27 +181,42 @@ group3.add_argument(
     default=False,
     help="Write coefficients to file? (default = False)",
 )
+group3.add_argument(
+    "-f",
+    "--filtered",
+    action="store_true",
+    default=False,
+    help="Included 'filtered' as part of the suffix to denote products are free from bad ionosphere observations",
+)
 results = parser.parse_args()
+
+if results.filtered:
+    print("Will be created the 'filtered' variety of data products. ")
+    outsuf = "_filtered"
+else:
+    outsuf = ""
 
 if os.path.exists(results.filelist):
     f = open(results.filelist, "r+")
     infiles = [line.rstrip() for line in f.readlines()]
     f.close()
 
-    concat_table = results.filelist.replace(".txt", "_concat.fits")
+    concat_table = results.filelist.replace(".txt", f"_concat{outsuf}.fits")
     title = results.filelist.replace(".txt", "")
-    dec_plot = results.filelist.replace(".txt", "_fitted_dec_poly.png")
+    dec_plot = results.filelist.replace(".txt", f"_fitted_dec_poly{outsuf}.png")
     dec_corrected_plot = results.filelist.replace(".txt", "_corrected_dec_poly.png")
 
     if results.correct_ra is True:
-        ra_plot = results.filelist.replace(".txt", "_fitted_ra_poly.png")
-        ra_corrected_plot = results.filelist.replace(".txt", "_corrected_ra_poly.png")
+        ra_plot = results.filelist.replace(".txt", f"_fitted_ra_poly{outsuf}.png")
+        ra_corrected_plot = results.filelist.replace(
+            ".txt", f"_corrected_ra_poly{outsuf}.png"
+        )
 
     # TODO: Replace these with database calls?
     if results.write_coefficients is True or results.read_coefficients is True:
-        dec_coeff = results.filelist.replace(".txt", "_dec_coefficients.csv")
+        dec_coeff = results.filelist.replace(".txt", f"_dec_coefficients{outsuf}.csv")
         if results.correct_ra is True:
-            ra_coeff = results.filelist.replace(".txt", "_ra_coefficients.csv")
+            ra_coeff = results.filelist.replace(".txt", f"_ra_coefficients{outsuf}.csv")
 else:
     print(results.filelist)
     print("Must specify a list of files to read!")
@@ -229,7 +244,7 @@ else:
 
     for fitsimage in infiles:
         sf = fitsimage.replace(".fits", "_comp.fits")
-        sfm = fitsimage.replace(".fits", "_comp_matched.fits")
+        sfm = fitsimage.replace(".fits", f"_comp_matched{outsuf}.fits")
 
         # Cross-match with a sky model to get model flux densities
         if not os.path.exists(sfm):
@@ -456,7 +471,9 @@ if results.do_rescale is True:
 
         for ext in extlist:
             infits = fitsimage.replace(".fits", ext + ".fits")
-            outfits = infits.replace(ext + ".fits", "_rescaled" + ext + ".fits")
+            outfits = infits.replace(
+                ext + ".fits", f"_rescaled{outsuf}" + ext + ".fits"
+            )
 
             if (not os.path.exists(outfits)) or results.overwrite is True:
                 print("Creating {0} from {1}".format(outfits, infits))

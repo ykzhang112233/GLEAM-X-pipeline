@@ -7,6 +7,7 @@ pipeuser=PIPEUSER
 base=BASEDIR
 obslist=OBSLIST
 readfile=READ
+projpsf=PROJECTPSF
 
 if [[ -z $readfile ]]
 then
@@ -25,9 +26,32 @@ echo "subchan: ${subchan}"
 
 cd "${base}" || exit 1
 
+sublist="${obslist%.txt}_${subchan}.txt"
+
+# If projpsf is not none, we should filter the obsids using the previous 
+# results from rescale and mosaic
+if [[ ! -z ${projpsf} ]] 
+then
+    if [[ -f "${projpsf}" ]] && [[ -f "${sublist}" ]]
+    then
+        echo "Found both the projected PSF and the previous sublist."
+        echo "Will attempt to filter obsids based on blur factor."
+        sublistfilt=${sublist/.txt/_filtered.txt}
+        obslistfilt=${obslist/.txt/_filtered.txt}
+        filter_blurred_obsid.py \
+        "${sublist}" \
+        "${projpsf}" \
+        "${obslistfilt}" \
+        --plot \
+        --verbose
+
+        obslist="${obslistfilt}"
+        sublist="${sublistfilt}"
+    fi
+fi
+
 obs=$(cat $obslist)
 
-sublist="${obslist%.txt}_${subchan}.txt"
 
 # track_task.py start_mosaic --jobid="${jobid}" --taskid="${taskid}" 
 
