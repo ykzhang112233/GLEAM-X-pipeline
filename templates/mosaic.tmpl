@@ -9,12 +9,14 @@ obslist=OBSLIST
 ra=RAPOINT
 dec=DECPOINT
 mosaicdir=MOSAICDIR
+filtered=FILTERED
 
 cd "${base}" || exit 1
 obss=($(sort $obslist))
 
 # pos=$(obsid_ops.py "${obslist}" meanpos)
-pos=$(calc_mean_pos.py ./*/*MFS*rescaled.fits --filter-obsids "${obslist}")
+pos=$(calc_mean_pos.py ./*/*MFS*rescaled${filtered}.fits --filter-obsids "${obslist}")
+
 if [ -z $ra ]
 then
     ra=$(echo "${pos}" | cut -d ' ' -f1)
@@ -27,7 +29,12 @@ fi
 
 if [[ -z ${mosaicdir} ]]
 then
-    mosaicdir='mosaic'
+    if [[ -z ${filtered} ]]
+    then
+        mosaicdir='mosaic'
+    else
+        mosaicdir='filtered_mosaic'
+    fi
 fi
 
 #n=0
@@ -72,14 +79,14 @@ used_obs=()
 # TODO: Add the weights to the if condition as wel
 for obsnum in ${obss[@]}
 do
-    if [[ -e ${obsnum}/${obsnum}_deep-${subchan}-image-pb_warp_rescaled.fits ]]
+    if [[ -e ${obsnum}/${obsnum}_deep-${subchan}-image-pb_warp_rescaled${filtered}.fits ]]
     then
 
-        echo "../${obsnum}/${obsnum}_deep-${subchan}-image-pb_warp_rescaled.fits" >> "${tmp}"
-        example=${obsnum}/${obsnum}_deep-${subchan}-image-pb_warp_rescaled.fits
+        echo "../${obsnum}/${obsnum}_deep-${subchan}-image-pb_warp_rescaled${filtered}.fits" >> "${tmp}"
+        example=${obsnum}/${obsnum}_deep-${subchan}-image-pb_warp_rescaled${filtered}.fits
 
         # pass weight maps as a text file so the same weight maps can be used - not needed anymore
-        echo "../${obsnum}/${obsnum}_deep-${subchan}-image-pb_warp_rescaled_weight.fits" >> $tmp_weights
+        echo "../${obsnum}/${obsnum}_deep-${subchan}-image-pb_warp_rescaled${filtered}_weight.fits" >> $tmp_weights
         
         # add obs that actually exist to list for later:
         used_obs+=(${obsnum})
@@ -90,17 +97,17 @@ done
 # Use an image that exists to get the frequency range
 if [[ ! -z $example ]]
 then
-    del=$(pyhead.py -p CDELT3 $example | awk '{print $3/2}')
-    mid=$(pyhead.py -p CRVAL3 $example | awk '{print $3}')
-    low=$(echo $mid $del | awk '{printf "%03.0f",($1-$2)/1e6}')
-    high=$(echo $mid $del | awk '{printf "%03.0fMHz",($1+$2)/1e6 }')
+    del=$(pyhead.py -p CDELT3 "${example}" | awk '{print $3/2}')
+    mid=$(pyhead.py -p CRVAL3 "${example}" | awk '{print $3}')
+    low=$(echo "${mid}" "${del}" | awk '{printf "%03.0f",($1-$2)/1e6}')
+    high=$(echo "${mid}" "${del}" | awk '{printf "%03.0fMHz",($1+$2)/1e6 }')
 else
     echo "No images found!"
     exit 1
 fi
 
 # Finish setting up output filenames by including the frequencies over which we integrate
-outname="${outname}_${low}-${high}"
+outname="${outname}_${low}-${high}${filtered}"
 # Also use this to define the list of images to be used
 #imagelist=${outname}.list
 imagelist=${outname}
@@ -166,17 +173,17 @@ if [[ ! -e ${outname}.fits ]] || [[ ! -e ${outname}_psfmap.fits ]]; then
     for obsnum in ${used_obs[@]}; do
 
         # keep name the same for easier naming rather than append .resamp
-        echo "${resampdir}/${obsnum}_deep-${subchan}-image-pb_warp_rescaled.fits" >> $tmp_resamp
+        echo "${resampdir}/${obsnum}_deep-${subchan}-image-pb_warp_rescaled${filtered}.fits" >> $tmp_resamp
         
         # create snapshot PSF on resampled image: 
         # psf_projected.py new_image old_image
-        psf_projected.py "${resampdir}/${obsnum}_deep-${subchan}-image-pb_warp_rescaled.fits" "../${obsnum}/${obsnum}_deep-${subchan}-image-pb_warp_rescaled.fits" 
-        echo "${resampdir}/${obsnum}_deep-${subchan}-image-pb_warp_rescaled_bmaj.fits" >> "${tmp_bmaj}"
-        echo "${resampdir}/${obsnum}_deep-${subchan}-image-pb_warp_rescaled_bmin.fits" >> "${tmp_bmin}"
-        echo "${resampdir}/${obsnum}_deep-${subchan}-image-pb_warp_rescaled_bpa.fits" >> "${tmp_bpa}"
+        psf_projected.py "${resampdir}/${obsnum}_deep-${subchan}-image-pb_warp_rescaled${filtered}.fits" "../${obsnum}/${obsnum}_deep-${subchan}-image-pb_warp_rescaled.fits" 
+        echo "${resampdir}/${obsnum}_deep-${subchan}-image-pb_warp_rescaled${filtered}_bmaj.fits" >> "${tmp_bmaj}"
+        echo "${resampdir}/${obsnum}_deep-${subchan}-image-pb_warp_rescaled${filtered}_bmin.fits" >> "${tmp_bmin}"
+        echo "${resampdir}/${obsnum}_deep-${subchan}-image-pb_warp_rescaled${filtered}_bpa.fits" >> "${tmp_bpa}"
 
         # weight maps are automatically renamed to .weight.fits apparently...
-        echo "${resampdir}/${obsnum}_deep-${subchan}-image-pb_warp_rescaled.weight.fits" >> "${tmp_weights}"
+        echo "${resampdir}/${obsnum}_deep-${subchan}-image-pb_warp_rescaled${filtered}.weight.fits" >> "${tmp_weights}"
 
     done
 
