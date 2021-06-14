@@ -23,9 +23,10 @@ tst=
 ra=
 dec=
 mosaicdir=
+filtered=
 
 # parse args and set options
-while getopts ':td:p:o:r:e:m:' OPTION
+while getopts ':td:p:o:r:e:m:f' OPTION
 do
     case "$OPTION" in
     d)
@@ -42,6 +43,8 @@ do
         mosaicdir=${OPTARG} ;;
     t)
         tst=1 ;;
+    f) 
+        filtered=1 ;;
     ? | : | h)
             usage ;;
   esac
@@ -79,6 +82,7 @@ cat "${GXBASE}/templates/mosaic.tmpl" | sed -e "s:OBSLIST:${obslist}:g" \
                                       -e "s:DECPOINT:${dec}:g" \
                                       -e "s:BASEDIR:${base}:g" \
                                       -e "s:MOSAICDIR:${mosaicdir}:g" \
+                                      -e "s:FILTERED:${filtered}:g" \
                                       -e "s:PIPEUSER:${pipeuser}:g" > "${script}"
 
 output="${GXLOG}/mosaic_${listbase}.o%A_%a"
