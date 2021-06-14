@@ -88,7 +88,7 @@ else:
     blur_tmp = np.zeros(len(ra))
 
     while count * stride < len(ra):
-        s_idx = np.linspace(count * stride, (count + 1) * stride)
+        s_idx = np.linspace(count * stride, (count + 1) * stride, stride, dtype=int)
         k, l = w_psf.wcs_world2pix(ra[s_idx], dec[s_idx], 1)
 
         # Testing this suggests it is 100x+ faster.
