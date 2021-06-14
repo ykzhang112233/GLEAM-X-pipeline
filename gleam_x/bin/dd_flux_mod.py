@@ -88,8 +88,8 @@ else:
     blur_tmp = np.zeros(len(ra))
 
     while count * stride < len(ra):
-        s_idx = np.linspace(count * stride, (count + 1) * stride, stride, dtype=int)
-        k, l = w_psf.wcs_world2pix(ra[s_idx], dec[s_idx], 1)
+        s = slice(count * stride, (count + 1) * stride)
+        k, l = w_psf.wcs_world2pix(ra[s], dec[s], 1)
 
         # Testing this suggests it is 100x+ faster.
         k_int = np.floor(k).astype(np.int)
@@ -100,7 +100,7 @@ else:
         l_mask = (l_int >= 0) & (l_int <= 180)
         l_int[~l_mask] = 0
 
-        blur_tmp[s_idx] = blur[l_int, k_int]
+        blur_tmp[s] = blur[l_int, k_int]
 
         count += 1
 
