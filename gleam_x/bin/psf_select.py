@@ -65,7 +65,7 @@ def main():
         "'{0}'".format(default_path),
     )
     parser.add_argument(
-        "--preffix",
+        "--prefix",
         default="example",
         help="Add a prefix to temporary file names to prevent bad race conditions",
     )
