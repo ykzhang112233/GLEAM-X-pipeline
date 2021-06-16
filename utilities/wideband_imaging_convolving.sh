@@ -1,47 +1,59 @@
-#!/bin/csh
+#!/bin/bash
 
-project_dir=/Users/katross/Documents/PhD/MWA/GLEAM-X/wideband_imaging
-cd ${project_dir}
-# Remove any previous .mir files from the last run (maybe make less hacky)
-rm -r *.mir 
+# A small utility script to brutally coadd two mosaic images together. 
+# It is only meant to be used to provide the initial source finding with 
+# a deeper image from which the priorised fitting is based on. 
 
-ls
+if [[ $# -ne 3 ]]
+then 
+    echo "USAGE: $0 LOWRES HIGHRES OUTTITLE"
+    echo "LOWRES - The low resolution mosaic, i.e. XG_170-200MHz_ddmod.fits. "
+    echo "LOWRES - The high resolution mosaic that will be convolved to LOWRES, i.e. XG_200-230MHz_ddmod.fits. "
+    echo "OUTTITLE - String used as the basis of the new file created, i.e. XG_170-230MHz "
+    exit
+fi
 
-lowres_im=GS_170-200MHz_ddmod_cutout
-highres_im=GS_200-231MHz_ddmod_cutout
-combined_im=GS_170-231
+SCRIPTSUFFIX=widebandmir
 
-lowres_fwhm_a=75.01355999978
-lowres_fwhm_b=58.7584799998
+find . -iname "*.${SCRIPTSUFFIX}" -type d -exec rm -rf {} +
 
-echo ${lowres_im}.mir
+lowres_im=$1
+highres_im=$2
+combined_im=$3
+
 # Reading both images into a miriad format
-fits in=${lowres_im}.fits out=${lowres_im}.mir op=xyin
-fits in=${highres_im}.fits out=${highres_im}.mir op=xyin
+fits in="${lowres_im}" out="${lowres_im/fits/${SCRIPTSUFFIX}}" op=xyin
+fits in="${highres_im}" out="${highres_im/fits/${SCRIPTSUFFIX}}" op=xyin
+
+prthd in="${lowres_im/fits/${SCRIPTSUFFIX}}" 
+
+lowres_fwhm_a=$(prthd in="${lowres_im/fits/${SCRIPTSUFFIX}}" | grep Beam | tr -s ' ' | cut -d ' ' -f3)
+lowres_fwhm_b=$(prthd in="${lowres_im/fits/${SCRIPTSUFFIX}}" | grep Beam | tr -s ' ' | cut -d ' ' -f5)
+lowres_pos_ang=$(prthd in="${lowres_im/fits/${SCRIPTSUFFIX}}" | grep Position | tr -s ' ' | cut -d ' ' -f3)
+
+echo "Extracted FWHM of low-resolution image: ${lowres_fwhm_a}x${lowres_fwhm_b} and ${lowres_pos_ang}"
 
 # Regriding the lowres to match highres
-regrid in=${lowres_im}.mir out=${lowres_im}_regrid.mir tin=${highres_im}.mir
+regrid in="${lowres_im/fits/${SCRIPTSUFFIX}}" \
+        out="${lowres_im/fits/regrid.${SCRIPTSUFFIX}}" \
+        tin="${highres_im/fits/${SCRIPTSUFFIX}}"
 
 # Convolving the high res to low res 
-convol map=${highres_im}.mir fwhm=${lowres_fwhm_a},${lowres_fwhm_b} options=final out=${highres_im}_convol.mir 
+convol map="${highres_im/fits/${SCRIPTSUFFIX}}" \
+      fwhm="${lowres_fwhm_a},${lowres_fwhm_b}" \
+      pa="${lowres_pos_ang}" \
+      options=final \
+      out="${highres_im/fits/convol.${SCRIPTSUFFIX}}" 
 
 
-final_lowmir_im=GS_170-200MHz_ddmod_cutout_regrid.mir
-final_highmir_im=GS_200-231MHz_ddmod_cutout_convol.mir
-outfile=${combined_im}.mir
+final_lowmir_im="${lowres_im/fits/regrid.${SCRIPTSUFFIX}}"
+final_highmir_im="${highres_im/fits/convol.${SCRIPTSUFFIX}}" 
+outfile="${combined_im}.${SCRIPTSUFFIX}"
 
 # Averaging the two imgaes 
-maths exp="(<${final_lowmir_im}>+<${final_highmir_im}>)/2" out=${combined_im}.mir
+maths exp="'(<${final_lowmir_im}>+<${final_highmir_im}>)/2'" out="${outfile}"
 
 # Exporting the miriad to a regular image 
-fits in=${combined_im}.mir out=${combined_im}.fits op=xyout 
+fits in="${outfile}" out="${outfile/${SCRIPTSUFFIX}/fits}" op=xyout 
 
-
-# BANE AND AEGEAN?? 
-BANE ${combined_im}.fits 
-BANE ${lowres_im}.fits 
-BANE ${highres_im}.fits 
-
-aegean --autoload --table ${combined_im}.fits --cores 3 ${combined_im}.fits
-aegean --autoload --table ${highres_im}.fits --cores 3 ${highres_im}.fits
-aegean --autoload --table ${lowres_im}.fits --cores 3 ${lowres_im}.fits
+find . -iname "*.${SCRIPTSUFFIX}" -type d -exec rm -rf {} +
