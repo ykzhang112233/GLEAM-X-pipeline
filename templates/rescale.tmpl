@@ -49,6 +49,8 @@ then
 
         obslist="${obslistfilt}"
         sublist="${sublistfilt}"
+
+        polyfitargs='--filtered'
     fi
 fi
 
@@ -87,7 +89,8 @@ done
 polyfit_snapshots.py \
                --filelist "${sublist}" \
                --skymodel="${GXBASE}"/models/GGSM_sparse_unresolved.fits \
-               $readfile $write --rescale --correctall --overwrite --plot 
+               $readfile $write --rescale --correctall --overwrite --plot \
+               ${polyfitargs}
 
 # Check that all files created so I can use the right exit code
 exitcode=0
