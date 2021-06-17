@@ -36,10 +36,12 @@ then
     then
         echo "Found both the projected PSF and the previous sublist."
         echo "Will attempt to filter obsids based on blur factor."
-        sublistfilt=${sublist/.txt/_concat.fits}
+        obslistconcat=${sublist/.txt/_concat.fits}
+        sublistfilt=${sublist/.txt/_filtered.txt}
         obslistfilt=${obslist/.txt/_filtered.txt}
+        echo $obslistconcat
         filter_blurred_obsids.py \
-        "${sublist}" \
+        "${obslistconcat}" \
         "${projpsf}" \
         "${obslistfilt}" \
         --plot \
@@ -52,6 +54,9 @@ fi
 
 obs=$(cat $obslist)
 
+echo $obs
+
+exit 0
 
 # track_task.py start_mosaic --jobid="${jobid}" --taskid="${taskid}" 
 
