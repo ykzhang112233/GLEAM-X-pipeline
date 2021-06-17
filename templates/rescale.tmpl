@@ -36,9 +36,9 @@ then
     then
         echo "Found both the projected PSF and the previous sublist."
         echo "Will attempt to filter obsids based on blur factor."
-        sublistfilt=${sublist/.txt/_filtered.txt}
+        sublistfilt=${sublist/.txt/_concat.fits}
         obslistfilt=${obslist/.txt/_filtered.txt}
-        filter_blurred_obsid.py \
+        filter_blurred_obsids.py \
         "${sublist}" \
         "${projpsf}" \
         "${obslistfilt}" \
