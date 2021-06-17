@@ -72,7 +72,7 @@ script="${GXSCRIPT}/rescale_${listbase}.sh"
 cat "${GXBASE}/templates/rescale.tmpl" | sed -e "s:OBSLIST:${obslist}:g" \
                                              -e "s:READ:${readfile}:g" \
                                              -e "s:BASEDIR:${base}:g"  \
-                                             -e "s:PROJPSF:${projpsf}:g" \
+                                             -e "s:PROJECTPSF:${projpsf}:g" \
                                              -e "s:PIPEUSER:${pipeuser}:g" > ${script}
 
 output="${GXLOG}/rescale_${listbase}.o%A_%a"
