@@ -21,7 +21,7 @@ readfile=
 projpsf=
 
 # parse args and set options
-while getopts ':td:p:o:r' OPTION
+while getopts ':td:p:o:rb:' OPTION
 do
     case "$OPTION" in
     d)
