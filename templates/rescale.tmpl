@@ -43,7 +43,7 @@ then
         filter_blurred_obsids.py \
         "${obslistconcat}" \
         "${projpsf}" \
-        "${obslistfilt}" \
+        "${sublistfilt}" \
         --plot \
         --verbose
 
@@ -55,8 +55,6 @@ fi
 obs=$(cat $obslist)
 
 echo $obs
-
-exit 0
 
 # track_task.py start_mosaic --jobid="${jobid}" --taskid="${taskid}" 
 
