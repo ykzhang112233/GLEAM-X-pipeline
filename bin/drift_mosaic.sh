@@ -2,11 +2,14 @@
 
 usage()
 {
-echo "drift_mosaic.sh [-p project] [-d dep] [-q queue] [-a account] [-t] [-r ra] [-e dec] -o list_of_observations.txt
+echo "drift_mosaic.sh [-p project] [-d dep] [-q queue] [-a account] [-t] [-f] [-r ra] [-e dec] -o list_of_observations.txt
   -p project  : project, (must be specified, no default)
-  -d dep     : job number for dependency (afterok)
+  -d dep      : job number for dependency (afterok)
   -t          : test. Don't submit job, just make the batch file
                 and then return the submission command
+  -f          : Use the data products produced by the filtered rescaling, which has 
+                observations with high blur factors. This will only work if the 
+                drift_rescale.sh task has been processed with a supplied -b psf option.  
   -r RA       : Right Ascension (decimal hours; default = guess from observation list)
   -e dec      : Declination (decimal degrees; default = guess from observation list)
   -m mosaicdir: Directory name for mosaics to be created (default = mosaics) 
