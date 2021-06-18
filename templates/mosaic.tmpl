@@ -27,6 +27,11 @@ then
     dec=$(echo "${pos}" | cut -d ' ' -f2)
 fi
 
+if [[ ! -z ${filtered} ]]
+then 
+    filtered="_filtered"
+fi
+
 if [[ -z ${mosaicdir} ]]
 then
     if [[ -z ${filtered} ]]
