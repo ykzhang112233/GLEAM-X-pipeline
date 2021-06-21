@@ -116,10 +116,11 @@ do
             --ra1 ra --dec1 dec \
             --ra2 RAJ2000 --dec2 DEJ2000 \
             --plot \
-            --nsrcs 1000 \
-            --vm 5 \
+            --nsrcs 750 \
+            --vm 10 \
             --progress \
-            --cores ${GXNCPUS}
+            --cores ${GXNCPUS} \
+            -- signal peak_flux_1
             # --signal peak_flux --noise local_rms --SNR 10
         fi
         
