@@ -28,9 +28,9 @@ cd "${base}" || exit 1
 
 sublist="${obslist%.txt}_${subchan}.txt"
 
-# If projpsf is not none, we should filter the obsids using the previous 
+# If projpsf is not none, we should filter the obsids using the previous
 # results from rescale and mosaic
-if [[ ! -z ${projpsf} ]] 
+if [[ ! -z ${projpsf} ]]
 then
     if [[ -f "${projpsf}" ]] && [[ -f "${sublist}" ]]
     then
@@ -46,19 +46,19 @@ then
         "${sublistfilt}" \
         --plot \
         --verbose
-
+        
         obslist="${obslistfilt}"
         sublist="${sublistfilt}"
-
+        
         polyfitargs='--filtered'
     fi
 fi
 
-obs=$(cat $sublistfilt)
+obs=$(cat $sublist)
 
 echo $obs
 
-# track_task.py start_mosaic --jobid="${jobid}" --taskid="${taskid}" 
+# track_task.py start_mosaic --jobid="${jobid}" --taskid="${taskid}"
 
 if [[ -e $sublist ]]
 then
@@ -72,10 +72,10 @@ do
     if [[ -e "${file}/${file}_deep-${subchan}-image-pb_warp.fits" ]]
     then
         if [[ -e "${file}/${file}_deep-${subchan}-image-pb_warp_comp.fits" ]] && \
-           [[ -e "${file}/${file}_deep-${subchan}-image-pb_warp_weight.fits" ]] && \
-           [[ -e "${file}/${file}_deep-${subchan}-image-pb_warp_rms.fits" ]] && \
-           [[ -e "${file}/${file}_deep-${subchan}-image-pb_warp_bkg.fits" ]] && \
-           [[ -e "${file}/${file}_deep-${subchan}-image-pb_warp_comp.fits" ]]
+        [[ -e "${file}/${file}_deep-${subchan}-image-pb_warp_weight.fits" ]] && \
+        [[ -e "${file}/${file}_deep-${subchan}-image-pb_warp_rms.fits" ]] && \
+        [[ -e "${file}/${file}_deep-${subchan}-image-pb_warp_bkg.fits" ]] && \
+        [[ -e "${file}/${file}_deep-${subchan}-image-pb_warp_comp.fits" ]]
         then
             echo "${file}/${file}_deep-${subchan}-image-pb_warp.fits" >> ${sublist}
         else
@@ -87,10 +87,10 @@ do
 done
 
 polyfit_snapshots.py \
-               --filelist "${sublist}" \
-               --skymodel="${GXBASE}"/models/GGSM_sparse_unresolved.fits \
-               $readfile $write --rescale --correctall --overwrite --plot \
-               ${polyfitargs}
+--filelist "${sublist}" \
+--skymodel="${GXBASE}"/models/GGSM_sparse_unresolved.fits \
+$readfile $write --rescale --correctall --overwrite --plot \
+${polyfitargs}
 
 # Check that all files created so I can use the right exit code
 exitcode=0
@@ -104,6 +104,6 @@ do
     fi
 done
 
-# track_task.py finish_mosaic --jobid="${jobid}" --taskid="${taskid}" 
+# track_task.py finish_mosaic --jobid="${jobid}" --taskid="${taskid}"
 
 exit $exitcode
