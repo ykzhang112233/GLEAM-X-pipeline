@@ -110,16 +110,17 @@ do
             fits_warp.py --incat "./${obsnum}_deep-${subchan}-image-pb_comp.fits" \
             --refcat "${POS_MODEL_CATALOGUE}" \
             --corrected "./${obsnum}_deep-${subchan}-image-pb_comp_warp-corrected.fits" \
-            --xm "./${obsnum}_fits_warp_xm.fits" \
+            --xm "./${obsnum}_${subchan}_fits_warp_xm.fits" \
             --suffix warp \
             --infits "./${obsnum}_deep-${subchan}-image-pb.fits" \
             --ra1 ra --dec1 dec \
             --ra2 RAJ2000 --dec2 DEJ2000 \
             --plot \
-            --nsrcs 1000 \
-            --vm 20 \
+            --nsrcs 750 \
+            --vm 10 \
             --progress \
-            --cores ${GXNCPUS}
+            --cores ${GXNCPUS} \
+            --signal peak_flux_1
             # --signal peak_flux --noise local_rms --SNR 10
         fi
         
