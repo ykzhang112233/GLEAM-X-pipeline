@@ -21,10 +21,30 @@ lowres_im=$1
 highres_im=$2
 combined_im=$3
 
+lowpsf="${lowres_im/ddmod/projpsf_psf}"
+highpsf="${highres_im/ddmod/projpsf_psf}"
+
+# extract beamsizes
+out=$(extract_lowhigh_psf_beam.py $lowpsf $highpsf -p)
+echo "${out}"
+low_maj=$(echo "${out}" | grep 'Low' | cut -d ' ' -f4)
+low_min=$(echo "${out}" | grep 'Low' | cut -d ' ' -f5)
+
+high_maj=$(echo "${out}" | grep 'High' | cut -d ' ' -f4)
+high_min=$(echo "${out}" | grep 'High' | cut -d ' ' -f5)
+
 # Reading both images into a miriad format
 fits in="${lowres_im}" out="${lowres_im/fits/${SCRIPTSUFFIX}}" op=xyin
 fits in="${highres_im}" out="${highres_im/fits/${SCRIPTSUFFIX}}" op=xyin
 
+# Put the extracted values into the files, even the low frequency ones. Not entirely sure how often
+# they are used by miriad, so lets just be sure they are in.
+puthd in="${highres_im/fits/${SCRIPTSUFFIX}}/bmaj" value="${high_maj},arcseconds"
+puthd in="${highres_im/fits/${SCRIPTSUFFIX}}/bmin" value="${high_min},arcseconds"
+puthd in="${lowres_im/fits/${SCRIPTSUFFIX}}/bmaj" value="${low_maj},arcseconds"
+puthd in="${lowres_im/fits/${SCRIPTSUFFIX}}/bmin" value="${low_min},arcseconds"
+
+# Get out the values, we just put in, needlessly. See above message about why it is done this way.
 prthd in="${lowres_im/fits/${SCRIPTSUFFIX}}"
 
 lowres_fwhm_a=$(prthd in="${lowres_im/fits/${SCRIPTSUFFIX}}" | grep Beam | tr -s ' ' | cut -d ' ' -f3)
