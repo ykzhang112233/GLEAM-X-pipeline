@@ -16,6 +16,7 @@ wcstools
 stilts
 mwa_pb_lookup
 mwa-reduce (private repository found at: https://github.com/ICRAR/mwa-reduce)
+miriad
 
 The mwa_pb_lookup scripts use the MWA_PB_BEAM and MWA_PB_JONES variables, to locate their HDF5 files. In this container they set to `/pb_lookup` directory. The appropriate scripts are configured to bind to GXPBLOOKUP so that these environment variables resolve correctly. 
 
@@ -26,6 +27,7 @@ mwa-reduce
 echo "Updating apt repositories"
 apt update && apt upgrade -y 
 apt install -y \
+            csh \
             ffmpeg \
             bc \
             rsync \
@@ -91,6 +93,17 @@ apt install -y \
 
 apt autoremove -y
 apt clean -y
+
+cd /usr/local \
+    && wget ftp://ftp.atnf.csiro.au/pub/software/miriad/miriad-linux64.tar.bz2 \
+    && wget ftp://ftp.atnf.csiro.au/pub/software/miriad/miriad-common.tar.bz2 
+    bzcat miriad-linux64.tar.bz2 | tar xvf -  
+    bzcat miriad-common.tar.bz2 | tar xvf -  
+    export MIR=/usr/local/miriad 
+    cd $MIR  
+    sed -e "s,@MIRROOT@,$MIR," scripts/MIRRC.in > MIRRC
+    sed -e "s,@MIRROOT@,$MIR," scripts/MIRRC.sh.in > MIRRC.sh
+    chmod 644 MIRRC*
 
 cd / \
     && git clone https://github.com/tjgalvin/swarp.git \
@@ -322,6 +335,15 @@ export PATH="/opt/mwa-reduce/build:$PATH"
 export MWA_PB_BEAM='/pb_lookup/gleam_xx_yy.hdf5'
 export MWA_PB_JONES='/pb_lookup/gleam_jones.hdf5'
 # ------------------------------------------------
+
+
+# ------------------------------------------------
+#  MIRIAD
+# ------------------------------------------------
+. /usr/local/miriad/MIRRC.sh \
+    && export PATH=$MIRBIN:$PATH
+# ------------------------------------------------
+
 
 # ------------------------------------------------
 # Alias 
