@@ -99,7 +99,8 @@ psf_create.py --input="${combined_im}_projpsf_comp_psfcat.fits"
 BANE --cores ${GXNCPUS} \
 --compress \
 --noclobber \
-"${combined_im}_ddmod.fits"
+"${outfile/${SCRIPTSUFFIX}/fits}"
+
 aegean --cores ${GXNCPUS} \
 --autoload \
 --progress \
