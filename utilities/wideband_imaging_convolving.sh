@@ -96,11 +96,6 @@ aegean --cores ${GXNCPUS} \
 psf_select.py --input="${combined_im}_projpsf_comp.fits"
 psf_create.py --input="${combined_im}_projpsf_comp_psfcat.fits"
 
-BANE --cores ${GXNCPUS} \
---compress \
---noclobber \
-"${outfile/${SCRIPTSUFFIX}/fits}"
-
 aegean --cores ${GXNCPUS} \
 --autoload \
 --progress \
