@@ -90,10 +90,21 @@ BANE --cores ${GXNCPUS} \
 "${outfile/${SCRIPTSUFFIX}/fits}"
 aegean --cores ${GXNCPUS} \
 --autoload \
---table="${outfile/.${SCRIPTSUFFIX}/_projectpsf_comp.fits}" \
+--table="${outfile/.${SCRIPTSUFFIX}/_projpsf.fits}" \
 "${outfile/${SCRIPTSUFFIX}/fits}"
 
 psf_select.py --input="${combined_im}_projpsf_comp.fits"
 psf_create.py --input="${combined_im}_projpsf_comp_psfcat.fits"
 
-dd_flux_mod.py "${outfile/${SCRIPTSUFFIX}/fits}" "${combined_im}_projpsf_psf.fits" "${combined_im}_ddmod.fits"
+dd_flux_mod.py "${combined_im}.fits" "${combined_im}_projpsf_psf.fits" "${combined_im}_ddmod.fits"
+
+BANE --cores ${GXNCPUS} \
+--compress \
+--noclobber \
+"${combined_im}_ddmod.fits"
+aegean --cores ${GXNCPUS} \
+--autoload \
+--progress \
+--psf="${outfile/.${SCRIPTSUFFIX}/_projpsf_psf.fits}" \
+--table="${combined_im}_ddmod.fits" \
+"${combined_im}_ddmod.fits"
