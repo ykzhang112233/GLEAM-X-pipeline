@@ -92,11 +92,17 @@ def _derive_frequency(projpsf_path: str) -> float:
     return freq
 
 
-def _get_blur_limits(src_cata_path: str, projpsf_path: str) -> Dict[str, float]:
+def _get_blur_limits(
+    src_cata_path: str, projpsf_path: str, thres: float = None, diff: float = None
+) -> Dict[str, float]:
     """Returns the typical filtering parameters given the frequency of the observation
 
     Args:
         projpsf_path (str): Filename of the projected PSF cube produced with typical GLEAM-X pipeline processing
+
+    Keyword Args:
+        thres (float): The absolute threshold limit. If None, use the the value hardcoded for each frequency. Defaults to None. 
+        diff (float): The acceptable inter-quartile difference limit. If None, use the the value hardcoded for each frequency. Defaults to None. 
 
     Returns:
         Dict[str, float]: The `threshold` and `diff` to use
@@ -105,11 +111,18 @@ def _get_blur_limits(src_cata_path: str, projpsf_path: str) -> Dict[str, float]:
     freq = _derive_frequency(projpsf_path)
 
     if freq < 100:
-        val = (1.25, 0.1)
+        val = [1.25, 0.1]
     elif freq < 134:
-        val = (1.2, 0.1)
+        val = [1.2, 0.1]
     else:
-        val = (1.15, 0.1)
+        val = [1.15, 0.1]
+
+    if thres is not None:
+        logger.info(f"Setting user threshold of {thres}")
+        val[0] = thres
+    if diff is not None:
+        logger.info(f"Setting user difference limit of {diff}")
+        val[1] = diff
 
     logger.debug(f"Adopted filter threshold values are {val}")
     return {"threshold": val[0], "diff": val[1]}
@@ -166,7 +179,7 @@ def filter_blurred_obsids(
     src_cata: pd.DataFrame,
     filter_params: Dict[str, float],
     obsid_col: str = "original_obsid",
-    plot: str = None,
+    plot: Union[str, None] = None,
 ):
     """Filter out obsids that have been detected to have too much blurring, indicative of 
     bad ionosphere
@@ -199,7 +212,12 @@ def filter_blurred_obsids(
 
 
 def blur_filter_obsids(
-    src_cata_path: str, projpsf_path: str, outpath_obsid: str, plot: bool = False
+    src_cata_path: str,
+    projpsf_path: str,
+    outpath_obsid: str,
+    plot: Union[bool, None] = False,
+    thres: float = None,
+    diff: float = None,
 ):
     """Identify obsids that are considered bad and flag them out. Only good obsids are written to a
     specified file. 
@@ -209,6 +227,11 @@ def blur_filter_obsids(
         projpsf_path (str): Path to a projpsf_psf.fits file produced by a provious drift_mosaic
         outpath_obsid (str): Output path to write the set of good obsids to
         plot (bool, optional): Create simple visualisations of the blurring across obsids. Defaults to False.
+    
+    Keyword Args:
+        thres (float): The absolute threshold limit. If None, use the the value hardcoded for each frequency. Defaults to None. 
+        diff (float): The acceptable inter-quartile difference limit. If None, use the the value hardcoded for each frequency. Defaults to None. 
+
     """
     # Read in table and convert to skycoord object
     src_cata = _read_clean_table(src_cata_path)
@@ -225,9 +248,11 @@ def blur_filter_obsids(
     ].astype("f8")
 
     # Get the filter specifications
-    params = _get_blur_limits(src_cata_path, projpsf_path)
-    plot = src_cata_path.replace(".fits", "_flagged.png") if plot else None
-    obsid_mask, good_obsids = filter_blurred_obsids(src_cata, params, plot=plot)
+    params = _get_blur_limits(src_cata_path, projpsf_path, thres=thres, diff=diff)
+    plot_path: Union[str, None] = src_cata_path.replace(
+        ".fits", "_flagged.png"
+    ) if plot else None
+    obsid_mask, good_obsids = filter_blurred_obsids(src_cata, params, plot=plot_path)
 
     if outpath_obsid is not None:
         write_obsids_file(good_obsids, outpath_obsid)
@@ -262,12 +287,32 @@ if __name__ == "__main__":
         action="store_true",
         help="Enable extra output when running",
     )
+    parser.add_argument(
+        "-t",
+        "--threshold",
+        default=None,
+        type=float,
+        help="The absolute threshold of the average blur factor in an obsid before it is marked as bad. ",
+    )
+    parser.add_argument(
+        "-d",
+        "--difference",
+        default=None,
+        type=float,
+        help="The absolute threshold of the inter-quartile range of the blur factor in an obsid before it is marked as bad. ",
+    )
+
     args = parser.parse_args()
 
     if args.verbose is True:
         logger.setLevel(logging.DEBUG)
 
     blur_filter_obsids(
-        args.concat_catalogue, args.projpsf, args.outpath_obsid, plot=args.plot
+        args.concat_catalogue,
+        args.projpsf,
+        args.outpath_obsid,
+        plot=args.plot,
+        thres=args.threshold,
+        diff=args.difference,
     )
 
