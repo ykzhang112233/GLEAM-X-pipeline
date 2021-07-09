@@ -88,7 +88,11 @@ BANE --cores ${GXNCPUS} \
 --compress \
 --noclobber \
 "${outfile/${SCRIPTSUFFIX}/fits}"
-aegean --cores ${GXNCPUS} \
+
+aegean \
+--seedclip=4 \
+--maxsummits=5 \
+--cores ${GXNCPUS} \
 --autoload \
 --table="${outfile/.${SCRIPTSUFFIX}/_projpsf.fits}" \
 "${outfile/${SCRIPTSUFFIX}/fits}"
@@ -96,7 +100,10 @@ aegean --cores ${GXNCPUS} \
 psf_select.py --input="${combined_im}_projpsf_comp.fits"
 psf_create.py --input="${combined_im}_projpsf_comp_psfcat.fits"
 
-aegean --cores ${GXNCPUS} \
+aegean \
+--seedclip=4 \
+--maxsummits=5 \
+--cores ${GXNCPUS} \
 --autoload \
 --progress \
 --psf="${outfile/.${SCRIPTSUFFIX}/_projpsf_psf.fits}" \
