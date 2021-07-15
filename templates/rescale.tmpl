@@ -7,6 +7,7 @@ pipeuser=PIPEUSER
 base=BASEDIR
 obslist=OBSLIST
 readfile=READ
+projpsf=PROJECTPSF
 
 if [[ -z $readfile ]]
 then
@@ -25,11 +26,39 @@ echo "subchan: ${subchan}"
 
 cd "${base}" || exit 1
 
-obs=$(cat $obslist)
-
 sublist="${obslist%.txt}_${subchan}.txt"
 
-# track_task.py start_mosaic --jobid="${jobid}" --taskid="${taskid}" 
+# If projpsf is not none, we should filter the obsids using the previous
+# results from rescale and mosaic
+if [[ ! -z ${projpsf} ]]
+then
+    if [[ -f "${projpsf}" ]] && [[ -f "${sublist}" ]]
+    then
+        echo "Found both the projected PSF and the previous sublist."
+        echo "Will attempt to filter obsids based on blur factor."
+        obslistconcat=${sublist/.txt/_concat.fits}
+        sublistfilt=${sublist/.txt/_filtered.txt}
+        obslistfilt=${obslist/.txt/_filtered.txt}
+        echo $obslistconcat
+        filter_blurred_obsids.py \
+        "${obslistconcat}" \
+        "${projpsf}" \
+        "${sublistfilt}" \
+        --plot \
+        --verbose
+        
+        obslist="${obslistfilt}"
+        sublist="${sublistfilt}"
+        
+        polyfitargs='--filtered'
+    fi
+fi
+
+obs=$(cat $obslist)
+
+echo $obs
+
+# track_task.py start_mosaic --jobid="${jobid}" --taskid="${taskid}"
 
 if [[ -e $sublist ]]
 then
@@ -43,10 +72,10 @@ do
     if [[ -e "${file}/${file}_deep-${subchan}-image-pb_warp.fits" ]]
     then
         if [[ -e "${file}/${file}_deep-${subchan}-image-pb_warp_comp.fits" ]] && \
-           [[ -e "${file}/${file}_deep-${subchan}-image-pb_warp_weight.fits" ]] && \
-           [[ -e "${file}/${file}_deep-${subchan}-image-pb_warp_rms.fits" ]] && \
-           [[ -e "${file}/${file}_deep-${subchan}-image-pb_warp_bkg.fits" ]] && \
-           [[ -e "${file}/${file}_deep-${subchan}-image-pb_warp_comp.fits" ]]
+        [[ -e "${file}/${file}_deep-${subchan}-image-pb_warp_weight.fits" ]] && \
+        [[ -e "${file}/${file}_deep-${subchan}-image-pb_warp_rms.fits" ]] && \
+        [[ -e "${file}/${file}_deep-${subchan}-image-pb_warp_bkg.fits" ]] && \
+        [[ -e "${file}/${file}_deep-${subchan}-image-pb_warp_comp.fits" ]]
         then
             echo "${file}/${file}_deep-${subchan}-image-pb_warp.fits" >> ${sublist}
         else
@@ -58,9 +87,10 @@ do
 done
 
 polyfit_snapshots.py \
-               --filelist "${sublist}" \
-               --skymodel="${GXBASE}"/models/GGSM_sparse_unresolved.fits \
-               $readfile $write --rescale --correctall --overwrite --plot 
+--filelist "${sublist}" \
+--skymodel="${GXBASE}"/models/GGSM_sparse_unresolved.fits \
+$readfile $write --rescale --correctall --overwrite --plot \
+${polyfitargs}
 
 # Check that all files created so I can use the right exit code
 exitcode=0
@@ -74,6 +104,6 @@ do
     fi
 done
 
-# track_task.py finish_mosaic --jobid="${jobid}" --taskid="${taskid}" 
+# track_task.py finish_mosaic --jobid="${jobid}" --taskid="${taskid}"
 
 exit $exitcode

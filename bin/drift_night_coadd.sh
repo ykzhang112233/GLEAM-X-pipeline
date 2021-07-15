@@ -2,7 +2,7 @@
 
 usage()
 {
-echo "drift_night_coadd.sh [-p project] [-d dep] [-q queue] [-a account] [-t] [-r ra] [-e dec] -o list_of_nights.txt
+echo "drift_night_coadd.sh [-p project] [-d dep] [-q queue] [-a account] [-t] [-r ra] [-e dec] list_of_nights.txt
 
 Task to combine mosaics that have been produced by 'drift_mosaic.sh' into a single, larger image. The contents of
 list_of_nights should be directed to the adopted mosaic folder for each nigh, incase a non-default 'mosaic' folder

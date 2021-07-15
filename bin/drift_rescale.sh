@@ -2,12 +2,13 @@
 
 usage()
 {
-echo "drift_rescale.sh [-p project] [-d dep] [-q queue] [-a account] [-t] [-r] [-e dec] -o list_of_observations.txt
+echo "drift_rescale.sh [-p project] [-d dep] [-b projectpsf] [-a account] [-t] [-r] [-e dec] -o list_of_observations.txt
   -p project  : project, (must be specified, no default)
   -d dep     : job number for dependency (afterok)
   -t          : test. Don't submit job, just make the batch file
                 and then return the submission command
   -r read : read existing solutions instead of writing new ones
+  -b projpsf : the path to the projpsf_psf.fits data producted produced by drift_mosaic.sh. Used to identify obsids with high blur factors
   -o obslist  : the list of obsids to process" 1>&2;
 exit 1;
 }
@@ -17,9 +18,10 @@ pipeuser=$(whoami)
 dep=
 tst=
 readfile=
+projpsf=
 
 # parse args and set options
-while getopts ':td:p:o:r' OPTION
+while getopts ':td:p:o:rb:' OPTION
 do
     case "$OPTION" in
     d)
@@ -32,6 +34,8 @@ do
         readfile="--read" ;;
     t)
         tst=1 ;;
+    b)
+        projpsf="${OPTARG}" ;;
     ? | : | h)
         usage ;;
   esac
@@ -68,6 +72,7 @@ script="${GXSCRIPT}/rescale_${listbase}.sh"
 cat "${GXBASE}/templates/rescale.tmpl" | sed -e "s:OBSLIST:${obslist}:g" \
                                              -e "s:READ:${readfile}:g" \
                                              -e "s:BASEDIR:${base}:g"  \
+                                             -e "s:PROJECTPSF:${projpsf}:g" \
                                              -e "s:PIPEUSER:${pipeuser}:g" > ${script}
 
 output="${GXLOG}/rescale_${listbase}.o%A_%a"

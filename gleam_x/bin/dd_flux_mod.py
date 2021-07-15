@@ -35,6 +35,13 @@ parser.add_argument(
     action="store_true",
     help="Invoke original correction code based on list comphrensions. By default will used a numpy approach that is significantly faster.",
 )
+parser.add_argument(
+    "-s",
+    "--stride",
+    default=10000,
+    type=int,
+    help="The number of pixels to process at a time",
+)
 
 args = parser.parse_args()
 
@@ -76,18 +83,27 @@ if args.old_method:
     blur_tmp = blur[l_int, k_int]
     blur_corr = blur_tmp.reshape(mosaic[0].data.shape[0], mosaic[0].data.shape[1])
 else:
-    k, l = w_psf.wcs_world2pix(ra, dec, 1)
+    stride = args.stride
+    count = 0
+    blur_tmp = np.zeros(len(ra))
 
-    # Testing this suggests it is 100x+ faster.
-    k_int = np.floor(k).astype(np.int)
-    k_mask = (k_int >= 0) & (k_int <= 360)
-    k_int[~k_mask] = 0
+    while count * stride < len(ra):
+        s = slice(count * stride, (count + 1) * stride)
+        k, l = w_psf.wcs_world2pix(ra[s], dec[s], 1)
 
-    l_int = np.floor(l).astype(np.int)
-    l_mask = (l_int >= 0) & (l_int <= 180)
-    l_int[~l_mask] = 0
+        # Testing this suggests it is 100x+ faster.
+        k_int = np.floor(k).astype(np.int)
+        k_mask = (k_int >= 0) & (k_int <= 360)
+        k_int[~k_mask] = 0
 
-    blur_tmp = blur[l_int, k_int]
+        l_int = np.floor(l).astype(np.int)
+        l_mask = (l_int >= 0) & (l_int <= 180)
+        l_int[~l_mask] = 0
+
+        blur_tmp[s] = blur[l_int, k_int]
+
+        count += 1
+
     blur_corr = blur_tmp.reshape(mosaic[0].data.shape)
 
 mosaic[0].data *= blur_corr

@@ -2,11 +2,14 @@
 
 usage()
 {
-echo "drift_mosaic.sh [-p project] [-d dep] [-q queue] [-a account] [-t] [-r ra] [-e dec] -o list_of_observations.txt
+echo "drift_mosaic.sh [-p project] [-d dep] [-q queue] [-a account] [-t] [-f] [-r ra] [-e dec] -o list_of_observations.txt
   -p project  : project, (must be specified, no default)
-  -d dep     : job number for dependency (afterok)
+  -d dep      : job number for dependency (afterok)
   -t          : test. Don't submit job, just make the batch file
                 and then return the submission command
+  -f          : Use the data products produced by the filtered rescaling, which has 
+                observations with high blur factors. This will only work if the 
+                drift_rescale.sh task has been processed with a supplied -b psf option.  
   -r RA       : Right Ascension (decimal hours; default = guess from observation list)
   -e dec      : Declination (decimal degrees; default = guess from observation list)
   -m mosaicdir: Directory name for mosaics to be created (default = mosaics) 
@@ -23,9 +26,10 @@ tst=
 ra=
 dec=
 mosaicdir=
+filtered=
 
 # parse args and set options
-while getopts ':td:p:o:r:e:m:' OPTION
+while getopts ':td:p:o:r:e:m:f' OPTION
 do
     case "$OPTION" in
     d)
@@ -42,6 +46,8 @@ do
         mosaicdir=${OPTARG} ;;
     t)
         tst=1 ;;
+    f) 
+        filtered=1 ;;
     ? | : | h)
             usage ;;
   esac
@@ -79,6 +85,7 @@ cat "${GXBASE}/templates/mosaic.tmpl" | sed -e "s:OBSLIST:${obslist}:g" \
                                       -e "s:DECPOINT:${dec}:g" \
                                       -e "s:BASEDIR:${base}:g" \
                                       -e "s:MOSAICDIR:${mosaicdir}:g" \
+                                      -e "s:FILTERED:${filtered}:g" \
                                       -e "s:PIPEUSER:${pipeuser}:g" > "${script}"
 
 output="${GXLOG}/mosaic_${listbase}.o%A_%a"

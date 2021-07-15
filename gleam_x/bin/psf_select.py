@@ -64,6 +64,11 @@ def main():
         help="NVSS-SUMSS catalogue filtering extended sources. Default is located at "
         "'{0}'".format(default_path),
     )
+    parser.add_argument(
+        "--prefix",
+        default="example",
+        help="Add a prefix to temporary file names to prevent bad race conditions",
+    )
 
     options = parser.parse_args()
 
@@ -76,6 +81,7 @@ def main():
         inputfile = options.input
 
     ext = options.input.split(".")[-1]  # make sure .vot can be used as input
+    prefix = options.prefix
 
     if options.output:
         outputfile = options.output
@@ -101,24 +107,30 @@ def main():
         os.system(
             "stilts tpipe in="
             + sparse
-            + " cmd='select ((local_rms<1.0)&&((int_flux/peak_flux)<3)&&((residual_std/peak_flux)<0.1))' out=temp_crop.fits"
+            + " cmd='select ((local_rms<1.0)&&((int_flux/peak_flux)<3)&&((residual_std/peak_flux)<0.1))' out={0}_temp_crop.fits".format(
+                prefix
+            )
         )
 
         # Match GLEAM with NVSS/SUMSS
         os.system(
             "stilts tmatch2 matcher=sky params=30 in1="
             + nscat
-            + ' in2=temp_crop.fits out=temp_ns_match.fits values1="RAJ2000 DEJ2000" values2="ra dec" fixcols="dups" suffix1="_ns" suffix2=""'
+            + ' in2={0}_temp_crop.fits out={0}_temp_ns_match.fits values1="RAJ2000 DEJ2000" values2="ra dec" fixcols="dups" suffix1="_ns" suffix2=""'.format(
+                prefix
+            )
         )
 
         # Keep only basic aegean headings
         os.system(
-            "stilts tpipe in=temp_ns_match.fits cmd='keepcols \"ra dec peak_flux err_peak_flux int_flux err_int_flux local_rms a err_a b err_b pa err_pa psf_a psf_b psf_pa residual_std flags\"' out="
+            "stilts tpipe in={0}_temp_ns_match.fits cmd='keepcols \"ra dec peak_flux err_peak_flux int_flux err_int_flux local_rms a err_a b err_b pa err_pa psf_a psf_b psf_pa residual_std flags\"' out=".format(
+                prefix
+            )
             + outputfile
         )
 
-        os.remove("temp_crop.fits")
-        os.remove("temp_ns_match.fits")
+        os.remove("{0}_temp_crop.fits".format(prefix))
+        os.remove("{0}_temp_ns_match.fits".format(prefix))
 
         hdu = fits.open(outputfile)
         data = hdu[1].data
