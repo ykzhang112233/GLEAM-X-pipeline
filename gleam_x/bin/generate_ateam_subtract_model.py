@@ -68,6 +68,9 @@ vira = Source("VirA", SkyCoord("12h30m49.42338s +12d23m28.0439s"), 1200.0, -1.0,
 pica = Source("PicA", SkyCoord("05h19m49.7229s  -45d46m43.853s"), 570.0, -1.0, 0.0)
 hera = Source("HerA", SkyCoord("16h51m11.4s     +04d59m20s"), 520.0, -1.1, 0.0)
 hyda = Source("HydA", SkyCoord("09h18m05.651s   -12d05m43.99s"), 350.0, -0.9, 0.0)
+# Position is roughly the center of the four components, slop was obtained by adding the four
+# components from GGSM, and fitting to the resulting model
+cena = Source("CenA", SkyCoord("13h25m27.600s   -43d01m09s"), 1040.0, -0.65, 0.0)
 
 BRIGHT_SOURCES = tuple([casa, cyga, crab, vira, pica, hera, hyda])
 
@@ -299,7 +302,7 @@ def wsclean_script(
         return
 
     with open(outpath, "w") as out:
-        out.write("#! /bin/bash \n")
+        out.write("#!/bin/bash \n")
         out.write("set -x \n\n")
         for c, (imagename, phasecenter, imsize) in enumerate(
             zip(outliers["imagename"], outliers["phasecenter"], outliers["imsize"])
