@@ -72,7 +72,7 @@ hyda = Source("HydA", SkyCoord("09h18m05.651s   -12d05m43.99s"), 350.0, -0.9, 0.
 # components from GGSM, and fitting to the resulting model
 cena = Source("CenA", SkyCoord("13h25m27.600s   -43d01m09s"), 1040.0, -0.65, 0.0)
 
-BRIGHT_SOURCES = tuple([casa, cyga, crab, vira, pica, hera, hyda])
+BRIGHT_SOURCES = tuple([casa, cyga, crab, vira, pica, hera, hyda, cena])
 
 
 def ggsm_row_model(row):
