@@ -33,6 +33,7 @@ scripts = [
     "gleam_x/bin/generate_weight_map.py",
     "gleam_x/bin/iono_update.py",
     "gleam_x/bin/make_time_cube.py",
+    "gleam_x/bin/mosaic_global_rescale.py",
     "gleam_x/bin/ms_flag_by_uvdist.py",
     "gleam_x/bin/multiply.py",
     "gleam_x/bin/new_fk5_template.py",

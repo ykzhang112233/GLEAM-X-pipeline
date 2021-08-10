@@ -107,5 +107,14 @@ aegean \
 --autoload \
 --progress \
 --psf="${outfile/.${SCRIPTSUFFIX}/_projpsf_psf.fits}" \
---table="${combined_im}_psf.fits" \
+--table="${combined_im}.fits" \
 "${outfile/${SCRIPTSUFFIX}/fits}"
+
+
+mosaic_global_rescale.py \
+"${combined_im}_comp.fits" \
+"${outfile/${SCRIPTSUFFIX}/fits}" \
+"${GXBASE}/models/GGSM_sparse_unresolved.fits" \
+--plot \
+--verbose \
+--apply
