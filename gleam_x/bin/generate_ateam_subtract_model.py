@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import os
-from typing import Tuple, Any
+from typing import Tuple, Any, Union, DefaultDict, List
 from collections import defaultdict
 
 import numpy as np
@@ -73,6 +73,27 @@ hyda = Source("HydA", SkyCoord("09h18m05.651s   -12d05m43.99s"), 350.0, -0.9, 0.
 cena = Source("CenA", SkyCoord("13h25m27.600s   -43d01m09s"), 1040.0, -0.65, 0.0)
 
 BRIGHT_SOURCES = tuple([casa, cyga, crab, vira, pica, hera, hyda, cena])
+
+
+def create_source(line: str) -> Union[None, Source]:
+    if line[0] == "#":
+        return None
+
+    name, ra, dec, s_nu, alpha, beta = line.split(",")
+
+    return Source(name, SkyCoord(f"{ra} {dec}"), float(s_nu), float(alpha), float(beta))
+
+
+def read_source_txt(path: str) -> Tuple[Source, ...]:
+    sources = []
+    with open(path, "r") as f:
+        for line in f.readlines():
+            src = create_source(line)
+
+            if src is not None:
+                sources.append(src)
+
+    return tuple(sources)
 
 
 def ggsm_row_model(row):
@@ -370,6 +391,7 @@ def ateam_model_creation(
     min_elevation=None,
     apply_beam=False,
     corrected_data: bool = False,
+    source_txt_path: str = None,
 ):
     """Search around known A-Team sources for components in the GGSM, and create
     a corresponding model in Andre's formation for use in mwa_reduce tasks.
@@ -410,6 +432,9 @@ def ateam_model_creation(
     metafits_wcs = create_wcs(header["RA"], header["DEC"], cenchan)
     no_comps = 0
 
+    if source_txt_path is not None and os.path.exists(source_txt_path):
+        sources += read_source_txt(source_txt_path)
+
     if mode == "subtrmodel":
         model_text = "skymodel fileformat 1.1\n"
 
@@ -421,7 +446,7 @@ def ateam_model_creation(
     elif mode == "casa":
         model_text = ""
     elif mode in ("casaclean", "wsclean"):
-        model_dict = defaultdict(list)
+        model_dict: DefaultDict[str, List] = defaultdict(list)
 
     for src in sources:
         response = gleamx_beam_lookup(src.pos.ra.deg, src.pos.dec.deg, grid, time, freq)
@@ -603,6 +628,12 @@ if __name__ == "__main__":
         action="store_true",
         help="In line with the GLEAM-X processing pipeline, if using the debug mode than the calibrated data are placed in the CORRECTED_DATA column, and these are the data that should be imaged initially. This is only relevant for the casa outlier subtraction mode. ",
     )
+    parser.add_argument(
+        "--source-txt",
+        default=None,
+        type=str,
+        help="A path to a user defined CSV list of sources. Each line source be name,ra,dec,s_150,alpha,beta. ",
+    )
     args = parser.parse_args()
 
     args.search_radius = attach_units_or_None(args.search_radius, u.arcminute)
@@ -624,6 +655,7 @@ if __name__ == "__main__":
             min_elevation=args.min_elevation,
             apply_beam=args.apply_beam,
             corrected_data=args.corrected_data,
+            source_txt_path=args.source_txt,
         )
 
         if result is not None:
