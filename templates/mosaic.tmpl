@@ -245,7 +245,7 @@ if [[ ! -e "${outname}_ddmod.fits" ]] || [[ ! -e "${outname}_psf.fits" ]]; then
     # To create the final PSF map that I will use later, run source-finding without any PSF input
     if [[ ! -e "${outname}_comp.fits" ]]
     then
-        aegean --seedclip=10 --maxsummits=5 --autoload --table="${outname}.fits" "${outname}.fits"
+        aegean --cores=1 --progress --seedclip=10 --maxsummits=5 --autoload --table="${outname}.fits" "${outname}.fits"
     fi
 
     # Generate a measured PSF map
@@ -258,7 +258,7 @@ if [[ ! -e "${outname}_ddmod.fits" ]] || [[ ! -e "${outname}_psf.fits" ]]; then
     # Run source-finding using the mosaicked PSF map as an input
     if [[ ! -e "${outname}_projpsf_comp.fits" ]]
     then
-        aegean --seedclip=10 --maxsummits=5 --autoload --table="${outname}_projpsf.fits" --psf="${outname}_psfmap.fits" "${outname}.fits"
+        aegean --cores=1 --progress --seedclip=10 --maxsummits=5 --autoload --table="${outname}_projpsf.fits" --psf="${outname}_psfmap.fits" "${outname}.fits"
     fi
 
     # Select sources and generate a new PSF map that has the right blur factor
@@ -283,7 +283,7 @@ fi
 if [[ ! -e "${outname}_ddmod_comp.fits" ]]
 then
     BANE --noclobber "${outname}_ddmod.fits"
-    aegean --seedclip=4 --maxsummits=5 --autoload --table="${outname}_ddmod.fits" --psf="${outname}_psf.fits" "${outname}_ddmod.fits"
+    aegean --cores=1 --progress --seedclip=4 --maxsummits=5 --autoload --table="${outname}_ddmod.fits" --psf="${outname}_psf.fits" "${outname}_ddmod.fits"
 fi
 
 # Record whether mosaicking was successful
