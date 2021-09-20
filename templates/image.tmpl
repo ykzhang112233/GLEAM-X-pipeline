@@ -165,6 +165,8 @@ do
     done
 done
 
+
+set -o pipefail
 # Deep clean (for pipeline)
 wsclean \
         -abs-mem ${GXMEMORY} \
