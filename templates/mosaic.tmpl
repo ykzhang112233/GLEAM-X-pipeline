@@ -62,6 +62,10 @@ track_task.py start_mosaic  --jobid="${jobid}" --taskid="${taskid}"  --start_tim
 
 # Define output mosaic name as the first part of the input text file
 outname=$(echo ${obslist} | awk 'BEGIN {FS="_"} {print $1}')
+baseoutname=$(basename ${obslist})
+outname=${baseoutname%.*}
+
+echo "The constructed outname is ${outname}"
 
 for image in "" "_weights"; do 
     if [ -e "${obslist%.txt}_temp_${subchan}${image}.txt" ]; then
