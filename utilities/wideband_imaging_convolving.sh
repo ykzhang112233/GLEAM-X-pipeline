@@ -73,6 +73,8 @@ outfile="${combined_im}.${SCRIPTSUFFIX}"
 # Averaging the two imgaes
 maths exp="'(<${final_lowmir_im}>+<${final_highmir_im}>)/2'" out="${outfile}"
 
+puthd in="${outfile}"/freq value=200315000
+
 # Exporting the miriad to a regular image
 fits in="${outfile}" out="${outfile/${SCRIPTSUFFIX}/fits}" op=xyout
 
