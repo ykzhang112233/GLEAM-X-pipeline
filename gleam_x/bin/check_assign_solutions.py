@@ -81,7 +81,7 @@ def check_solutions(aofile, threshold=THRESHOLD, *args, **kwargs):
     return True
 
 
-def report(obsids, cobsids, file=None):
+def report(obsids, cobsids, file=None, only_calids=False):
     """Report when an obsid has been associated with a new copied obsid solution file
 
     Args:
@@ -92,7 +92,10 @@ def report(obsids, cobsids, file=None):
         file (_io.TextIOWrapper): An open file handler to write to
     """
     for o, c in zip(obsids, cobsids):
-        print(o, c, file=file)
+        if only_calids:
+            print(c, file=file)
+        else:
+            print(o, c, file=file)
 
 
 def find_valid_solutions(
@@ -204,6 +207,12 @@ if __name__ == "__main__":
         help="Output text file to generate",
     )
     assign.add_argument(
+        '--only-calids',
+        default=False,
+        action='store_true',
+        help='When writing the output file, only write the calids column.'
+    )
+    assign.add_argument(
         "-b",
         "--base-path",
         type=str,
@@ -242,7 +251,7 @@ if __name__ == "__main__":
             report(obsids, calids)
         if args.calids_out is not None:
             with open(args.calids_out, "w") as outfile:
-                report(obsids, calids, file=outfile)
+                report(obsids, calids, file=outfile, only_calids=args.only_calids)
     else:
         print("Invalid directive supplied. ")
         parser.print_help()
