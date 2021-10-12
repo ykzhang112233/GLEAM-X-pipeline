@@ -154,7 +154,7 @@ def calculate_mean(
     mean_dec = np.mean(sky_pos.dec)
 
     if refine_position:
-        logger.info("Refining the mean position with a ZEA WCS type projection")
+        logger.debug("Refining the mean position with a ZEA WCS type projection")
         logger.debug(f"{mean_ra} {type(mean_ra)}")
         logger.debug(f"{mean_dec} {type(mean_dec)}")
 
