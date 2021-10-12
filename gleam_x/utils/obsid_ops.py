@@ -112,7 +112,7 @@ def split(path, column="cenchan", *args, **kwargs):
         sub_obsids = clean_obsids(sub_df["obs_id"])
 
         name, ext = os.path.splitext(path)
-        out_path = f"{name}_{column}_{idx}{ext}"
+        out_path = f"{name}_{column}_{int(idx):03d}{ext}"
 
         write_obsids_file(sub_obsids, out_path, *args, **kwargs)
 
