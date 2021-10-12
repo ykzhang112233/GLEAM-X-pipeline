@@ -15,7 +15,8 @@ cd "${base}" || exit 1
 obss=($(sort $obslist))
 
 # pos=$(obsid_ops.py "${obslist}" meanpos)
-pos=$(calc_mean_pos.py ./*/*MFS*rescaled${filtered}.fits --filter-obsids "${obslist}")
+# pos=$(calc_mean_pos.py ./*/*MFS*rescaled${filtered}.fits --filter-obsids "${obslist}")
+pos=$(calc_mean_pos.py --filter-obsids "${obslist}" --ra-field RA --dec-field DEC --refine-position ./*/*.metafits )
 
 if [ -z $ra ]
 then
