@@ -64,7 +64,7 @@ track_task.py start_mosaic  --jobid="${jobid}" --taskid="${taskid}"  --start_tim
 # Define output mosaic name as the first part of the input text file
 outname=$(echo ${obslist} | awk 'BEGIN {FS="_"} {print $1}')
 baseoutname=$(basename ${obslist})
-outname=${baseoutname%.*}
+outname=$(echo ${baseoutname%.*} | cut -d '_' -f-3)
 
 echo "The constructed outname is ${outname}"
 
