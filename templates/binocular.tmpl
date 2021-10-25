@@ -71,7 +71,7 @@ for dir in $dirs
 do
     cp -rf "${obsnum}.ms" "${obsnum}_flag.ms"
     flags=$(cat "${GXBASE}/configs/flags_${telescope}_${dir}.txt")
-    flagantennae "${obsnum}_flag.ms" "${flags}"
+    flagantennae "${obsnum}_flag.ms" ${flags}
 
     wsclean \
             -abs-mem "${GXMEMORY}" \
