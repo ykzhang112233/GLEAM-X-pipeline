@@ -2,7 +2,7 @@
 
 endpoint='146.118.69.100' #HOST is already used as a keyword in other script
 user='ubuntu'
-remote='/mnt/dav/GLEAM-X/Archived_Obsids'
+remote='/mnt/gxarchive/GLEAM-X/Archived_Obsids'
 
 usage()
 {
