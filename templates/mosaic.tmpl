@@ -180,14 +180,16 @@ if [[ ! -e ${outname}.fits ]] || [[ ! -e ${outname}_psfmap.fits ]]; then
     tmp_bpa=${tmp_resamp}_bpa
     tmp_weights=${imagelist}.weights.list.resamp
 
+    n=0
+
     for obsnum in ${used_obs[@]}; do
 
         # keep name the same for easier naming rather than append .resamp
         echo "${resampdir}/${obsnum}_deep-${subchan}-image-pb_warp_rescaled${filtered}.fits" >> $tmp_resamp
-        
+        (( n=$n+1 ))
         # create snapshot PSF on resampled image: 
         # psf_projected.py new_image old_image
-        psf_projected.py "${resampdir}/${obsnum}_deep-${subchan}-image-pb_warp_rescaled${filtered}.fits" "../${obsnum}/${obsnum}_deep-${subchan}-image-pb_warp_rescaled.fits" 
+        psf_projected.py "${resampdir}/${obsnum}_deep-${subchan}-image-pb_warp_rescaled${filtered}.fits" "../${obsnum}/${obsnum}_deep-${subchan}-image-pb_warp_rescaled.fits" &
         echo "${resampdir}/${obsnum}_deep-${subchan}-image-pb_warp_rescaled${filtered}_bmaj.fits" >> "${tmp_bmaj}"
         echo "${resampdir}/${obsnum}_deep-${subchan}-image-pb_warp_rescaled${filtered}_bmin.fits" >> "${tmp_bmin}"
         echo "${resampdir}/${obsnum}_deep-${subchan}-image-pb_warp_rescaled${filtered}_bpa.fits" >> "${tmp_bpa}"
@@ -195,7 +197,15 @@ if [[ ! -e ${outname}.fits ]] || [[ ! -e ${outname}_psfmap.fits ]]; then
         # weight maps are automatically renamed to .weight.fits apparently...
         echo "${resampdir}/${obsnum}_deep-${subchan}-image-pb_warp_rescaled${filtered}.weight.fits" >> "${tmp_weights}"
 
+        if [[ $n -ge 3 ]]
+        then
+              n=0
+              wait
+       fi
+
     done
+
+    wait
 
     for image in "" "_bmaj" "_bmin" "_bpa"; do
         
