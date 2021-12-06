@@ -197,7 +197,7 @@ if [[ ! -e ${outname}.fits ]] || [[ ! -e ${outname}_psfmap.fits ]]; then
         # weight maps are automatically renamed to .weight.fits apparently...
         echo "${resampdir}/${obsnum}_deep-${subchan}-image-pb_warp_rescaled${filtered}.weight.fits" >> "${tmp_weights}"
 
-        if [[ $n -ge 3 ]]
+        if [[ $n -ge 5 ]]
         then
               n=0
               wait
