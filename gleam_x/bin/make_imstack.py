@@ -44,10 +44,6 @@ parser.add_argument('-v','--verbose', actio='store_true', default=False, help='M
 
 args = parser.parse_args()
 
-# TODO: What is the mandatory argument/s?
-if len(args) != 1:
-    parser.error("incorrect number of arguments")
-
 prefix = args.prefix
 
 logging.basicConfig(format='%(asctime)s-%(levelname)s %(message)s', level=logging.INFO)
