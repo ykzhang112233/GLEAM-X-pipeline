@@ -191,6 +191,13 @@ out="${obsnum}_transient_matched_table.fits"
 # Make a cube and a standard deviation image
 make_time_cube.py ${obsnum}_transient
 
+# Dump the image and model files into a hdf5 container
+make_imsstack.py "${obsnum}_transient" 
+
+# Save the flags
+ms="${obsnum}.ms"
+taql "select ctod(TIME), gsum(ntrue(amplitude(DATA[,::3])==0.0)), gsum(ntrue(FLAG[,::3])), gmean(WEIGHT_SPECTRUM[,::3]) from $ms where ANTENNA1 != ANTENNA2 groupby TIME" > "${obsnum}_summary.txt"
+
 # Clean up
 rm "${obsnum}"_transient-t????-*.fits
 # rm "${obsnum}_transient_concatenated_table.fits"
