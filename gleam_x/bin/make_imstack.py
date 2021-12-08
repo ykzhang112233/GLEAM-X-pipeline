@@ -21,7 +21,7 @@ HDU = 0
 PB_THRESHOLD = 0.1 # fraction of pbmax
 #SUFFIXES=["image", "model", "dirty"]
 SUFFIXES = "image,model"
-N_TIMESTEPS = 26
+N_TIMESTEPS = 25
 N_CHANNELS = 1
 DTYPE = np.float16
 FILENAME = "{prefix}-t{time:04d}-{suffix}.fits"
@@ -39,7 +39,6 @@ parser.add_argument("--suffixes", default=SUFFIXES, type=str, help="comma-separa
 parser.add_argument("--stamp-size", default=STAMP_SIZE, type=int, help="hdf5 stamp size [default: %default]")
 parser.add_argument("--check-filenames-only", action="store_true",  help="check all required files are present then quit.")
 parser.add_argument("--allow-missing", action="store_true",  help="check for presence of files for contiguous timesteps from --start up to -n")
-parser.add_argument("--old-wsc-timesteps", action="store_true", help="use old WSClean timesteps to check files")
 parser.add_argument('-v','--verbose', action='store_true', default=False, help='More output logging')
 
 args = parser.parse_args()
@@ -54,15 +53,12 @@ if args.outfile is None:
     args.outfile = "%s.hdf5" % prefix
 
 if os.path.exists(args.outfile):
-    logging.warn("Warning: editing existing file")
+    logging.warning("Warning: editing existing file")
     file_mode = "r+"
 else:
     file_mode = "w"
 
 args.suffixes = args.suffixes.split(',')
-
-if args.old_wcs_timesteps:
-    logging.warn("Warning: using old WSC timesteps. Not recommended, even for old WSClean images!")
 
 # check that all image files are present
 for suffix in args.suffixes:
@@ -133,25 +129,21 @@ for s, suffix in enumerate(args.suffixes):
     i=0
     for t in range(args.n):
         im_slice = [slice(n_rows*i, n_rows*(i+1)), slice(None, None, None)]
-        fits_slice = SLICE[:-2] + im_slice
+        fits_slice = tuple(SLICE[:-2] + im_slice)
 
         infile = FILENAME.format(prefix=prefix, time=t+args.start, suffix=suffix)
         logging.info(" processing %s", infile)
-        hdus = fits.open(infile, memmap=True)
-        filenames[0, 0, t] = infile.encode("utf-8")
-        data[0, n_rows*i:n_rows*(i+1), :, 0, t] = np.where(pb_mask[n_rows*i:n_rows*(i+1), :, 0, 0],
-                                                           hdus[0].data[fits_slice],
-                                                           np.nan)*pb_nan[n_rows*i:n_rows*(i+1), :, 0, 0]
-        if s == 0:
-            timestamp[t] = hdus[0].header['DATE-OBS'].encode("utf-8")
-            if args.old_wcs_timesteps:
-                timestep_start[t] = hdus[0].header['WSCTIMES']
-                timestep_stop[t] = hdus[0].header['WSCTIMEE']
-            else:
+        with fits.open(infile, memmap=True) as hdus:
+            filenames[0, 0, t] = infile.encode("utf-8")
+            data[0, n_rows*i:n_rows*(i+1), :, 0, t] = np.where(pb_mask[n_rows*i:n_rows*(i+1), :, 0, 0],
+                                                            hdus[0].data[fits_slice],
+                                                            np.nan)*pb_nan[n_rows*i:n_rows*(i+1), :, 0, 0]
+            if s == 0:
+                timestamp[t] = hdus[0].header['DATE-OBS'].encode("utf-8")
                 timestep_start[t] = t
                 timestep_stop[t] = t+1
-        else:
-            assert timestamp[t] == hdus[0].header['DATE-OBS'].encode("utf-8"), "Timesteps do not match %s in %s" % (args.suffixes[0], infile)
+            else:
+                assert timestamp[t] == hdus[0].header['DATE-OBS'].encode("utf-8"), "Timesteps do not match %s in %s" % (args.suffixes[0], infile)
     logging.info(" writing to hdf5 file")
     hdf5_data = group.create_dataset(suffix, data_shape, chunks=chunks, dtype=DTYPE, compression='lzf', shuffle=True)
     hdf5_data[...] = data
