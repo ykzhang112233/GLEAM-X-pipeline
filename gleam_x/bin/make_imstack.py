@@ -40,7 +40,7 @@ parser.add_argument("--stamp-size", default=STAMP_SIZE, type=int, help="hdf5 sta
 parser.add_argument("--check-filenames-only", action="store_true",  help="check all required files are present then quit.")
 parser.add_argument("--allow-missing", action="store_true",  help="check for presence of files for contiguous timesteps from --start up to -n")
 parser.add_argument("--old-wsc-timesteps", action="store_true", help="use old WSClean timesteps to check files")
-parser.add_argument('-v','--verbose', actio='store_true', default=False, help='More output logging')
+parser.add_argument('-v','--verbose', action='store_true', default=False, help='More output logging')
 
 args = parser.parse_args()
 
