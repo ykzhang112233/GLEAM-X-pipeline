@@ -192,7 +192,7 @@ out="${obsnum}_transient_matched_table.fits"
 make_time_cube.py ${obsnum}_transient
 
 # Dump the image and model files into a hdf5 container
-make_imsstack.py "${obsnum}_transient" 
+make_imstack.py "${obsnum}_transient" 
 
 # Save the flags
 ms="${obsnum}.ms"
