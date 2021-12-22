@@ -23,7 +23,7 @@ Only a single process will be invoked for all obsids. There is no attempt to mul
 exit 1;
 }
 
-if [[ -z ${GXSSH} ]] | [[ ! -r "${GXSSH}" ]]
+if [[ -z ${GXSSH} ]] || [[ ! -r "${GXSSH}" ]]
 then
     echo "The GXSSH variable has not been configured, or the corresponding key can not be accessed. "
     echo 'Ensure the ssh key exists and is correctly described in the GLEAM-X profile script.'
