@@ -84,6 +84,29 @@ do
     
     if [[ ! -e "${obsnum}_deep-${subchan}-image-pb_comp.fits"  ]]
     then
+        # Generate a weight map for mosaicking
+        chans=($( pyhead.py -p CHANNELS "${obsnum}.metafits" | awk '{print $3}' | sed "s/,/ /g" ))
+        if [[ ${subchan} == "MFS" ]]
+        then
+            i=0
+            j=23
+        else
+            n=${subchan:3}
+            i=$((n * 6))
+            j=$((i + 5))
+        fi
+        cstart=${chans[$i]}
+        cend=${chans[$j]}
+        lookup_beam.py "${obsnum}" \
+        "_deep-${subchan}-image-pb.fits" \
+        "${obsnum}_deep-${subchan}-image-pb-" \
+        -c "$cstart-$cend"
+
+        mask_image.py "${obsnum}_deep-${subchan}-image-pb.fits" \
+        "${obsnum}_deep-${subchan}-image-pb-XX-beam.fits" \
+        "${obsnum}_deep-${subchan}-image-pb-YY-beam.fits" \
+        --apply-mask -v
+
         BANE --cores ${GXNCPUS} --compress --noclobber "${obsnum}_deep-${subchan}-image-pb.fits"
         # TODO: Replace the redirection
         aegean --cores 1 --autoload --table="./${obsnum}_deep-${subchan}-image-pb.fits" "./${obsnum}_deep-${subchan}-image-pb.fits" > >(tee -a "${obsnum}_deep-${subchan}_aegean.log") 2> >(tee -a "${obsnum}_deep-${subchan}_aegean.log" >&2)
