@@ -84,6 +84,11 @@ do
     
     if [[ ! -e "${obsnum}_deep-${subchan}-image-pb_comp.fits"  ]]
     then
+        if [[ ! -e "${obsnum}_deep-${subchan}-image-pb_original.fits" ]]
+        then 
+            cp -v "${obsnum}_deep-${subchan}-image-pb.fits" "${obsnum}_deep-${subchan}-image-pb_original.fits"
+        fi
+
         # Generate a weight map for mosaicking
         chans=($( pyhead.py -p CHANNELS "${obsnum}.metafits" | awk '{print $3}' | sed "s/,/ /g" ))
         if [[ ${subchan} == "MFS" ]]
