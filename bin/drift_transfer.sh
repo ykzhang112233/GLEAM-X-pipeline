@@ -2,7 +2,7 @@
 
 endpoint='146.118.68.233' #HOST is already used as a keyword in other script
 user='ubuntu'
-remote='/mnt/gxarchive/GLEAM-X/Archived_Obsids'
+remote='/mnt/gxarchive/Archived_Obsids'
 
 usage()
 {
@@ -123,7 +123,7 @@ fi
 
 # This is among the few tasks that should reasonably be expected to run on another cluster. 
 # Export all GLEAM-X pipeline configurable variables 
-sub="sbatch  --begin=now+5minutes --export=$(echo ${!GX*} | tr ' ' ',') --time=48:00:00 --mem=24G -M ${GXCOPYM} --output=${output} --error=${error} "
+sub="sbatch  --begin=now+1minutes --export=$(echo ${!GX*} | tr ' ' ',') --time=48:00:00 --mem=24G -M ${GXCOPYM} --output=${output} --error=${error} "
 sub="${sub}  ${GXNCPULINE} ${account} ${GXTASKLINE} ${depend} ${queue} ${script}.sbatch"
 
 if [[ ! -z ${tst} ]]
