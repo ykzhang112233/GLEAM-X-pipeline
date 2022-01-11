@@ -565,8 +565,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "-c",
         "--check-fov",
-        default=True,
-        action="store_false",
+        default=False,
+        action="store_true",
         help="Check to only include sources if they are outside the image boundaries, assuming 8000x8000 pixels and pixel scale of 0.5 / central channel",
     )
     parser.add_argument(

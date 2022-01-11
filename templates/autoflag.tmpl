@@ -140,10 +140,16 @@ fi
 if [[ $obsnum -ge 1302970000 ]] && [[ $obsnum -le 1303130000 ]]
 then
     flags="$flags 40 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 105 106 107 108 109 110 111 112 113 114 115 116 117 118 119 120"
+
+# Tile 84 seems to be pretty ratty. May expand these limits. 
+if [[ $obsnum -ge 1285758208 ]] && [[ $obsnum -le 1287607136 ]]
+then 
+    flags=" $flags 84 "
 fi
 
 if [[ ! -z ${flags} ]]
 then
+    echo "Flagging tiles $flags"
     flagantennae ${obsnum}.ms $flags
 fi
 

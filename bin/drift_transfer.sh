@@ -1,8 +1,8 @@
 #! /bin/bash
 
-endpoint='146.118.69.100' #HOST is already used as a keyword in other script
+endpoint='146.118.68.233' #HOST is already used as a keyword in other script
 user='ubuntu'
-remote='/mnt/dav/GLEAM-X/Archived_Obsids'
+remote='/mnt/gxarchive/GLEAM-X/Archived_Obsids'
 
 usage()
 {
@@ -23,7 +23,7 @@ Only a single process will be invoked for all obsids. There is no attempt to mul
 exit 1;
 }
 
-if [[ -z ${GXSSH} ]] | [[ ! -r "${GXSSH}" ]]
+if [[ -z ${GXSSH} ]] || [[ ! -r "${GXSSH}" ]]
 then
     echo "The GXSSH variable has not been configured, or the corresponding key can not be accessed. "
     echo 'Ensure the ssh key exists and is correctly described in the GLEAM-X profile script.'

@@ -71,7 +71,7 @@ for dir in $dirs
 do
     cp -rf "${obsnum}.ms" "${obsnum}_flag.ms"
     flags=$(cat "${GXBASE}/configs/flags_${telescope}_${dir}.txt")
-    flagantennae "${obsnum}_flag.ms" "${flags}"
+    flagantennae "${obsnum}_flag.ms" ${flags}
 
     wsclean \
             -abs-mem "${GXMEMORY}" \
@@ -87,7 +87,7 @@ do
             "${obsnum}_flag.ms"
 
     BANE --cores ${GXNCPUS} --compress --noclobber "${obsnum}_${dir}-image.fits"
-    aegean --cores ${GXNCPUS} --autoload --table="${obsnum}_${dir}-image.fits" "${obsnum}_${dir}-image.fits"
+    aegean --cores 1 --progress --autoload --table="${obsnum}_${dir}-image.fits" "${obsnum}_${dir}-image.fits"
     rm -rf "${obsnum}_flag.ms"
     rm "${obsnum}_${dir}-image.fits"
     rm "${obsnum}_${dir}-image_bkg.fits"

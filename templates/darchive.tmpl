@@ -70,7 +70,7 @@ do
     # Create an extract of the psf
     psf=${obsnum}_deep-${subchan}-psf.fits
     crop=${psf%.fits}_crop.fits
-    if [[ ! -e ${crop} ]]
+    if [[ -e ${psf} ]] && [[ ! -e ${crop} ]]
     then
         # Get size of the total image
         x=$(imsize "${psf}" | tr -s '[:blank:]' ' ' | cut -d ' ' -f7 | cut -d 'x' -f1)

@@ -73,6 +73,8 @@ outfile="${combined_im}.${SCRIPTSUFFIX}"
 # Averaging the two imgaes
 maths exp="'(<${final_lowmir_im}>+<${final_highmir_im}>)/2'" out="${outfile}"
 
+puthd in="${outfile}"/freq value=200315000
+
 # Exporting the miriad to a regular image
 fits in="${outfile}" out="${outfile/${SCRIPTSUFFIX}/fits}" op=xyout
 
@@ -90,9 +92,10 @@ BANE --cores ${GXNCPUS} \
 "${outfile/${SCRIPTSUFFIX}/fits}"
 
 aegean \
---seedclip=4 \
+--seedclip=10 \
 --maxsummits=5 \
---cores ${GXNCPUS} \
+--cores 1 \
+--progress \
 --autoload \
 --table="${outfile/.${SCRIPTSUFFIX}/_projpsf.fits}" \
 "${outfile/${SCRIPTSUFFIX}/fits}"
@@ -103,7 +106,7 @@ psf_create.py --input="${combined_im}_projpsf_comp_psfcat.fits"
 aegean \
 --seedclip=4 \
 --maxsummits=5 \
---cores ${GXNCPUS} \
+--cores 1 \
 --autoload \
 --progress \
 --psf="${outfile/.${SCRIPTSUFFIX}/_projpsf_psf.fits}" \

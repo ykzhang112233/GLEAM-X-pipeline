@@ -165,6 +165,8 @@ do
     done
 done
 
+# Set the pipefail so the test_fail does not test for tee
+set -o pipefail
 # Deep clean (for pipeline)
 wsclean \
         -abs-mem ${GXMEMORY} \
