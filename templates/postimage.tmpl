@@ -84,6 +84,51 @@ do
     
     if [[ ! -e "${obsnum}_deep-${subchan}-image-pb_comp.fits"  ]]
     then
+        # The mask_image.py operation will destructively remove the pixels. I can not think of a case 
+        # where we actually want to keep pixels below 5% of the PB, apart from _maybe_ causing non-uniform
+        # noise issues in the swarp image. In any case, the below attempts to preserve the original image
+        # as a just in case. 
+        if [[ ! -e "${obsnum}_deep-${subchan}-image-pb_original.fits" ]]
+        then 
+            cp -v "${obsnum}_deep-${subchan}-image-pb.fits" "${obsnum}_deep-${subchan}-image-pb_original.fits"
+        fi
+        if [[ ! -e "${obsnum}_deep-${subchan}-image-pb.fits" ]]
+        then 
+            if [[ ! -e "${obsnum}_deep-${subchan}-image-pb_original.fits" ]]
+            then 
+                echo "Missing ${obsnum}_deep-${subchan}-image-pb.fits file, and no copy found. This should not happen. "
+                test_fail 2
+            fi
+            cp -v "${obsnum}_deep-${subchan}-image-pb_original.fits" "${obsnum}_deep-${subchan}-image-pb.fits"
+        fi
+        
+
+        # Generate a weight map for mosaicking
+        chans=($( pyhead.py -p CHANNELS "${obsnum}.metafits" | awk '{print $3}' | sed "s/,/ /g" ))
+        if [[ ${subchan} == "MFS" ]]
+        then
+            i=0
+            j=23
+        else
+            n=${subchan:3}
+            i=$((n * 6))
+            j=$((i + 5))
+        fi
+        cstart=${chans[$i]}
+        cend=${chans[$j]}
+        lookup_beam.py "${obsnum}" \
+        "_deep-${subchan}-image-pb.fits" \
+        "${obsnum}_deep-${subchan}-image-pb-" \
+        -c "$cstart-$cend"
+
+        mask_image.py "${obsnum}_deep-${subchan}-image-pb.fits" \
+        "${obsnum}_deep-${subchan}-image-pb-XX-beam.fits" \
+        "${obsnum}_deep-${subchan}-image-pb-YY-beam.fits" \
+        --apply-mask -v
+
+        # move into place the new masked image
+        rm "${obsnum}_deep-${subchan}-image-pb.fits" && mv "${obsnum}_deep-${subchan}-image-pb_mask.fits" "${obsnum}_deep-${subchan}-image-pb.fits"
+
         BANE --cores ${GXNCPUS} --compress --noclobber "${obsnum}_deep-${subchan}-image-pb.fits"
         # TODO: Replace the redirection
         aegean --cores 1 --autoload --table="./${obsnum}_deep-${subchan}-image-pb.fits" "./${obsnum}_deep-${subchan}-image-pb.fits" > >(tee -a "${obsnum}_deep-${subchan}_aegean.log") 2> >(tee -a "${obsnum}_deep-${subchan}_aegean.log" >&2)

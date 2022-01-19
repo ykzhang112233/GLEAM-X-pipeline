@@ -34,6 +34,7 @@ scripts = [
     "gleam_x/bin/iono_update.py",
     "gleam_x/bin/make_imstack.py",
     "gleam_x/bin/make_time_cube.py",
+    "gleam_x/bin/mask_image.py",
     "gleam_x/bin/mosaic_global_rescale.py",
     "gleam_x/bin/ms_flag_by_uvdist.py",
     "gleam_x/bin/multiply.py",
