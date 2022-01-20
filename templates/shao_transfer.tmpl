@@ -56,7 +56,7 @@ do
         echo "obsid: ${obsnum}"
         # Singularity does not mount the home directory on pawsey correctly, so 
         # best to avoid trying to hit the home directory and load ssh keys elsewhere
-        rsync  -rvh --inplace --progress --stats \
+        rsync  -avh --whole-file --inplace --progress --stats \
                             -e "ssh -o StrictHostKeyChecking=no -i ${GXSSH}" \
                                     ./*.bin \
                                     ./*.ms.zip \

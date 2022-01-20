@@ -33,13 +33,14 @@ user=ENDUSER
 host=ENDPOINT
 remote=REMOTE
 project=PROJECT
+port=PORT 
 
 failed=0
 progress=0
 cd "${base}" || exit 1
 
-rsync -rvh --inplace --progress --stats \
-                    -e "ssh -o StrictHostKeyChecking=no -i ${GXSSH}" \
+rsync -avh --whole-file --inplace --progress --stats \
+                    -e "ssh -o StrictHostKeyChecking=no -i ${GXSSH} ${port}" \
                             ./*csv \
                             ./*png \
                             ./*txt \
@@ -66,8 +67,8 @@ do
         echo "obsid: ${obsnum}"
         # Singularity does not mount the home directory on pawsey correctly, so 
         # best to avoid trying to hit the home directory and load ssh keys elsewhere
-        rsync  -rvh --inplace --progress --stats \
-                            -e "ssh -o StrictHostKeyChecking=no -i ${GXSSH}" \
+        rsync -avh --whole-file --inplace --progress --stats \
+                            -e "ssh -o StrictHostKeyChecking=no -i ${GXSSH} ${port}" \
                                     ./*clip.zip \
                                     ./*png \
                                     ./*log \
@@ -95,8 +96,8 @@ do
         # The iondiff is optional in the autocal stage. Unless used this will not be available
         if [ -f "${obsnum}_ionodiff.csv" ]
         then
-            rsync  -rvh --inplace --progress --stats \
-                            -e "ssh -o StrictHostKeyChecking=no -i ${GXSSH}" \
+            rsync -avh --whole-file --inplace --progress --stats \
+                            -e "ssh -o StrictHostKeyChecking=no -i ${GXSSH} ${port}" \
                             "${obsnum}_ionodiff.csv" \
                             "${user}@${host}:${remote}/${obsnum}"  
         fi       

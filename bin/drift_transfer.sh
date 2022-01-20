@@ -3,6 +3,7 @@
 endpoint='146.118.68.233' #HOST is already used as a keyword in other script
 user='ubuntu'
 remote='/mnt/gxarchive/Archived_Obsids'
+port=
 
 usage()
 {
@@ -19,7 +20,8 @@ Only a single process will be invoked for all obsids. There is no attempt to mul
   -r remote   : remote directory to copy files to (default: '$remote')
   -t          : test. Don't submit job, just make the batch file
                 and then return the submission command
-  -o obsnum      : A text file of obsids (newline separated).  " 1>&2;
+  -o obsnum   : A text file of obsids (newline separated).  
+  -q port     : The port number for rsync to use. (default: 22)" 1>&2;
 exit 1;
 }
 
@@ -92,6 +94,12 @@ then
     account="--account=${GXACCOUNT}"
 fi
 
+if [[ -n ${port} ]]
+then 
+    # Passed to rsync
+    port="-p ${port}"
+fi
+
 numfiles=$(wc -l "${obslist}" | awk '{print $1}')
 
 # start the real program
@@ -102,7 +110,8 @@ cat "${GXBASE}/templates/transfer.tmpl" | sed -e "s:OBSLIST:${obslist}:g" \
                                  -e "s:ENDPOINT:${endpoint}:g" \
                                  -e "s:REMOTE:${remote}:g" \
                                  -e "s:PIPEUSER:${pipeuser}:g" \
-                                 -e "s:PROJECT:${project}:g"  > "${script}"
+                                 -e "s:PROJECT:${project}:g" \
+                                 -e "s:PORT:${port}:g" > "${script}"
 
 output="${GXLOG}/transfer_${obslist}.o%A"
 error="${GXLOG}/transfer_${obslist}.e%A"
