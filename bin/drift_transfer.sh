@@ -41,7 +41,7 @@ dep=
 tst=
 
 # parse args and set options
-while getopts ':td:a:p:u:h:r:o:' OPTION
+while getopts ':td:a:p:u:e:r:o:q:' OPTION
 do
     case "$OPTION" in
 	d)
@@ -56,7 +56,7 @@ do
 	u)
         user=${OPTARG}
         ;;
-    h)
+    e)
         endpoint=${OPTARG}
         ;;
     r)
@@ -68,7 +68,10 @@ do
     o)
 	    obslist=${OPTARG} 
         ;;
-	? | : | h)
+	q) 
+        port=${OPTARG}
+        ;;
+    ? | : | h)
 	    usage
 	    ;;
   esac
