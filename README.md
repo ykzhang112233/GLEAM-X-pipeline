@@ -222,25 +222,53 @@ uses templates:
     - `fits_warp` and `flux_warp` correct the image for effects of ionosphere
     - source finding is performed again on the corrected image
 
-### obs_archive.sh
+### drift_archive_prep.sh
+This will prepare data components for long term archive at Data Central. This stage will
+- compress measurement sets
+- extract a region of the PSF / dirty beam
+- clip and compress model component files
+- perform lossy compress of some smoothly varying files (rms/bkg)
+
+Usage:
+```
+drift_archive_prep.sh [-d dep] [-p project] [-t] obsnum
+
+Prepares data products for eachobsid for archiving. This involves zipping and cropping certain data products, and moving them into place. This will NOT initiate the transfer to a remote endpoint. 
+
+A SLURM job-array will be used to prepare separate obsids in parallel. 
+
+  -d dep      : job number for dependency (afterok)
+  -p project  : project, (must be specified, no default)
+  -t          : test. Don't submit job, just make the batch file
+                and then return the submission command
+  -o obsnum   : A text file of obsids (newline separated). 
+                A job-array task will be submitted to process the collection of obsids.
+```
+uses template:
+  - `darchive.tmpl`
+
+### drift_transfer.sh
 Copies selected GLEAM-X data products over to the Data Central archive. This isrequired only for those doing bulk processing of data directly related to G0008. 
 
 Usage:
 ```
-obs_archive.sh [-d dep] [-p project] [-a account] [-u user] [-e endpoint] [-r remote_directory] [-t] obsnum
+drift_archive.sh [-d dep] [-p project] [-a account] [-u user] [-e endpoint] [-r remote_directory] [-q port] [-t] obsnum
 
-Archives the processed data products onto the data central archive system. By default traffic is routed through a nimbus instance, requiring a public ssh key to first be added to list of authorized keys. Data Central runs ownCloud, and at the moment easiest way through is a davfs2 mount. Consult Natasha or Tim. 
+Will rsync files over to a remote end point. It is expected that items have already been packaged for transfer by running drift_archive_prep.sh
+
+Only a single process will be invoked for all obsids. There is no attempt to multi-process. 
 
   -d dep      : job number for dependency (afterok)
   -p project  : project, (must be specified, no default)
-  -u user     : user name of system to archive to 
-  -e endpoint : hostname to copy the archive data to 
-  -r remote   : remote directory to copy files to
+  -u user     : user name of system to archive to (default: '$user')
+  -e endpoint : hostname to copy the archive data to (default: '$endpoint')
+  -r remote   : remote directory to copy files to (default: '$remote')
   -t          : test. Don't submit job, just make the batch file
                 and then return the submission command
-  obsnum      : the obsid to process, or a text file of obsids (newline separated). 
-               A job-array task will be submitted to process the collection of obsids.
+  -o obsnum   : A text file of obsids (newline separated).  
+  -q port     : The port number for rsync to use. (default: 22)
 ```
+
 uses templates:
-  - `archive.tmpl`
+  - `transfer.tmpl`
     - requires access to GLEAM-X nimbus instance

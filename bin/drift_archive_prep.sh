@@ -2,7 +2,7 @@
 
 usage()
 {
-echo "drift_archive_prep.sh [-d dep] [-p project] [-a account] [-u user] [-e endpoint] [-r remote_directory] [-t] obsnum
+echo "drift_archive_prep.sh [-d dep] [-p project] [-t] obsnum
 
 Prepares data products for eachobsid for archiving. This involves zipping and cropping certain data products, and moving them into place. This will NOT initiate the transfer to a remote endpoint. 
 

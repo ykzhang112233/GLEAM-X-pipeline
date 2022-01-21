@@ -7,7 +7,7 @@ port=
 
 usage()
 {
-echo "drift_archive.sh [-d dep] [-p project] [-a account] [-u user] [-e endpoint] [-r remote_directory] [-t] obsnum
+echo "drift_archive.sh [-d dep] [-p project] [-a account] [-u user] [-e endpoint] [-r remote_directory] [-q port] [-t] obsnum
 
 Will rsync files over to a remote end point. It is expected that items have already been packaged for transfer by running drift_archive_prep.sh
 
