@@ -12,7 +12,7 @@ echo "drift_mosaic.sh [-p project] [-d dep] [-q queue] [-a account] [-t] [-f] [-
                 drift_rescale.sh task has been processed with a supplied -b psf option.  
   -r RA       : Right Ascension (decimal hours; default = guess from observation list)
   -e dec      : Declination (decimal degrees; default = guess from observation list)
-  -m mosaicdir: Directory name for mosaics to be created (default = mosaics) 
+  -m mosaicdir: Directory name for mosaics to be created (default=mosaic) 
   -o obslist  : the list of obsids to process" 1>&2;
 exit 1;
 }
