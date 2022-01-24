@@ -89,7 +89,7 @@ fi
 
 if [[ ! -z ${GXCOPYA} ]]
 then
-    account="--account=${GXACCOUNT}"
+    account="--account=${GXCOPYA}"
 fi
 
 numfiles=$(wc -l "${obslist}" | awk '{print $1}')

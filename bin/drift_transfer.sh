@@ -94,7 +94,7 @@ fi
 
 if [[ ! -z ${GXCOPYA} ]]
 then
-    account="--account=${GXACCOUNT}"
+    account="--account=${GXCOPYA}"
 fi
 
 if [[ -n ${port} ]]
