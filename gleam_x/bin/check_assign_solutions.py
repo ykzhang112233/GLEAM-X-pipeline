@@ -239,7 +239,7 @@ if __name__ == "__main__":
     elif args.mode == "assign":
         print("Assigning calibration")
 
-        obsids = np.loadtxt(args.obsids, dtype=np.int)
+        obsids = np.loadtxt(args.obsids, dtype=int)
         calids = find_valid_solutions(
             obsids,
             threshold=args.threshold,
