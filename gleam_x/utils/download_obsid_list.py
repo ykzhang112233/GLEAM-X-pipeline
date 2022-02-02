@@ -20,7 +20,8 @@ GALACTIC_PLANE_LIMITS = [-10, 10, 90, 270]
 
 
 def get_observations(
-    fds_only=True,
+    all_obs=False,
+    only_calobs=False,
     start_obsid=None,
     finish_obsid=None,
     obs_date=None,
@@ -30,11 +31,18 @@ def get_observations(
     mask_gp=False,
 ):
 
+    if all_obs is True and only_calobs is True:
+        raise ValueError("Both all_obs and only_calobs can not be True.")
+
     df = pd.read_sql_table("observation", mdb.dbconn)
 
-    if fds_only:
+    # The default behaviour of this script is to only return the 
+    # GLEAM-X science fields, not the MWA calibration scans. 
+    if only_calobs:
+        df = df[~df["obsname"].str.contains("FDS")]    
+    elif not all_obs:
         df = df[df["obsname"].str.contains("FDS")]
-
+  
     if mask_gp:
         sky = SkyCoord(df["ra_pointing"], df["dec_pointing"], unit=(u.deg, u.deg))
 
@@ -105,6 +113,12 @@ if __name__ == "__main__":
         help="Include calibration scans as well as the FDS observations",
     )
     parser.add_argument(
+        '--only-calobs',
+        default=False,
+        action='store_true',
+        help='Download only the calibration observations matching the criteria'
+    )
+    parser.add_argument(
         "-s",
         "--start-obsid",
         default=None,
@@ -167,8 +181,12 @@ if __name__ == "__main__":
 
     print(args)
 
+    if args.all_obs is True and args.only_calobs is True:
+        raise ValueError("--all-obs and --only-calobs are mutually exclusive operations. ")
+
     df = get_observations(
-        fds_only=not args.all_obs,
+        all_obs=args.all_obs,
+        only_calobs=args.only_calobs,
         start_obsid=args.start_obsid,
         finish_obsid=args.finish_obsid,
         obs_date=args.date,
