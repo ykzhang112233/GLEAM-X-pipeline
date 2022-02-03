@@ -27,6 +27,7 @@ mwa-reduce
 echo "Updating apt repositories"
 apt update && apt upgrade -y 
 apt install -y \
+            saods9 \
             csh \
             ffmpeg \
             bc \
@@ -34,6 +35,7 @@ apt install -y \
             zip \
             git \
             wget \
+            curl \
             pigz \
             stilts \
             graphviz-dev \
@@ -94,6 +96,23 @@ apt install -y \
 apt autoremove -y
 apt clean -y
 
+# ------------------------------------------------
+# AWS Command Line
+# Used for the S3 bucket
+# ------------------------------------------------
+cd / \
+   && mkdir aws \
+   && cd aws \
+   && curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
+   && unzip awscliv2.zip \
+   && ./aws/install
+# ------------------------------------------------
+
+# ------------------------------------------------
+# MIRIAD 
+# Used for regrid and convolve tasks
+# NOTE: The command chaining is not performed
+# ------------------------------------------------
 cd /usr/local \
     && wget ftp://ftp.atnf.csiro.au/pub/software/miriad/miriad-linux64.tar.bz2 \
     && wget ftp://ftp.atnf.csiro.au/pub/software/miriad/miriad-common.tar.bz2 
@@ -104,7 +123,14 @@ cd /usr/local \
     sed -e "s,@MIRROOT@,$MIR," scripts/MIRRC.in > MIRRC
     sed -e "s,@MIRROOT@,$MIR," scripts/MIRRC.sh.in > MIRRC.sh
     chmod 644 MIRRC*
+# ------------------------------------------------
 
+# ------------------------------------------------
+# SWarp
+# Modified version of swarp with an increased version of BIG,
+# which was needed to avoid some regions of mosaic images 
+# being blanked due to excessive weights
+# ------------------------------------------------
 cd / \
     && git clone https://github.com/tjgalvin/swarp.git \
     && cd swarp \
@@ -115,9 +141,14 @@ cd / \
     && make install \
     && cd / \
     && rm -r swarp
+# ------------------------------------------------
 
+# ------------------------------------------------
+# Sneaky symlink
+# ------------------------------------------------
 cd / \
     && ln -s /usr/include 
+# ------------------------------------------------
     
 # ------------------------------------------------
 # WCSTools
@@ -184,9 +215,11 @@ pip3 install --no-cache-dir \
             cython \
             numpy \
             scipy \
+            numba \
             matplotlib \
             pandas \
             astropy \
+            astroquery \
             mysql-connector-python \
             pytest \
             h5py \
