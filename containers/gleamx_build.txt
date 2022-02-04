@@ -87,11 +87,6 @@ apt install -y \
             autoconf \
             libtool
 
-# Swarp package has been replaced with compile from source to address a pixel flagging issue during coadd 
-# when pixels had large weight values
-#            swarp 
-#            && ln -s /usr/bin/SWarp /usr/bin/swarp
-
 
 apt autoremove -y
 apt clean -y
@@ -100,7 +95,7 @@ apt clean -y
 # AWS Command Line
 # Used for the S3 bucket
 # ------------------------------------------------
-cd / \
+  cd / \
    && mkdir aws \
    && cd aws \
    && curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
@@ -208,17 +203,21 @@ rm -r /var/lib/casacore/data \
 # Make sure that python3 is the default
 update-alternatives --install /usr/bin/python python /usr/bin/python3 10
 
+
 pip3 install --no-cache-dir \
-            jedi==0.17.2 \
-            ipython \
-            tqdm \
             cython \
-            numpy \
-            scipy \
+            scipy==1.6.1 \
+            astropy==4.3 \
+            lmfit==1.0.2 \
+            tifffile==2021.8.30 \
+            jedi==0.17.2 \
+            pandas==1.2.1
+
+pip3 install --no-cache-dir \
+            ipython \
             numba \
+            tqdm \
             matplotlib \
-            pandas \
-            astropy \
             astroquery \
             mysql-connector-python \
             pytest \
