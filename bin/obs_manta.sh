@@ -112,10 +112,10 @@ do
     else
         if [[ -z ${gpubox} ]]
         then
-            echo "obs_id=${obsnum}, job_type=c, timeres=${timeres}, freqres=${freqres}, edgewidth=${edgeflag}, expiry_days=${expiry}, conversion=ms, allowmissing=true, flagdcchannels=true" >>  "${obslist}_manta.tmp"
+            echo "obs_id=${obsnum}, delivery=acacia, job_type=c, timeres=${timeres}, freqres=${freqres}, edgewidth=${edgeflag}, conversion=ms, allowmissing=true, flagdcchannels=true" >>  "${obslist}_manta.tmp"
             stem="ms"
         else
-            echo "obs_id=${obsnum}, job_type=d, download_type=vis, expiry_days=${expiry}" >>  "${obslist}_manta.tmp"
+            echo "obs_id=${obsnum}, delivery=acacia, job_type=d, download_type=vis" >>  "${obslist}_manta.tmp"
             stem="vis"
         fi
         dllist=$dllist"$obsnum "
