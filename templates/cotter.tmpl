@@ -35,14 +35,15 @@ track_task.py start --jobid="${jobid}" --taskid="${taskid}" --start_time="$(date
 
 cd "${datadir}" || exit 1
 
-if [[ -e ${obsnum}_vis.zip ]]
+obsfile=$(find ./"${obsnum}"_[0-9]*.zip -maxdepth 1 -type f)
+if [[ -e "${obsfile}" ]]
 then
     echo "Unzipping raw visibilities into ${obsnum}"
     mkdir "${obsnum}"
     cd "${obsnum}" || exit
-    mv "../${obsnum}_vis.zip" ./
-    unzip "${obsnum}_vis.zip"
-    rm "${obsnum}_vis.zip"
+    mv "../${obsfile}" ./
+    unzip "${obsfile}" && \
+    rm "${obsfile}"
 else
     echo "Moving in ${obsnum} measurement set directory"
     cd "${obsnum}" || exit
