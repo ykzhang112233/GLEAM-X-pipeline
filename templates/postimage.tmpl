@@ -149,6 +149,19 @@ do
         # TODO make this dependent on CENTCHAN
         radius=50. #24.8
         
+        if [[ ! -e "${obsnum}_${subchan}_complete_sources_xm.fits" ]]
+        then
+            fits_warp.py \
+            --incat "${obsnum}_deep-${subchan}-image-pb_comp.fits" \
+            --refcat "${POS_MODEL_CATALOGUE}" \
+            --xm "${obsnum}_${subchan}_complete_sources_xm.fits" \
+            --plot \
+            --ra1 ra \
+            --dec1 dec \
+            --ra2 RAJ2000 \
+            --dec2 DEJ2000 \
+            --infits "${obsnum}_deep-${subchan}-image-pb.fits"
+        fi
         
         if [[ ! -e "${obsnum}_deep-${subchan}-image-pb_warp.fits" ]]
         then
@@ -169,6 +182,7 @@ do
             --enforce-min-srcs 100
             # --signal peak_flux --noise local_rms --SNR 10
         fi
+
         
         if [[ ! -e ${obsnum}_${subchan}_xm.fits ]]
         then
