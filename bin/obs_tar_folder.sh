@@ -96,7 +96,7 @@ fi
 script="${GXSCRIPT}/tar_folder_${obsnum}.sh"
 cat "${GXBASE}/templates/tar_folder.tmpl" | sed -e "s:OBSNUM:${obsnum}:g" \
                                  -e "s:BASEDIR:${base}:g" \
-                                 -e "s:ZIPMODE:${mode}:g" \
+                                 -e "s:TARMODE:${mode}:g" \
                                  -e "s:PIPEUSER:${pipeuser}:g"  > "${script}"
 
 output="${GXLOG}/tar_folder_${obsnum}.o%A"

@@ -4,7 +4,7 @@ set -x
 
 pipeuser=PIPEUSER
 obsnum=OBSNUM
-mode=ZIPMODE
+mode=TARMODE
 
 # If obsnum is a file, then we are in an array job
 if [[ -f ${obsnum} ]]
@@ -46,7 +46,7 @@ then
     if [[ -d "${OBS}" ]]
     then
         echo "Taring ${OBS}" && \
-        tar cf "${OBSTAR}" "${OBS}" && \
+        tar vcf "${OBSTAR}" "${OBS}" && \
         echo "Removing original ${OBS}" && \
         rm -r "${OBS}"
     else
@@ -56,7 +56,7 @@ fi
 
 if [ $mode = 'd' ]
 then
-    if [[ -f "${OBSZIP}" ]]
+    if [[ -f "${OBSTAR}" ]]
     then
         echo "Extracting ${OBSTAR}" && \
         tar --touch -xvf "${OBSTAR}" && \
