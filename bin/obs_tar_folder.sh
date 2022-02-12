@@ -93,7 +93,7 @@ else
 fi
 
 # start the real program
-script="${GXSCRIPT}/zip_folder_${obsnum}.sh"
+script="${GXSCRIPT}/tar_folder_${obsnum}.sh"
 cat "${GXBASE}/templates/tar_folder.tmpl" | sed -e "s:OBSNUM:${obsnum}:g" \
                                  -e "s:BASEDIR:${base}:g" \
                                  -e "s:ZIPMODE:${mode}:g" \
