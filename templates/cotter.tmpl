@@ -35,7 +35,7 @@ track_task.py start --jobid="${jobid}" --taskid="${taskid}" --start_time="$(date
 
 cd "${datadir}" || exit 1
 
-obsfile=$(find ./"${obsnum}"_+([0-9])_vis.??? -maxdepth 1 -type f)
+obsfile=$(find ./"${obsnum}"_[0-9]*_vis.??? -maxdepth 1 -type f)
 filename=$(basename -- "$obsfile")
 ext="${filename##*.}"
 if [[ -e "${obsfile}" ]]
