@@ -2,7 +2,7 @@
 
 set -x
 
-echo ${GXBASE}
+echo "${GXBASE}"
 
 pipeuser=PIPEUSER
 base=BASEDIR
@@ -25,48 +25,61 @@ mwa_client --csv="${obslist}_manta.tmp" --dir="${base}"
 n=1
 for obsnum in $list
 do
-    if [[ "$stem" == 'ms' ]]
-    then
-        if [[ -e "${obsnum}_*.zip" ]]
+    cd "${base}" || exit 1
+    
+    # files are stored as either
+    # obsnum_jobid_vis.tar
+    # obsnum_jobid_ms.tar
+    # where the jobid refers to the slurm jobid of the mwasvo processing task
+    # and said jobid is not known during obs_mantal.sh template generation.   
+    # obsfile=$(find ./"${obsnum}"_[0-9]*_"${stem}".tar -maxdepth 1 -type f)
+    obsfile=$(echo ./"${obsnum}_"[0-9]*"_${stem}.tar")
+    
+    # Ensure that a file exists before attempting to match to the download mode
+    if [[ ! -e "${obsfile}" ]]
+    then 
+        echo "No file corresponding to obsid ${obsnum} found."
+        track_task.py fail --jobid="${SLURM_JOBID}" --taskid="${n}" --finish_time="$(date +%s)"    
+    
+    # now process the specific modes
+    elif [[ "${stem}" == "ms" ]]
+    then 
+        if [[ ! -d "${obsnum}" ]]
         then
-            if [[ ! -d "${obsnum}" ]]
-            then
-                mkdir "${obsnum}"
-            fi
+            mkdir "${obsnum}"
+        fi
 
-            cd "${obsnum}" || exit 1
+        cd "${obsnum}" || exit 1
 
-            if [[ -d "${obsnum}.ms" ]]
+        if [[ -d "${obsnum}.ms" ]]
+        then
+            echo "${obsnum}.ms already exists; please remove directory before running untar job."
+            track_task.py fail --jobid="${SLURM_JOBID}" --taskid="${n}" --finish_time="$(date +%s)"
+        else
+            mv "../${obsfile}" ./ 
+            tar xf "${obsfile}"
+            if [[ $? ]]
             then
-                echo "${obsnum}.ms already exists; please remove directory before running unzip job."
-                track_task.py fail --jobid="${SLURM_JOBID}" --taskid="${n}" --finish_time="$(date +%s)"
+                rm "${obsfile}"
+                track_task.py finish --jobid="${SLURM_JOBID}" --taskid="${n}" --finish_time="$(date +%s)"
             else
-                mv "../${obsnum}_*.zip" ./
-                unzip "${obsnum}_*.zip"
-                if [[ $? ]]
-                then
-                    rm "${obsnum}_ms.zip"
-                    track_task.py finish --jobid="${SLURM_JOBID}" --taskid="${n}" --finish_time="$(date +%s)"
-                else
-                    echo "Failed to unzip ${obsnum}_ms.zip"
-                    track_task.py fail --jobid="${SLURM_JOBID}" --taskid="${n}" --finish_time="$(date +%s)"
-                fi
+                echo "Failed to untar ${obsfile}"
+                track_task.py fail --jobid="${SLURM_JOBID}" --taskid="${n}" --finish_time="$(date +%s)"
             fi
             cd ../
-        fi
-    fi
-    
-    if [[ "$stem" == 'vis' ]]
+        fi    
+    elif [[ "$stem" == 'vis' ]]
     then
-        if [[ -e "${obsnum}_*.zip" ]]
-        then
-            echo "${obsnum}_vis.zip downloaded successfully; now run cotter."
-            track_task.py finish --jobid="${SLURM_JOBID}" --taskid="${n}" --finish_time="$(date +%s)"
-            track_task.py obs_status --obs_id="${obsnum}" --status='downloaded'
-        else
-            echo "${obsnum}_ms.zip failed to download."
-            track_task.py fail --jobid="${SLURM_JOBID}" --taskid="${n}" --finish_time="$(date +%s)"
-        fi
+        echo "${obsfile} downloaded successfully; now run cotter."
+        track_task.py finish --jobid="${SLURM_JOBID}" --taskid="${n}" --finish_time="$(date +%s)"
+        track_task.py obs_status --obs_id="${obsnum}" --status='downloaded'
+    elif [[ "$stem" == 'astro' ]]
+    then 
+        echo "astro delivery mode not yet supported by obs_mantra. "
+        track_task.py fail --jobid="${SLURM_JOBID}" --taskid="${n}" --finish_time="$(date +%s)"
+    else
+        echo "No operation available for ${stem} mode for obsid ${obsnum}."
+        track_task.py fail --jobid="${SLURM_JOBID}" --taskid="${n}" --finish_time="$(date +%s)"
     fi
     ((n+=1))
 done
