@@ -1,4 +1,5 @@
 #! /bin/bash -l
+set -x
 
 pipeuser=PIPEUSER
 obsnum=OBSNUM
@@ -50,11 +51,11 @@ then
         rm "${obsfile}"
     elif [[ "${ext}" == 'tar' ]]
     then 
-        echo "Untarring raw visibilites into ${obsnum}" 
+        echo "Untarring raw visibilites into ${obsnum}"     
         mkdir "${obsnum}"
         cd "${obsnum}" || exit 1
         mv "../${obsfile}" ./
-        tar xf "./${obsfile}"
+        tar xvf "./${obsfile}"
     else 
         echo "The extension ${ext} of ${obsfile} is not known. "
         exit 1
