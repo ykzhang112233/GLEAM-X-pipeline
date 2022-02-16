@@ -43,7 +43,7 @@ then
     if [[ "${ext}" == 'zip' ]]
     then
         echo "Unzipping raw visibilities into ${obsnum}"
-        echo mkdir "${obsnum}"
+        mkdir "${obsnum}"
         cd "${obsnum}" || exit
         mv "../${obsfile}" ./
         unzip "${obsfile}" && \
