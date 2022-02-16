@@ -57,15 +57,15 @@ def process_df(df: pd.DataFrame) -> pd.DataFrame:
     df['ha'] = ha.astype(int)
     df = df[df['ha'].isin((-1,0,1))]
 
-    target = SkyCoord(
-        '05:23:34 -69:45:22',
-        unit=(u.hourangle, u.degree)
-    )
-    pos = SkyCoord(df.ra_pointing*u.deg, df.dec_pointing*u.deg)
-    match = target.separation(pos) < (15*u.deg)
-    logger.info(f"Number of matches {np.sum(match)}")
+    # target = SkyCoord(
+    #     '05:23:34 -69:45:22',
+    #     unit=(u.hourangle, u.degree)
+    # )
+    # pos = SkyCoord(df.ra_pointing*u.deg, df.dec_pointing*u.deg)
+    # match = target.separation(pos) < (15*u.deg)
+    # logger.info(f"Number of matches {np.sum(match)}")
 
-    df = df.loc[match]
+    # df = df.loc[match]
 
     return df
 
