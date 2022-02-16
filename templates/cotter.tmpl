@@ -35,18 +35,33 @@ track_task.py start --jobid="${jobid}" --taskid="${taskid}" --start_time="$(date
 
 cd "${datadir}" || exit 1
 
-obsfile=$(find ./"${obsnum}"_[0-9]*.zip -maxdepth 1 -type f)
+obsfile=$(find ./"${obsnum}"_+([0-9])_vis.??? -maxdepth 1 -type f)
+filename=$(basename -- "$obsfile")
+ext="${filename##*.}"
 if [[ -e "${obsfile}" ]]
 then
-    echo "Unzipping raw visibilities into ${obsnum}"
-    mkdir "${obsnum}"
-    cd "${obsnum}" || exit
-    mv "../${obsfile}" ./
-    unzip "${obsfile}" && \
-    rm "${obsfile}"
+    if [[ "${ext}" == 'zip' ]]
+    then
+        echo "Unzipping raw visibilities into ${obsnum}"
+        echo mkdir "${obsnum}"
+        cd "${obsnum}" || exit
+        mv "../${obsfile}" ./
+        unzip "${obsfile}" && \
+        rm "${obsfile}"
+    elif [[ "${ext}" == 'tar' ]]
+    then 
+        echo "Untarring raw visibilites into ${obsnum}" \
+        mkdir "${obsnum}"
+        cd "${obsnum}" || exit 1
+        mv "../${obsfile}" ./
+        tar xf "./${obsfile}"
+    else 
+        echo "The extension ${ext} of ${obsfile} is not known. "
+        exit 1
+    fi
 else
-    echo "Moving in ${obsnum} measurement set directory"
-    cd "${obsnum}" || exit
+    echo "${obsfile} does not exit. Exiting. "
+    exit 1
 fi
 
 zipflag="${obsnum}_flags.zip"
