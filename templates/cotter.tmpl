@@ -55,7 +55,8 @@ then
         mkdir "${obsnum}"
         cd "${obsnum}" || exit 1
         mv "../${obsfile}" ./
-        tar xvf "./${obsfile}"
+        tar xvf "./${obsfile}" && \
+        rm "./${obsfile}"
     else 
         echo "The extension ${ext} of ${obsfile} is not known. "
         exit 1
