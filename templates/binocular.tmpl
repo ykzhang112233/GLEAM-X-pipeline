@@ -70,8 +70,9 @@ dirs="north south east west"
 for dir in $dirs
 do
     cp -rf "${obsnum}.ms" "${obsnum}_flag.ms"
-    flags=$(cat "${GXBASE}/configs/flags_${telescope}_${dir}.txt")
-    flagantennae "${obsnum}_flag.ms" ${flags}
+    
+    # Apply flagging for direction
+    ms_flag_by_direction.py "${obsnum}_flag.ms" --apply --direction "${dir}" -p
 
     wsclean \
             -abs-mem "${GXMEMORY}" \
