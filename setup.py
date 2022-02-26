@@ -37,6 +37,7 @@ scripts = [
     "gleam_x/bin/mask_image.py",
     "gleam_x/bin/match_idg_obsid_pairs.py",
     "gleam_x/bin/mosaic_global_rescale.py",
+    "gleam_x/bin/ms_flag_by_direction.py",
     "gleam_x/bin/ms_flag_by_uvdist.py",
     "gleam_x/bin/multiply.py",
     "gleam_x/bin/new_fk5_template.py",

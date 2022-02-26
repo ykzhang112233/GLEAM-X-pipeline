@@ -38,6 +38,12 @@ failed=0
 progress=0
 cd "${base}" || exit 1
 
+# Create remote directory structure
+ssh -o StrictHostKeyChecking=no -i "${GXSSH}" ${user}@${host} \
+    "mkdir -p ${remote}/${project}"
+test_fail $?
+
+
 for taskid in $(seq ${numfiles})
 do
     (( progress=progress+1 ))
