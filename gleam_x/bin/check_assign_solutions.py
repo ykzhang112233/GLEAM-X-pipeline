@@ -4,6 +4,7 @@
 identify ones close in time that are appropriate. 
 """
 
+import dis
 import os
 import sys
 import numpy as np
@@ -21,20 +22,26 @@ THRESHOLD = (
 )
 
 
-def obtain_cen_chan(obsids):
+def obtain_cen_chan(obsids, disable_db_check=False):
     """Retrieve the cenchan for a set of specified pointings. This will be done through the 
     meta-database, but should be expanded in the future to dial home to the mwa meta-data service
 
     Args:
         obsids (iterable): collection of obsids to check
 
+    Keyword Args:
+        disable_db_check (bool): Normal behaviour will raise an error if the GX database can not be contaced. If True this check is ignored (default: False)
+    
     Returns:
         cenchans (numpy.ndarray): the cenchan of each obsid
     """
     cen_chan = np.array([1 for i in obsids])
 
     if gxdb is None:
-        return cen_chan
+        if disable_db_check:
+            return cen_chan
+        else:
+            raise ValueError("GX Database configuraiton is not configured. ")
 
     try:
         con = gxdb.connect()
@@ -52,8 +59,11 @@ def obtain_cen_chan(obsids):
         return np.squeeze(np.array([o[0] for o in cursor.fetchall()]))
 
     except:
-        print("WARNING: Database lookup failed. Setting all cenchans to 1")
-        return cen_chan
+        if disable_db_check:
+            print("WARNING: Database lookup failed. Setting all cenchans to 1")
+            return cen_chan
+        else:
+            raise ValueError("GX Database is not contactable. ")
 
 
 def check_solutions(aofile, threshold=THRESHOLD, *args, **kwargs):
@@ -104,6 +114,7 @@ def find_valid_solutions(
     base_path=".",
     same_cen_chan=True,
     suffix="_local_gleam_model_solutions_initial_ref.bin",
+    disable_db_check=False,
     *args,
     **kwargs,
 ):
@@ -122,7 +133,8 @@ def find_valid_solutions(
         base_path (str): Prefix of path to search for ao-solutions (default: '.')
         same_cen_chan (bool): Force obsids to have the same central channel when considering candidate solutions (default: True)
         suffix (str): Suffix of the solution file, in GLEAM-X pipeline this is `{obsid}_{solution}` (default: '_local_gleam_model_solutions_initial_ref.bin')
-    
+        disable_db_check (bool): Normal behaviour will raise an error if the GX database can not be contaced. If True this check is ignored (default: False)
+
     Returns:
         calids (numpy.ndarray): Parrallel array with calibration solution obsid corresponding to the obsids specified in `obsids`
     """
@@ -141,7 +153,7 @@ def find_valid_solutions(
         sys.exit(1)
 
     if same_cen_chan:
-        cen_chan = obtain_cen_chan(obsids)
+        cen_chan = obtain_cen_chan(obsids, disable_db_check=disable_db_check)
     else:
         cen_chan = np.array([1 for obsid in obsids])
 
@@ -226,6 +238,12 @@ if __name__ == "__main__":
         action="store_true",
         help="The default behvious will be to consider the cen_chan property when assigning calibration IDs. This disables that check and only considers time when determining optimal calibration ID. ",
     )
+    assign.add_argument(
+        "--disable-db-check",
+        action='store_true',
+        default='False',
+        help="Normal behaviour will raise an error if the GX database is not accessible. If True, this behaviour will be ignored, and no cen-chan information will be used. "
+    )
 
     args = parser.parse_args()
 
@@ -245,6 +263,7 @@ if __name__ == "__main__":
             threshold=args.threshold,
             same_cen_chan=not args.any_cen_chan,
             base_path=args.base_path.rstrip("/"),
+            disable_db_check=args.disable_db_check
         )
 
         if not args.no_report:
