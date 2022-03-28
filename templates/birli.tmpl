@@ -98,8 +98,31 @@ then
     # --flag-edge-width 80 \
     # Birli does not currently support the edge channel flagging. Need to
     # revisit this once the feature has been enabled. 
+    # The option is in units of kHz. The flagmwa tool requires input in
+    # units of channels and timesteps
+    nfreqchan=$(echo "80 / $fres" | bc )
+    nsubbands=24
 
+    # Andrew Williams suggests the worst case the the typical worst case for
+    # attenuators to settle is 2.5 seconds. 
+    ntsquack=1
+    if (( $(echo "$tres < 2.5" | bc -l) ))
+    then 
+        # this should flag all potential time intervals, including a potential
+        # wrap needed for the interger to work out correctly
+        ntsquack=$(echo "(2.5+$tres)/$tres" | bc)
+    fi
+
+    echo "Flagging ${nfreqchan} edge channels across ${nsubbands} sub-bands, and quacking ${ntsquack} timesteps"
+
+    flagmwa \
+        "${obsnum}.ms" \
+        $ntsquack \
+        $nsubbands \
+        1 \
+        $nfreqchan 
     test_fail $?
+
     if [[ -d ${obsnum}.ms ]]
     then 
          rm ./${obsnum}_*_ch???_???.fits ./*.zip ./*.mwaf "${metafits}"
