@@ -53,6 +53,13 @@ parser.add_option(
     default=None,
     help="The measurement set the corresponds to the solutions file",
 )
+parser.add_option(
+    "--no_preserve_mask",
+    action='store_true',
+    default=False,
+    help='If used this will not carry forward the set of flagged channels as stored in the original aocal input file, replicating old behavour.  This should only be used if you know what you are doing. '
+)
+
 opts, args = parser.parse_args()
 
 if len(args) != 3:
@@ -103,5 +110,11 @@ if opts.xy != 0.0 or opts.dxy != 0.0:
     xy_phasor1.real += np.cos(np.radians(opts.dxy * freqs)).reshape(1, 1, ao.n_chan)
     xy_phasor1.imag += np.sin(np.radians(opts.dxy * freqs)).reshape(1, 1, ao.n_chan)
     ao[..., 3] = ao[..., 3] * xy_phasor0 * xy_phasor1
+
+
+if not opts.no_preserve_mask:
+    print("Carrying forward NaN mask")
+    initial_ao = fromfile(infilename)
+    ao[np.isnan(initial_ao)] = np.nan
 
 ao.tofile(outfilename)

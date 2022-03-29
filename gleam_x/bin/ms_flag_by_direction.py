@@ -21,7 +21,8 @@ import os
 import sys
 from argparse import ArgumentParser
 import logging
-from typing import Iterable, Tuple
+from typing import Iterable, Tuple, Union
+from pathlib import Path
 
 import pandas as pd
 import astropy.units as u
@@ -44,11 +45,11 @@ MWA = EarthLocation.from_geodetic(
 )
 
 
-def parse_antenna_ms(ms: str) -> pd.DataFrame:
+def parse_antenna_ms(ms: Union[str,Path]) -> pd.DataFrame:
     """Convert the ANTENNA table of the supplied measurement set into a pandas dataframe
 
     Args:
-        ms (str): Path to the measurement set of interest
+        ms (Union[str, Path]): Path to the measurement set of interest
 
     Returns:
         pd.DataFrame: ANTENNA table from the supplied emasurement set 
@@ -118,7 +119,7 @@ def derive_local_tangent_plane(
     # get the geodetic position from the EarthLocation
     ref_xyz = u.Quantity(ref0.geocentric).to(u.m)
 
-    # get the two rotations that depent on the reference/origin
+    # get the two rotations that depend on the reference/origin
     # of the local tangent plane
     rot1, rot2 = create_rotation_matrices(ref0)
 
@@ -181,14 +182,14 @@ def get_ant_subarray_flags(ant_table: pd.DataFrame, direction: str) -> Iterable[
 
     return mask 
 
-def plot_layout(ant_table: pd.DataFrame, direction: str, path: str=None) -> None:
+def plot_layout(ant_table: pd.DataFrame, direction: str, path: Union[str,Path]=None) -> None:
     """Make a diagnostic figure that highlights the MWA tile layout in
     as obtained by the ENU derivation. Will highlight the flagged and unflagged regions. 
 
     Args:
         ant_table (pd.DataFrame): ANTENNA table from a measurement set of interest
         direction (str): direction of interest, used purely for title
-        path (str, optional): Location to save the figure to. Discarded otherwise. Defaults to None.
+        path (Union[str,Path], optional): Location to save the figure to. Discarded otherwise. Defaults to None.
     """
 
     fig, ax = plt.subplots(1,1)
@@ -225,12 +226,12 @@ def plot_layout(ant_table: pd.DataFrame, direction: str, path: str=None) -> None
         fig.tight_layout()
         fig.savefig(path)
     
-def apply_flagging_to_ms(ms: str, idx_to_flag: Iterable[int]) -> None:
+def apply_flagging_to_ms(ms: Union[str, Path], idx_to_flag: Iterable[int]) -> None:
     """Given a set of antenna IDs (based on the index position of a ANTENNA table),
     use taql to flag visibilities
 
     Args:
-        ms (str): Measurement set to apply flagging to
+        ms (Union[str,Path]): Measurement set to apply flagging to
         idx_to_flag (Iterable[int]): Antennas to flag
     """
 
@@ -250,20 +251,21 @@ def apply_flagging_to_ms(ms: str, idx_to_flag: Iterable[int]) -> None:
     logger.info(f"{int(unflag2)} visibilities remain unflagged")
 
 def ms_flag_by_direction(
-    ms: str, direction: str = "north", apply: bool = True, plot: bool=False, dump_table: bool=False
+    ms: Union[str,Path], direction: str = "north", apply: bool = True, plot: bool=False, dump_table: bool=False
 ) -> None:
     """Flag an MWA measurment set of interest into a quadrant. Antennas will be 
     flagged using taql, and flagged antennas are identified by converting the 
     POSITION field (XYZ) into a East-North-Up (ENU) at the MWA location. 
 
     Args:
-        ms (str): Path to a measurement set of interest
+        ms (Union[str,Path]): Path to a measurement set of interest
         direction (str, optional): Direction of interest. Acceptable values are 'north', 'south', 'east', 'west'. Defaults to "north".
         apply (bool, optional): Apply the antenna flagging using taql. Defaults to True.
         plot (bool, optional): Create a plot of the MWA layout and which tiles are to be flagged. Defaults to False.
         dump_table (bool, optional): Save the processed ANTENNA table, with ENU positions, to a csv. File name is based on the measurment set name. Defaults to False.
     """
-    if not os.path.exists(ms):
+    ms = Path(ms)
+    if not ms.exists():
         logger.error(f"{ms} does not exist. Exiting. ")
         sys.exit(2)
 
@@ -293,7 +295,7 @@ def ms_flag_by_direction(
     # data products are produced below
     if plot:
         ext = f"_{direction}.png"
-        out_path = f"{ms.replace('.ms', ext)}"
+        out_path = f"{Path(str(ms).replace('.ms', ext))}"
         logger.info(f"Creating {out_path}")
         plot_layout(
             ant_table,
@@ -303,7 +305,7 @@ def ms_flag_by_direction(
 
     if dump_table:
         ext = f"_{direction}_table.csv"
-        out_path = f"{ms.replace('.ms', ext)}"
+        out_path = f"{Path(str(ms).replace('.ms', ext))}"
         logger.info(f"Creating {out_path}")
         ant_table.to_csv(out_path)
 
