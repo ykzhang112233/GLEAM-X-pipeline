@@ -112,7 +112,12 @@ do
     else
         if [[ -z ${gpubox} ]]
         then
-            echo "obs_id=${obsnum}, delivery=acacia, job_type=c, timeres=${timeres}, freqres=${freqres}, edgewidth=${edgeflag}, conversion=ms, allowmissing=true, flagdcchannels=true" >>  "${obslist}_manta.tmp"
+            preprocessor='cotter'
+            if [[ ${obsnum} -ge 1314921618 ]]
+            then 
+                preprocessor='birli'
+            fi
+            echo "obs_id=${obsnum}, preprocessor=${preprocessor}, delivery=acacia, job_type=c, timeres=${timeres}, freqres=${freqres}, edgewidth=${edgeflag}, conversion=ms, allowmissing=true, flagdcchannels=true" >>  "${obslist}_manta.tmp"
             stem="ms"
         else
             echo "obs_id=${obsnum}, delivery=acacia, job_type=d, download_type=vis" >>  "${obslist}_manta.tmp"
@@ -130,6 +135,8 @@ echo "obslist is $obslist"
 
 cat "${GXBASE}/templates/manta.tmpl" | sed -e "s:OBSLIST:${obslist}:g" \
                                  -e "s:STEM:${stem}:g"  \
+                                 -e "s:TRES:${timeres}:g" \
+                                 -e "s:FRES:${freqres}:g" \
                                  -e "s:BASEDIR:${base}:g" \
                                  -e "s:PIPEUSER:${pipeuser}:g" > "${script}"
 

@@ -8,6 +8,8 @@ pipeuser=PIPEUSER
 base=BASEDIR
 obslist=OBSLIST
 stem=STEM
+tres=TRES
+fres=FRES
 
 # start download
 cd "${base}" || exit 1
@@ -58,10 +60,47 @@ do
         else
             mv "../${obsfile}" ./ 
             tar xf "${obsfile}"
+            
+            # Ensure that tar operation was successful
             if [[ $? ]]
             then
                 rm "${obsfile}"
                 track_task.py finish --jobid="${SLURM_JOBID}" --taskid="${n}" --finish_time="$(date +%s)"
+            
+                # At the moment birli does not do edge channel flagging. Use flagmwa to do this
+                # for us now. The time and freq resolution parameters are used only for this operation and
+                # can be removed once birli reaches feature parity with cotter. Note that
+                # this is not robust to a change in MWA configuration in the same request. If
+                # a separate set of time and frequency resolutions are required between obsids
+                # in the same mwa_client request flagging may be incorrectly. Note however 
+                # this is consistent with the implicit assumption made in the obs_mantra.sh script
+                # anyway (timeres and freqres are in a loop and testing for not empty)
+                if [[ ${obsnum} -ge 1314921618 ]]
+                then 
+                    echo "Applying flagmwa"
+                    nfreqchan=$(echo "80 / $fres" | bc )
+                    nsubbands=24
+
+                    # Andrew Williams suggests the worst case the the typical worst case for
+                    # attenuators to settle is 2.5 seconds. 
+                    ntsquack=1
+                    if (( $(echo "$tres < 2.5" | bc -l) ))
+                    then 
+                        # this should flag all potential time intervals, including a potential
+                        # wrap needed for the integer to work out correctly
+                        ntsquack=$(echo "(2.5+$tres)/$tres" | bc)
+                    fi
+
+                    echo "Flagging ${nfreqchan} edge channels across ${nsubbands} sub-bands, and quacking ${ntsquack} timesteps"
+
+                    flagmwa \
+                        "${obsnum}.ms" \
+                        $ntsquack \
+                        $nsubbands \
+                        1 \
+                        $nfreqchan 
+                fi
+
             else
                 echo "Failed to untar ${obsfile}"
                 track_task.py fail --jobid="${SLURM_JOBID}" --taskid="${n}" --finish_time="$(date +%s)"
