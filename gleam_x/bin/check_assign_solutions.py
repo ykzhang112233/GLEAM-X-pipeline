@@ -4,7 +4,6 @@
 identify ones close in time that are appropriate. 
 """
 
-import dis
 import os
 import sys
 import numpy as np
@@ -41,7 +40,7 @@ def obtain_cen_chan(obsids, disable_db_check=False):
         if disable_db_check:
             return cen_chan
         else:
-            raise ValueError("GX Database configuraiton is not configured. ")
+            raise ValueError("GX Database configuration is not configured. ")
 
     try:
         con = gxdb.connect()
@@ -66,7 +65,7 @@ def obtain_cen_chan(obsids, disable_db_check=False):
             raise ValueError("GX Database is not contactable. ")
 
 
-def check_solutions(aofile, threshold=THRESHOLD, *args, **kwargs):
+def check_solutions(aofile, threshold=THRESHOLD, segments=None, *args, **kwargs):
     """Inspects the ao-calibrate solutions file to evaluate its reliability
 
     Args:
@@ -88,6 +87,25 @@ def check_solutions(aofile, threshold=THRESHOLD, *args, **kwargs):
     if ao_flagged > threshold:
         return False
 
+    if segments is not None: 
+        segments = int(segments)
+
+        assert ao_results.shape[0] == 1, "Segment checks not implemented across multiple time steps"
+        
+        # shape is timestep, antenna, channel, pol
+        no_chan = ao_results.shape[2]
+        
+        assert no_chan % segments == 0, f"{no_chan} channels is not evenly divisible by {segments} segments"
+        stride = no_chan // segments
+        
+        for i in range(segments):
+            chan_slice = slice(i*stride, (i+1)*stride)
+            seg_ao_data = ao_results[:,:,chan_slice,:]
+            seg_ao_flagged = np.sum(np.isnan(seg_ao_data)) / np.prod(seg_ao_data.shape)
+
+            if seg_ao_flagged > threshold:
+                return False
+        
     return True
 
 
@@ -183,6 +201,14 @@ if __name__ == "__main__":
         help=f"Threshold (between 0 to 1) of the acceptable number of NaN solutions before the entirety of solutions file considered void, defaults to {THRESHOLD}",
     )
 
+    parser.add_argument(
+        '-s',
+        '--segments',
+        type=int,
+        default=None,
+        help='Consider the flagging statistic checks on N number of sub-band segments. '
+    )
+
     subparsers = parser.add_subparsers(dest="mode")
 
     check = subparsers.add_parser(
@@ -241,7 +267,7 @@ if __name__ == "__main__":
     assign.add_argument(
         "--disable-db-check",
         action='store_true',
-        default='False',
+        default=False,
         help="Normal behaviour will raise an error if the GX database is not accessible. If True, this behaviour will be ignored, and no cen-chan information will be used. "
     )
 
@@ -249,13 +275,18 @@ if __name__ == "__main__":
 
     if args.mode == "check":
         print("Checking Mode")
+        if args.segments is not None:
+            print(f"Applying nan threshold checks to {args.segments} sub-bands")
+        
         for f in args.aofile:
-            if check_solutions(f, threshold=args.threshold):
+            if check_solutions(f, threshold=args.threshold, segments=args.segments):
                 print(f"{f} passed")
             else:
                 print(f"{f} failed")
     elif args.mode == "assign":
         print("Assigning calibration")
+        if args.segments is not None:
+            print(f"Applying nan threshold checks to {args.segments} sub-bands")
 
         obsids = np.loadtxt(args.obsids, dtype=int)
         calids = find_valid_solutions(
