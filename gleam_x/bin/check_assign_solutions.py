@@ -294,7 +294,8 @@ if __name__ == "__main__":
             threshold=args.threshold,
             same_cen_chan=not args.any_cen_chan,
             base_path=args.base_path.rstrip("/"),
-            disable_db_check=args.disable_db_check
+            disable_db_check=args.disable_db_check,
+            segments=args.segments
         )
 
         if not args.no_report:
