@@ -111,6 +111,19 @@ A typical workflow might look like:
    - Run the post-imaging processing via `obs_postimage.sh` to perform source-finding, ionospheric de-warping, and flux density scaling to GLEAM.
 
 ## Detailed script descriptions
+### A few small notes
+
+#### Specifying obsids
+Most `obs_*.sh` style tasks have two ways of specifying which obsids to operate against. 
+
+The first is simplying invoking the task with the obsid of interest on the command line, ie. `obs_autocal.sh -p test_project 1234568762`. This task will then look for the obsid folder (which in this example would be `"$GXSCRATCH/test_project/1234568762"), and the submitted worker script will switch to it before carrying out any operations. 
+
+If multiple obsids want to be specified for a single task (which is the typical suggested workflow when processing a night of data), then a new-line delimited text file of obsids may be created. When calling a task, the name of this text file should be specified inplace of a single obsid. Internally, tasks will create a job-array, where each obsid described by this new-line delimieted file are processed as a separate slurm job. 
+
+#### Dependency chaining
+Most tasks have a `-d` option, which will allow a slurm job-id to be passed, and included as a dependency when submitting a new slurm job. That is to say, an instruction is given to the slurm schedular to wait for a previously submitted task to finish before commencing work. Attempts are made to use the appropriate slurm directive that distinguishes between chaining work before a single obsid or a job-array of obsids. 
+
+Although this 'technically' works in that an error is not immediatedly issued by the slurm schedular when a task is submitted, in practise it was found that in the job-array case some task-ids (elements of job-array) would fail to execute. This was happening in a un-predictable manner. It is suggested that this mode of operation be observed closely if invoked. 
 
 ### obs_manta.sh
 Use the [ASVO-mwa](https://asvo.mwatelescope.org) service to do the cotter conversion and then download the resulting measurement set. No matter which cluster the jobs are submitted from, they will always run on the copy queue specified in the user profile script. On Pawsey systems this is typical the `Zeus` cluster's `copyq` queue.
@@ -403,7 +416,7 @@ uses template:
 ### drift_night_coadd.sh
 Task to combined night long mosaics that have already been processed using `drift_mosaic.sh`. 
 
-Unlike most tasks, which operate on either a singule obsid or a list of obsids specified in a text file, this task requires a list of directories that contain the outputs of `drift_mosaic.sh`/`mosaic.tmpl` to be specified. Internally to `drift_night_coadd.sh`, a job-array of length 25 is formed to attempt to add each sub-band and wide-band image together. The submitted work script attempts to ignore the component of the filename corresponding to each of the night-line mosaic names. 
+Unlike most tasks, which operate on either a single obsid or a list of obsids specified in a text file, this task requires a list of directories that contain the outputs of `drift_mosaic.sh`/`mosaic.tmpl` to be specified. Internally to `drift_night_coadd.sh`, a job-array of length 25 is formed to attempt to add each sub-band and wide-band image together. The submitted work script attempts to ignore the component of the filename corresponding to each of the night-line mosaic names. 
 
 Usage:
 ```
