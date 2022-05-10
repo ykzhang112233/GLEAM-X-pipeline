@@ -111,7 +111,10 @@ A typical workflow might look like:
    - Run the post-imaging processing via `obs_postimage.sh` to perform source-finding, ionospheric de-warping, and flux density scaling to GLEAM.
 
 ## Detailed script descriptions
-### A few small notes
+<details>
+<summary>
+*A few small notes*
+</summary>
 
 #### Specifying obsids
 Most `obs_*.sh` style tasks have two ways of specifying which obsids to operate against. 
@@ -124,9 +127,12 @@ If multiple obsids want to be specified for a single task (which is the typical 
 Most tasks have a `-d` option, which will allow a slurm job-id to be passed, and included as a dependency when submitting a new slurm job. That is to say, an instruction is given to the slurm schedular to wait for a previously submitted task to finish before commencing work. Attempts are made to use the appropriate slurm directive that distinguishes between chaining work before a single obsid or a job-array of obsids. 
 
 Although this 'technically' works in that an error is not immediatedly issued by the slurm schedular when a task is submitted, in practise it was found that in the job-array case some task-ids (elements of job-array) would fail to execute. This was happening in a un-predictable manner. It is suggested that this mode of operation be observed closely if invoked. 
+</summary>
 
 <details>
-<summary>Important task descriptions</summary>
+<summary>
+*Important task descriptions*
+</summary>
 
 ### obs_manta.sh
 Use the [ASVO-mwa](https://asvo.mwatelescope.org) service to do the cotter conversion and then download the resulting measurement set. No matter which cluster the jobs are submitted from, they will always run on the copy queue specified in the user profile script. On Pawsey systems this is typical the `Zeus` cluster's `copyq` queue.
