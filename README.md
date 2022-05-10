@@ -125,7 +125,7 @@ Most tasks have a `-d` option, which will allow a slurm job-id to be passed, and
 
 Although this 'technically' works in that an error is not immediatedly issued by the slurm schedular when a task is submitted, in practise it was found that in the job-array case some task-ids (elements of job-array) would fail to execute. This was happening in a un-predictable manner. It is suggested that this mode of operation be observed closely if invoked. 
 
-<group>
+<details>
 <summary>Important task descriptions</summary>
 
 ### obs_manta.sh
@@ -494,4 +494,4 @@ uses templates:
   - `transfer.tmpl`
     - requires access to GLEAM-X nimbus instance
 
-</group>
+</details>
