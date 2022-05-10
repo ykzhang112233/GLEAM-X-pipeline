@@ -2,7 +2,7 @@
 
 usage()
 {
-echo "obs_transient.sh [-d dep] [-p project] [-a account] [-z] [-t] obsnum
+echo "obs_transient.sh [-d dep] [-p project] [-z] [-t] obsnum
   -d dep     : job number for dependency (afterok)
   -p project : project, (must be specified, no default)
   -z         : Debugging mode: image the CORRECTED_DATA column
@@ -27,9 +27,6 @@ do
 	d)
 	    dep=${OPTARG}
 	    ;;
-    a)
-        account=${OPTARG}
-        ;;
     p)
         project=${OPTARG}
         ;;
