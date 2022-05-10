@@ -125,6 +125,9 @@ Most tasks have a `-d` option, which will allow a slurm job-id to be passed, and
 
 Although this 'technically' works in that an error is not immediatedly issued by the slurm schedular when a task is submitted, in practise it was found that in the job-array case some task-ids (elements of job-array) would fail to execute. This was happening in a un-predictable manner. It is suggested that this mode of operation be observed closely if invoked. 
 
+<group>
+<summary>Important task descriptions</summary>
+
 ### obs_manta.sh
 Use the [ASVO-mwa](https://asvo.mwatelescope.org) service to do the cotter conversion and then download the resulting measurement set. No matter which cluster the jobs are submitted from, they will always run on the copy queue specified in the user profile script. On Pawsey systems this is typical the `Zeus` cluster's `copyq` queue.
 
@@ -490,3 +493,5 @@ Only a single process will be invoked for all obsids. There is no attempt to mul
 uses templates:
   - `transfer.tmpl`
     - requires access to GLEAM-X nimbus instance
+
+</group>
