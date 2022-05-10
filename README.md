@@ -113,7 +113,7 @@ A typical workflow might look like:
 ## Detailed script descriptions
 <details>
 <summary>
-*A few small notes*
+<b>A few small notes</b>
 </summary>
 
 #### Specifying obsids
@@ -127,11 +127,11 @@ If multiple obsids want to be specified for a single task (which is the typical 
 Most tasks have a `-d` option, which will allow a slurm job-id to be passed, and included as a dependency when submitting a new slurm job. That is to say, an instruction is given to the slurm schedular to wait for a previously submitted task to finish before commencing work. Attempts are made to use the appropriate slurm directive that distinguishes between chaining work before a single obsid or a job-array of obsids. 
 
 Although this 'technically' works in that an error is not immediatedly issued by the slurm schedular when a task is submitted, in practise it was found that in the job-array case some task-ids (elements of job-array) would fail to execute. This was happening in a un-predictable manner. It is suggested that this mode of operation be observed closely if invoked. 
-</summary>
+</details>
 
 <details>
 <summary>
-*Important task descriptions*
+<b>Important task descriptions</b>
 </summary>
 
 ### obs_manta.sh
