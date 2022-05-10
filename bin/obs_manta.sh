@@ -8,7 +8,6 @@ echo "obs_manta.sh [-p project] [-d dep] [-s timeave] [-k freqav] [-t] -o list_o
   -s timeres  : time resolution in sec. default = 2 s
   -k freqres  : freq resolution in KHz. default = 40 kHz
   -f edgeflag : number of edge band channels flagged. default = 80
-  -e expiry   : number of days datafile will be available for download for. default = 7
   -g          : download gpubox fits files instead of measurement sets
   -t          : test. Don't submit job, just make the batch file
                 and then return the submission command
@@ -34,7 +33,6 @@ gpubox=
 timeres=
 freqres=
 edgeflag=80
-expiry=7
 
 # parse args and set options
 while getopts ':tgd:p:s:k:o:f:e:' OPTION
@@ -56,8 +54,6 @@ do
         gpubox=1 ;;
     f)
         edgeflag=${OPTARG} ;;
-    e)
-        expiry=${OPTARG} ;;
     ? | : | h)
             usage ;;
   esac
@@ -89,6 +85,7 @@ if [[ -e "${obslist}_manta.tmp" ]] ; then rm "${obslist}_manta.tmp" ; fi
 # Might use these later to get different metafits files etc
 for obsnum in $list
 do
+    # Note this implicitly 
     if [[ $obsnum -lt 1151402936 ]] ; then
         telescope="MWA128T"
         basescale=1.1
