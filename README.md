@@ -1,18 +1,29 @@
 # GLEAM-X-pipeline
-
 The goal of this pipeline is to reduce the data observed as part of the GLEAM-X project (G0008), but it is also applicable to many other MWA datasets. The pipeline was originally written for the Pawsey Magnus and Zeus systems, but has been adapted for compatibility with wider HPC systems. Software dependencies are built within a singularity container, which is subsequently used throughout the execution of the pipeline. It borrows significantly from the MWA-Fast-Transients pipeline written by Paul Hancock and Gemma Anderson: https://github.com/PaulHancock/MWA-fast-image-transients.
 
 ## Credits
 If you use this code, or incorporate it into your own workflow, please cite [Hurley-Walker et al. 2022b](https://ui.adsabs.harvard.edu/abs/2022arXiv220412762H/abstract) and add a link to this repository.
 
-## Overall Design
+## Overall design
+
+<details>
+<summary><b>Overall design details</b></summary>
+
 The pipeline is divided into two main components. The first is a set of bash scripts that direct the processing of the pipeline, and the second is a set ofpython codes that implement specialised methods. 
 
 Each stage within the pipeline has at least two bash scripts associated with it. One is a template script, which contains special placeholders which represent observation specific values. The second is a generating script. Based on user specifications, the generating script will adapt the template for processing, replacing the placeholder values with there actual values appropriate for processing. The mechanism used to do this substitution is a `sed` command within the generating script. In general, template scripts end in `tmpl` and are placed in the `templates` sub-directory, and the generating scripts have filenames beginning with either `obs` or `drift` and are placed in the `bin` directory. These `obs` and `drift` scripts are also responsible for submitting work to the SLURM scheduler. 
 
 The python codes are stored under the `gleam_x` sub-directory in a structure that is `pip` installable, if required. These codes have been updated to `python3`. Although some effort has been made to maintain backwards compatibility with `python2`, this is not guaranteed. Many of these python codes are called as standard command line programs within the pipeline, and have python module dependencies that should be standardised. For this reason, the `gleam_x` python module is installed within the singularity container. When deploying the pipeline for use, it is _not_ necessary to `pip install` the python module within this repository so that it is accessible as part of the larger HPC environment. 
 
+</details>
+
 ## Singularity container
+
+<details>
+<summary>
+<b>Singularity container details</b>
+</summary>
+
 The GLEAM-X singularity container is built to contain all programs that are used throughout the GLEAM-X processing pipeline. The intent is that the singularity container is either built using the provided build script in `containers`folder, or a reference in made to an existing container (see next section). In brief, if the container needs to be built `singularity` has to be installed on a machine with admin privileges. The container would be built using a command similar to:
 
 `sudo singularity build gleamx_container.img gleamx_build.txt`
@@ -25,6 +36,8 @@ Generated scripts are executed entirely within the singularity container context
 
 The GLEAM-X pipeline used upon the `SINGULARITY_BINDPATH` mechanism to describe the set of filesystem paths that should be included within an invoked singularity context. This is a supported mechanism by singularity. During the invocation of a profile script this `SINGULARITY_BINDPATH` variable is created with the properties set by the GLEAM-X configuration described within the profile script. If this environment variable is mangled or reset by other operations then submitted tasks might fail in unexpected ways. 
 
+</details>
+
 ## Pipeline configuration
 The pipeline is configured through the use of a 'profile' script, which contains the important components that describe aspects like:
 - location of scratch disk
@@ -36,18 +49,32 @@ The pipeline is configured through the use of a 'profile' script, which contains
 Each environemtn parameter begins with `GX` to denote its relation to the GLEAM-X pipeline. Throughout all tasks there is the expectation that these variables are present. Examples of these GLEAM-X profiles are provided under the `example_profiles` folder of this repository. 
 
 ## Structure of pipeline
+
+<details>
+<summary><b>Structure of pipeline details</b></summary>
+
 Code directory:
 - bin: contains the bash scripts that generate files for execution
 - templates: the template bash scripts that are used as the basis to generate submittable scripts
 - containers: a container related space, currently containing the build script for the singularity container for reference
-- models: Sky model files
+- models: Sky model files, including the Global GLEAM Sky Model which is extensively used throughout the pipeline
+- mosaics: Template files used to instruct `SWarp` image co-adding
 - gleam_x: Python module containing the GLEAM-X python code 
+- utilities: Bespoke scripts used for isolated problems that should be preserved for prosperity
 
 In the base path there are two files of importance:
 - setup.py: file that allows for `gleam_x` to be installed as a python module
 - GLEAM-X-pipeline-template.profile: a template of the GLEAM-X configuration
 
-## track_task.py
+</details>
+
+## Meta-data tracking database 
+
+<details>
+<summary><b>Meta-data tracking database details</b></summary>
+
+If you are not planning on using the meta-data tracking component of the GLEAM-X pipeline, simply set `export GXTRACK='no'` in your GLEAM-X profile script and you can largely ignore this subsection. If unsure, read on. 
+
 This `track_task.py` script is used throughout the pipeline to record properties of submitted tasks in a mySQL database. For submitted tasks it tracks things like:
 - start and finish times 
 - exit status
@@ -69,7 +96,13 @@ For GLEAM-X use the following environment parameters (using `export`) should be 
 
 Generally, the account details can be obtained through a project member, and should be saved in a secure file specified by the `GXSECRETS` file (see below).
 
+</details>
+
 ## Template configuration script
+
+<details>
+<summary><b>Template configuration script details</b></summary>
+
 We provide `GLEAM-X-pipeline-template.profile` as an example configuration file that needs to be updated for the exact HPC system the GLEAM-X pipeline is being deployed on. Each environment variable also carries with it a brief description of its purporse and expected form.
 
 When running the completed template file for the first time, a set of folders are created, and data dependencies are automatically downloaded. This should be a 'one-and-done' operation, but if locations are updated at a later time (or are accidently deleted) they would be redownloaded the next time the profile script is executed.
@@ -77,6 +110,8 @@ When running the completed template file for the first time, a set of folders ar
 It will be necessary to `source` the completed template file before running any of the GLEAM-X scripts. This will export all GLEAM-X configurables into the environment of spawned processes, which are in turn passed along to submitted slurm tasks. 
 
 The template example configuration profile also references a secrets file. It is intended that this file (which is not included in this repository) would contain user authentication details required for aspects of the pipeline, including the downloading of MWA data from ASVO and authentication against the mysql database (see above). This file is intentionally not included in this repository in an effort to ensure secrets are not accidently commited and made available. When created it should be set to have secure permissions, ie. `chmod700 gxsecrets_file.profile`. 
+
+</details>
 
 ## Steps to deploy
 The following steps should install the pipeline for use on a HPC system with a slurm schedular:
@@ -86,16 +121,34 @@ The following steps should install the pipeline for use on a HPC system with a s
 4. Run the configuration file to create directories and download data dependencies, e.g. `source GLEAM-X-pipeline-hpc.pipeline`
 5. If archiving to the GLEAM-X data-store (see the next subsection) reach out to a GLEAM-X member for further details
 
-All compiled software is already prebuilt in the singularity container. There is no need to install any python modules on the host system, as all python code is executed within the context of the singularity container. 
+All compiled software is already prebuilt in the singularity container. There is no need to install any python modules on the host system, as all python code is executed within the context of the singularity container. Provided that singularity is installed, slurm is installed and you have a copy of the singularity container -- it should just work provided a correct configuration profile (famous last words).
 
 The pipeline expects that a completed configuration profile and has been completed and loaded (using `source`) before running any of the associated `obs_*.sh` or `drift_*.sh` scripts. It is recommended that you `source` the completed configuration file in your `bash_profile`, so that it is loaded on login. *A word of warning*. If you adopt this approach and your home directory (where `bash_profile` usually resides) is shared among multiple clusters, special care should be taken to ensure you `source` the correct profile. Depending on the SLURM configuration and the compute node specifications, it is entirely possible that configuration profiles are not interchangeable between HPC environments, particuarly if SLURM jobs are requesting resources that the compute node are not capable of supporting. 
 
-## SSH keys and archiving
+<details>
+<summary><b>Other small installation notes</b></summary>
+
+### Data dependencies
+
+The pipeline requires two data products to be downloaded:
+
+- The MWA [Fully Embedded Element Beam](http://cerberus.mwa128t.org/mwa_full_embedded_element_pattern.h5): A HDF5 file containing the MWA FEE beam, which is used in some tooling (`calibrate`) to evaluate the instrumental response towards a particular direction at a particular frequency
+- [Pre-computed MWA primary beams](https://cloudstor.aarnet.edu.au/plus/s/77FRhCpXFqiTq1H/download): A HDF5 file containing the FEE beam evaluated towards every MWA grid position for every frequency, which is used by a python [mwa_pb_lookup]([https://github.com/johnsmorgan/mwa_pb_lookup) module to quickly evaluate the primary beam by using the precompute and saved response (with interpolation in the spatial and frequency dimensions when required)
+
+These are automatically downloaded by the example profile scripts if they do not exist in the deployed GLEAM-X pipeline folder. Be aware though that they are downloaded and extracted in the working directory when the profile script is executed before being moved into place. Depending on the HPC environment and set up this might result in 'disk quota' issues, particularly if running from `$HOME`. 
+
+
+### SSH keys and archiving
 The GLEAM-X team have secured an ongoing archive at [Data Central](https://datacentral.org.au/) that is used to save completed pipeline data products. These are copied as part of an archive stage using a numbus instance as a tunnel. To successfully run this stage your public ssh key has to be approved and stored as an allowed user. Reach out to one of the GLEAM-X members for assistance. 
 
 As a note - within the Pawsey system it has been found that the singularity container is not able to consistently bind to the home directory of the user, meaning that the users default ssh credentials are not accessible. For this reason the current suggestion is to create a ssh keypair specific to the GLEAM-X pipeline. The ideal location would be with $GXBASE directory, however any path would be acceptable if you have read/write permission. Creating the ssh keypair is not part of the current version of the configuration template, but such a keypair can be created with 
+
 `ssh-keygen -t rsa -f "${GXBASE}/ssh_keys/gx_${GXUSER}"` 
+
 after the GLEAM-X configuration profile has been loaded. The archive stage expects the key to follow a `gx_${GXUSER}` format. This may change in a future release. 
+
+
+</details>
 
 ## Example workflow
 
@@ -110,10 +163,14 @@ A typical workflow might look like:
    - Run some deep imaging via `obs_image.sh`
    - Run the post-imaging processing via `obs_postimage.sh` to perform source-finding, ionospheric de-warping, and flux density scaling to GLEAM.
 
+The approach outlined above would produce a single snapshoot image. If the intent it to produce a night-long mosaic then two extra tasks should be applied against sets of obsids grouped by frequency. These steps are:
+- aggregating bright source information and comparing to the GGSM and applying a final spatially varying flux scaling correction via `drift_rescale.sh`
+- coadding final images into deep co-added images via `drift_mosaic.sh`
+
 ## Detailed script descriptions
 <details>
 <summary>
-<b>A few small notes</b>
+<b>A few small notes on using tasks</b>
 </summary>
 
 #### Specifying obsids
