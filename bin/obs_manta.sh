@@ -182,6 +182,6 @@ do
     ((n+=1))
 done
 
-echo "Submitted ${script} as ${jobid}. Follow progress here:"
+echo "Submitted ${script} as ${jobid} . Follow progress here:"
 echo "${output}"
 echo "${error}"
