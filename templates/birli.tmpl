@@ -29,7 +29,7 @@ fi
 datadir=DATADIR
 tres=TRES
 fres=FRES
-memory=${GXMEMORY}
+memory=$(echo "${GXMEMORY} * 0.8" | bc)
 
 # start task
 track_task.py start --jobid="${jobid}" --taskid="${taskid}" --start_time="$(date +%s)"
@@ -56,7 +56,7 @@ then
         cd "${obsnum}" || exit 1
         mv "../${obsfile}" ./
         tar xvf "./${obsfile}" && \
-        rm "./${obsfile}"
+        mv "./${obsfile}" ..
     else 
         echo "The extension ${ext} of ${obsfile} is not known. "
         exit 1
@@ -84,6 +84,7 @@ then
     fi
     
     # Use 80% of the memory
+    export RUST_LOG=birli=trace,marlu=trace
     birli \
             ${flagfiles} \
             --max-memory ${memory} \
