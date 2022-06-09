@@ -24,6 +24,10 @@ export GXACCOUNT=               # The SLURM account jobs will be run under. e.g.
 export GXBASE="/not/actual/path" # Path to base of GLEAM-X Pipeline where the repository was 'git clone' into including the name of the repository foldername, e.g. "/astro/mwasci/tgalvin/GLEAM-X-pipeline" 
 export GXSCRATCH="/scratch"     # Path to your scratch space used for processing on the HPC environment, e.g. /scratch
                                 # Within pawsey this is /astro/mwas/${GXUSER}
+export GXHOME="${GXSCRATCH}"    # HOME space for some tasks. In some system configurations singularity can not mount $HOME, but applications (e.g. CASA, python) would like 
+                                # one to be available to cache folders. This does not have to be an actual $HOME directory, just a folder with read and write access. 
+                                # Suggestion is the same path as the scratch space, e.g. $GXSCRATCH. Although if the HPC is configured correctly it could be set to HOME. 
+                                # This variable is not used in any tasks -- but it used in the creation of the SINGULARITY_BINDPATH variable.
 export GXCONTAINER="${GXSCRATCH}/gleamx.img"  # Absolute path to the GLEAM-X singularity container, including the file name, e.g. "${GXSCRATCH}/gleamx.img"
                                               # This container is still being evaluated and available when requested from Tim Galvin. In a future update
                                               # the container will be automatically downloaded alongside other data dependencies. 
@@ -96,7 +100,7 @@ export GXSTAGE=             # To support the polarisation effort led by Xiang Zh
 # and pipeline configuration it is best to have these explicitly set across all tasks. For each 'singularity run' command this
 # SINGULARITY_BINDPATHS will be used to mount against. These GX variables should be all that is needed on a typical deployed 
 # pipeline, but can be used to further expose/enhance functionality if desired. 
-export SINGULARITY_BINDPATH="${HOME}:${HOME},${GXSCRIPT},${GXBASE},${GXSCRATCH},${GXSSH},${GXMWALOOKUP}:/pb_lookup,${GXMWAPB},${GXSTAGE}"
+export SINGULARITY_BINDPATH="${GXHOME}:${HOME},${GXSCRIPT},${GXBASE},${GXSCRATCH},${GXSSH},${GXMWALOOKUP}:/pb_lookup,${GXMWAPB},${GXSTAGE}"
 
 export PATH="${PATH}:${GXBASE}/bin" # Adds the obs_* script to the searchable path. 
 export HOST_CLUSTER=${GXCLUSTER}    # Maintained for compatability. Will be removed soon. 
