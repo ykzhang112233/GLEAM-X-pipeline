@@ -270,6 +270,12 @@ if __name__ == "__main__":
         default=False,
         help="Normal behaviour will raise an error if the GX database is not accessible. If True, this behaviour will be ignored, and no cen-chan information will be used. "
     )
+    assign.add_argument(
+        '--suffix',
+        type=str,
+        default="_local_gleam_model_solutions_initial_ref.bin",
+        help='The suffix to append to each obsid, which corresponds to the binary solutions file to inspect.'
+    )
 
     args = parser.parse_args()
 
@@ -295,7 +301,8 @@ if __name__ == "__main__":
             same_cen_chan=not args.any_cen_chan,
             base_path=args.base_path.rstrip("/"),
             disable_db_check=args.disable_db_check,
-            segments=args.segments
+            segments=args.segments,
+            suffix=args.suffix
         )
 
         if not args.no_report:
