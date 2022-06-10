@@ -7,6 +7,8 @@
 # Actually, thinking about it this might not be the best way, as the original
 # problem was in John's code. Will need to re-reconsider this again.
 
+set -e
+
 if [[ -z $GXBASE ]]
 then
     echo "Looks like the GLEAM-X profile is not loaded."
@@ -28,13 +30,19 @@ then
    exit 2
 fi
 
-echo "Checking binaru files to apply calibration solutions"
+echo "Checking binary files to apply calibration solutions"
 echo "Original checks"
 singularity exec $GXCONTAINER check_assign_solutions.py assign $obs | grep -v A  > original_calids.txt
 wc -l original_calids.txt
 
-echo "Four subvband checks"
-singularity exec $GXCONTAINER check_assign_solutions.py -s 4 assign $obs | grep -v A  > recent_calids.txt
+# The incorrect calibration solutions ultimately slipped in after the XY/YX terms were set to zero. 
+# The code to count the number of flagged channels/antenna counts the NANs in a solution file. Each
+# solution is really a 2x2 Jones matrix of complex numbers. Code would count all NANs with the implicit
+# assumption that a Jones is either entirily finite or completely masked. Setting the XY/YX to zero
+# broke this. So, to figure out which obsids would need to be reprocessed, rather than re-calibrating
+# with the now corrected antenna-referencing and XY/YX nuking script, we can use the previous one
+echo "Four subvband checks against non-initial ref solutions (before XY zero terms introduces"
+singularity exec $GXCONTAINER check_assign_solutions.py -s 4 assign $obs --suffix "_local_gleam_model_solutions_initial.bin" | grep -v A  > recent_calids.txt
 wc -l recent_calids.txt
 
 echo "Creating the diff"
@@ -55,7 +63,7 @@ then
 fi
 
 mkdir $data
-cat new_obsid_calid.txt | cut -d ' ' -f3 > "${data}/Repair_${obs}"
+cat new_obsid_calid.txt | cut -d ' ' -f2 > "${data}/Repair_${obs}"
 mv new_obsid_calid.txt $data
 
 
