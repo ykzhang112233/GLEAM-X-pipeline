@@ -128,8 +128,6 @@ listbase=$(basename ${obslist})
 listbase=${listbase%%.*}
 script="${GXSCRIPT}/manta_${listbase}.sh"
 
-echo "obslist is $obslist"
-
 cat "${GXBASE}/templates/manta.tmpl" | sed -e "s:OBSLIST:${obslist}:g" \
                                  -e "s:STEM:${stem}:g"  \
                                  -e "s:TRES:${timeres}:g" \
