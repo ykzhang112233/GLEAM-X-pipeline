@@ -63,7 +63,9 @@ then
 fi
 
 mkdir $data
-cat new_obsid_calid.txt | cut -d ' ' -f2 > "${data}/Repair_${obs}"
+# The columns are obsid calid. Since we need to re-process the obsids with
+# and incorrect calibration solution, we get the first column
+cat new_obsid_calid.txt | cut -d ' ' -f1 > "${data}/Repair_${obs}"
 mv new_obsid_calid.txt $data
 
 
