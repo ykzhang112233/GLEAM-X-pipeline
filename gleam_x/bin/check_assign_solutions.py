@@ -6,9 +6,17 @@ identify ones close in time that are appropriate.
 
 import os
 import sys
-import numpy as np
-from calplots.aocal import fromfile
+import logging 
 from argparse import ArgumentParser
+
+import numpy as np
+
+from calplots.aocal import fromfile
+
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(format="%(module)s:%(levelname)s:%(lineno)d %(message)s")
+logger.setLevel(logging.INFO)
 
 try:
     from gleam_x.db import mysql_db as gxdb
@@ -19,7 +27,7 @@ except:
 THRESHOLD = (
     0.25  # acceptable level of flagged solutions before the file is considered ratty
 )
-
+MWABW = 30720 # Spectral coverage in kilohertz  
 
 def obtain_cen_chan(obsids, disable_db_check=False):
     """Retrieve the cenchan for a set of specified pointings. This will be done through the 
@@ -64,6 +72,22 @@ def obtain_cen_chan(obsids, disable_db_check=False):
         else:
             raise ValueError("GX Database is not contactable. ")
 
+def derive_edge_channel_flagged(ao_results, edge_bw_flag, no_sub_bands):
+
+    logger.debug(f"Number of channels {ao_results.n_chan}")
+    logger.debug(f"Supplied number of subbands {no_sub_bands=}")
+
+    freq_res = MWABW // ao_results.n_chan
+    logger.debug(f"Channel frequency resolution {freq_res} KHz")
+
+    no_chan_flag = edge_bw_flag // freq_res 
+    logger.debug(f"Number of edge channels flagged {no_chan_flag=} either side of subband")
+
+    # Flagging either side of a sub-band
+    total_chans_flag = 2 * no_chan_flag * no_sub_bands
+    logger.debug(f"{no_sub_bands=} {total_chans_flag=} Bandwidth flagged={total_chans_flag*freq_res} KHz")
+
+    return total_chans_flag
 
 def check_solutions(aofile, threshold=THRESHOLD, segments=None, *args, **kwargs):
     """Inspects the ao-calibrate solutions file to evaluate its reliability
@@ -78,12 +102,33 @@ def check_solutions(aofile, threshold=THRESHOLD, segments=None, *args, **kwargs)
         bool: a valid of invalid aosolutions file
     """
     threshold = threshold / 100 if threshold > 1 else threshold
+    logger.debug(f"Threshold level set is {threshold=}")
+
     if not os.path.exists(aofile):
+        logger.debug(f"{aofile} not found")
         return False
 
+    logger.debug(f"Loading {aofile=}")
     ao_results = fromfile(aofile)
+
+    if logger.level == logging.DEBUG:
+        total_flag = 0
+
+        for ant in range(ao_results.shape[1]):
+            ant_data = ao_results[:,ant,:,:]
+            flag_lvl = np.sum(np.isnan(ant_data)) / np.prod(ant_data.shape)
+            
+            logger.debug(f"{ant=} {ant_data.shape=} Flagged={flag_lvl*100:.2f}% {no_chan=}")
+
+            if flag_lvl == 1.:
+                total_flag += 1
+
+        logger.debug(f"Total set of antennas completely flagged: {total_flag}")
+
+    logger.debug(f"AOFile datashape {ao_results.shape=}")
     ao_flagged = np.sum(np.isnan(ao_results)) / np.prod(ao_results.shape)
 
+    logger.debug(f"{ao_flagged:.4f} fraction flagged")
     if ao_flagged > threshold:
         return False
 
@@ -98,10 +143,14 @@ def check_solutions(aofile, threshold=THRESHOLD, segments=None, *args, **kwargs)
         assert no_chan % segments == 0, f"{no_chan} channels is not evenly divisible by {segments} segments"
         stride = no_chan // segments
         
+        logger.debug(f"{segments=} and {stride=}")
+
         for i in range(segments):
             chan_slice = slice(i*stride, (i+1)*stride)
             seg_ao_data = ao_results[:,:,chan_slice,:]
             seg_ao_flagged = np.sum(np.isnan(seg_ao_data)) / np.prod(seg_ao_data.shape)
+
+            logger.debug(f"{chan_slice} {seg_ao_data.shape} {seg_ao_flagged=}")
 
             if seg_ao_flagged > threshold:
                 return False
@@ -159,6 +208,8 @@ def find_valid_solutions(
     obsids = obsids.astype(np.int)
     calids = obsids.copy()
 
+    logger.debug(f"{len(obsids)=} in presented set of obsids")
+
     sol_present = np.array(
         [
             check_solutions(f"{base_path}/{obsid}/{obsid}{suffix}", **kwargs)
@@ -167,7 +218,7 @@ def find_valid_solutions(
     )
 
     if np.all(sol_present == False):
-        print("No potenial calibration scans. base_path needs to be set?")
+        logger.error("No potenial calibration scans. base_path needs to be set?")
         sys.exit(1)
 
     if same_cen_chan:
@@ -277,9 +328,54 @@ if __name__ == "__main__":
         help='The suffix to append to each obsid, which corresponds to the binary solutions file to inspect.'
     )
 
+    subband = subparsers.add_parser(
+        'subbands',
+        help='Explore the number of channels flagged from edgeband effects. This stub is included as a test and future use. '
+    )
+    subband.add_argument(
+        '--flag-edge-width',
+        type=float,
+        default=80,
+        help='The edge width in kilohertz that will be flagged'
+    )
+    subband.add_argument(
+        '--no-subbands',
+        type=int,
+        default=24,
+        help='The number of sub-bands that make up a MWA measurement set, where each side of a subband would be flagged'
+    )
+    subband.add_argument(
+        "aofile",
+        type=str,
+        nargs="+",
+        help="Path to ao-solution file/s to check to see if it is valid",
+    )
+
+    parser.add_argument(
+        '-v',
+        '--verbose',
+        action='store_true',
+        default=False,
+        help='Enable extra logging'
+    )
+
     args = parser.parse_args()
 
-    if args.mode == "check":
+    if args.verbose:
+        logger.setLevel(logging.DEBUG)
+
+    if args.mode == "subbands":
+        for f in args.aofile:
+            logger.debug(f"Loading solutions file {f}")
+            ao_results = fromfile(f)
+        
+            derive_edge_channel_flagged(
+                ao_results,
+                args.flag_edge_width,
+                args.no_subbands
+            )
+
+    elif args.mode == "check":
         print("Checking Mode")
         if args.segments is not None:
             print(f"Applying nan threshold checks to {args.segments} sub-bands")
