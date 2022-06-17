@@ -2,6 +2,16 @@
 
 """Script to help identify which calibrate solution files are not appropriate to apply, and helps to 
 identify ones close in time that are appropriate. 
+
+TODO: Add a custom fromfile function. There was a bug in some of the original XY/YX correction and 
+      refant code that would cause the XY/YX Jones terms to be turned from NaNs to finite numbers,
+      and this messed up the statistics. This custome fromfile function should be made to ensure
+      that this does not happen. A 2x2 Jones should be completely finite or completely NaN'd. 
+
+TODO: Load in the metafits files and count the number of tiles that are known to be bad flagged 
+      out and exclude them from the statistics. This is distinct from tiles that are completely
+      flagged because they did not converge. 
+
 """
 
 import os
@@ -73,6 +83,19 @@ def obtain_cen_chan(obsids, disable_db_check=False):
             raise ValueError("GX Database is not contactable. ")
 
 def derive_edge_channel_flagged(ao_results, edge_bw_flag, no_sub_bands):
+    """Knowing how wide the MWA subbands are, this function will return the
+    number of edge channels flagged of each sub-band. This is useful when 
+    attempting to compute meaningful flagging statistics as these will always
+    be flagged despite the state of the array and data. 
+
+    Args:
+        ao_results (AOCal): AOCal solutions file opened against a valid MWA calibration solutions files
+        edge_bw_flag (float): The bandwidth either side of of each sub-band that should be flagged
+        no_sub_bands (int): Number of sub-bands that make up the MWA frequency axis throughout the signal process chain
+
+    Returns:
+        int: number of channels that are deemed as edge channels
+    """
 
     logger.debug(f"Number of channels {ao_results.n_chan}")
     logger.debug(f"Supplied number of subbands {no_sub_bands=}")
@@ -106,6 +129,10 @@ def check_solutions(
     
     Keyword Args:
         threshold (float): The threshold, between 0 to 1, where too many solutions are flagged before the file becomes invalid (default: 0.25)
+        segments (int): If not None, divide the frequency axis up into a set of segments, and ensure each segment has enough data (default: None)
+        ignore_edge_channels (bool): Remove edge channels flagged from the threshold statistics (default: True)
+        edge_bw_flag (float): The total bandwidth to flag (default: 80)
+        no_sub_bands (int): The number of sub-bands that make up the MWA signal processing (default: 24)
 
     Returns:
         bool: a valid of invalid aosolutions file
