@@ -152,7 +152,7 @@ def check_solutions(
     # and because there are four nans per solution in the Jones
     no_edges *= 4
 
-    logger.debug(f"Removing {no_edges=} from statiistic")
+    logger.debug(f"Removing {no_edges=} from statistic")
     ao_flagged = (np.sum(np.isnan(ao_results)) - no_edges) / (np.prod(ao_results.shape) - no_edges)
 
     logger.debug(f"{ao_flagged:.4f} fraction flagged")
