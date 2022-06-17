@@ -89,7 +89,16 @@ def derive_edge_channel_flagged(ao_results, edge_bw_flag, no_sub_bands):
 
     return total_chans_flag
 
-def check_solutions(aofile, threshold=THRESHOLD, segments=None, *args, **kwargs):
+def check_solutions(
+    aofile, 
+    * ,
+    threshold=THRESHOLD, 
+    segments=None, 
+    segment_threshold=None,
+    ignore_edge_channels=True, 
+    edge_bw_flag=80,
+    no_sub_bands=24,
+    **kwargs):
     """Inspects the ao-calibrate solutions file to evaluate its reliability
 
     Args:
@@ -111,6 +120,9 @@ def check_solutions(aofile, threshold=THRESHOLD, segments=None, *args, **kwargs)
     logger.debug(f"Loading {aofile=}")
     ao_results = fromfile(aofile)
 
+    no_chan = ao_results.n_chan
+    no_ant = ao_results.n_ant
+
     if logger.level == logging.DEBUG:
         total_flag = 0
 
@@ -126,7 +138,22 @@ def check_solutions(aofile, threshold=THRESHOLD, segments=None, *args, **kwargs)
         logger.debug(f"Total set of antennas completely flagged: {total_flag}")
 
     logger.debug(f"AOFile datashape {ao_results.shape=}")
-    ao_flagged = np.sum(np.isnan(ao_results)) / np.prod(ao_results.shape)
+    
+    # For each antenna this number of edge channels are flagged
+    no_edges = derive_edge_channel_flagged(
+        ao_results, 
+        edge_bw_flag,
+        no_sub_bands
+        ) if ignore_edge_channels else 0
+    
+    # now scale to the number of antenna
+    no_edges *= no_ant
+    
+    # and because there are four nans per solution in the Jones
+    no_edges *= 4
+
+    logger.debug(f"Removing {no_edges=} from statiistic")
+    ao_flagged = (np.sum(np.isnan(ao_results)) - no_edges) / (np.prod(ao_results.shape) - no_edges)
 
     logger.debug(f"{ao_flagged:.4f} fraction flagged")
     if ao_flagged > threshold:
@@ -141,18 +168,25 @@ def check_solutions(aofile, threshold=THRESHOLD, segments=None, *args, **kwargs)
         no_chan = ao_results.shape[2]
         
         assert no_chan % segments == 0, f"{no_chan} channels is not evenly divisible by {segments} segments"
-        stride = no_chan // segments
-        
+        stride = no_chan // segments        
         logger.debug(f"{segments=} and {stride=}")
+        
+        segment_threshold = threshold if segment_threshold is None else segment_threshold
+        segment_threshold = segment_threshold / 100 if segment_threshold > 1. else segment_threshold
+        logger.debug(f"Using {segment_threshold=}")
+
+        no_seg_edges = (no_edges / segments)
+        if no_edges > 0:
+            logger.debug(f"Assuming {no_seg_edges=} per segment")
 
         for i in range(segments):
             chan_slice = slice(i*stride, (i+1)*stride)
             seg_ao_data = ao_results[:,:,chan_slice,:]
-            seg_ao_flagged = np.sum(np.isnan(seg_ao_data)) / np.prod(seg_ao_data.shape)
+            seg_ao_flagged = (np.sum(np.isnan(seg_ao_data)) - no_seg_edges) / (np.prod(seg_ao_data.shape) - no_seg_edges)
 
-            logger.debug(f"{chan_slice} {seg_ao_data.shape} {seg_ao_flagged=}")
+            logger.debug(f"segment={i} {chan_slice} {seg_ao_data.shape} {seg_ao_flagged=}")
 
-            if seg_ao_flagged > threshold:
+            if seg_ao_flagged > segment_threshold:
                 return False
         
     return True
@@ -181,7 +215,7 @@ def find_valid_solutions(
     base_path=".",
     same_cen_chan=True,
     suffix="_local_gleam_model_solutions_initial_ref.bin",
-    disable_db_check=False,
+    disable_db_check=False,    
     *args,
     **kwargs,
 ):
@@ -259,7 +293,33 @@ if __name__ == "__main__":
         default=None,
         help='Consider the flagging statistic checks on N number of sub-band segments. '
     )
+    parser.add_argument(
+        '--segment-threshold',
+        type=float,
+        default=None,
+        help="A threshold (between 0 to 1) applied to each segment. If None the --threshold is used. Default is None. "
+    )
 
+    parser.add_argument(
+        '--include-edge-channels',
+        default=False,
+        action='store_true',
+        help='Will include edge channels that were flagged on for each subband when computing the threshold operations. Default is False. '
+    )
+
+    parser.add_argument(
+        '--flag-edge-width',
+        type=float,
+        default=80,
+        help='The edge width in kilohertz that will be flagged'
+    )
+    parser.add_argument(
+        '--no-subbands',
+        type=int,
+        default=24,
+        help='The number of sub-bands that make up a MWA measurement set, where each side of a subband would be flagged'
+    )
+    
     subparsers = parser.add_subparsers(dest="mode")
 
     check = subparsers.add_parser(
@@ -332,18 +392,7 @@ if __name__ == "__main__":
         'subbands',
         help='Explore the number of channels flagged from edgeband effects. This stub is included as a test and future use. '
     )
-    subband.add_argument(
-        '--flag-edge-width',
-        type=float,
-        default=80,
-        help='The edge width in kilohertz that will be flagged'
-    )
-    subband.add_argument(
-        '--no-subbands',
-        type=int,
-        default=24,
-        help='The number of sub-bands that make up a MWA measurement set, where each side of a subband would be flagged'
-    )
+    
     subband.add_argument(
         "aofile",
         type=str,
@@ -381,7 +430,16 @@ if __name__ == "__main__":
             print(f"Applying nan threshold checks to {args.segments} sub-bands")
         
         for f in args.aofile:
-            if check_solutions(f, threshold=args.threshold, segments=args.segments):
+            if check_solutions(
+                f, 
+                threshold=args.threshold, 
+                segments=args.segments,
+                segment_threshold=args.segment_threshold,
+                ignore_edge_channels=not args.include_edge_channels,
+                flag_edge_width=args.flag_edge_width,
+                no_sub_bands=args.no_subbands
+
+            ):
                 print(f"{f} passed")
             else:
                 print(f"{f} failed")
@@ -397,8 +455,12 @@ if __name__ == "__main__":
             same_cen_chan=not args.any_cen_chan,
             base_path=args.base_path.rstrip("/"),
             disable_db_check=args.disable_db_check,
+            suffix=args.suffix,
             segments=args.segments,
-            suffix=args.suffix
+            segment_threshold=args.segment_threshold,
+            ignore_edge_channels=not args.include_edge_channels,
+            flag_edge_width=args.flag_edge_width,
+            no_sub_bands=args.no_subbands
         )
 
         if not args.no_report:

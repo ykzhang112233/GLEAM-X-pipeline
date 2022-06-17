@@ -176,7 +176,7 @@ The approach outlined above would produce a single snapshoot image. If the inten
 #### Specifying obsids
 Most `obs_*.sh` style tasks have two ways of specifying which obsids to operate against. 
 
-The first is simplying invoking the task with the obsid of interest on the command line, ie. `obs_autocal.sh -p test_project 1234568762`. This task will then look for the obsid folder (which in this example would be `"$GXSCRATCH/test_project/1234568762"), and the submitted worker script will switch to it before carrying out any operations. 
+The first is simplying invoking the task with the obsid of interest on the command line, ie. `obs_autocal.sh -p test_project 1234568762`. This task will then look for the obsid folder (which in this example would be `"$GXSCRATCH/test_project/1234568762"`), and the submitted worker script will switch to it before carrying out any operations. 
 
 If multiple obsids want to be specified for a single task (which is the typical suggested workflow when processing a night of data), then a new-line delimited text file of obsids may be created. When calling a task, the name of this text file should be specified inplace of a single obsid. Internally, tasks will create a job-array, where each obsid described by this new-line delimieted file are processed as a separate slurm job. 
 
