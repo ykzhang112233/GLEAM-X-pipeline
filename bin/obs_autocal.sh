@@ -10,6 +10,12 @@ echo "obs_autocal.sh [-d dep] [-a account] [-t] obsnum
   -i         : disable the ionospheric metric tests (default = False)
   -t         : test. Don't submit job, just make the batch file
                and then return the submission command
+  -f FRAC    : the acceptable fraction of spectrum that may be flagged in a calibration
+               solution file before it is marked as bad. Value between 0 - 1. (default = 0.25)
+  -s SFRAC   : the acceptable fraction of a segmented spectrum that may be flagged in a 
+               calibration solution file before it is flagged as bad. Typical GLEAM-X
+               processing has four sub-bands, so there are four segments. If a single 
+               segment has more then SFRAC flagged it is marked as bad. (default = 0.4) 
   obsnum     : the obsid to process, or a text file of obsids (newline separated). 
                A job-array task will be submitted to process the collection of obsids. " 1>&2;
 exit 1;
@@ -20,9 +26,11 @@ pipeuser=${GXUSER}
 dep=
 tst=
 ion=1
+frac=0.25
+sthresh=0.4
 
 # parse args and set options
-while getopts ':tia:d:p:' OPTION
+while getopts ':tia:d:p:f:s:' OPTION
 do
     case "$OPTION" in
 	d)
@@ -40,6 +48,12 @@ do
 	t)
 	    tst=1
 	    ;;
+    f)
+        frac=${OPTARG}
+        ;;
+    s) 
+        sthresh=${OPTARG}
+        ;;
 	? | : | h)
 	    usage
 	    ;;
@@ -89,7 +103,9 @@ script="${GXSCRIPT}/autocal_${obsnum}.sh"
 cat "${GXBASE}/templates/autocal.tmpl" | sed -e "s:OBSNUM:${obsnum}:g" \
                                      -e "s:DATADIR:${datadir}:g" \
                                      -e "s:IONOTEST:${ion}:g" \
-                                     -e "s:PIPEUSER:${pipeuser}:g" > "${script}"
+                                     -e "s:PIPEUSER:${pipeuser}:g" \
+                                     -e "s:FRACTION:${frac}:g" \
+                                     -e "s:STHRESH:${sthresh}:g" > "${script}"
 
 
 output="${GXLOG}/autocal_${obsnum}.o%A"
