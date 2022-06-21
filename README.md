@@ -147,6 +147,7 @@ As a note - within the Pawsey system it has been found that the singularity cont
 
 after the GLEAM-X configuration profile has been loaded. The archive stage expects the key to follow a `gx_${GXUSER}` format. This may change in a future release. 
 
+Archiving data to Data Central is a two step process. Step one is to run `drift_archive_prep.sh`, which will iterate over a collection of obsids and prepare them for copying. This includes clipping and zipping model component files, and applying `SR6` to background and noise maps. Step two is to run `drift_transfer.sh`, which will then iterate over each obsid and copy desired files (using a SSHFS mount on the meta-data server) over to Data Central. 
 
 </details>
 
@@ -158,16 +159,43 @@ A typical workflow might look like:
    - Go to your configured scratch space (`cd "$GXSCRATCH"`) and create a project directory with whatever pithy name you feel is appropriate
    - Put the text file there, and then run obs_manta.sh on it to download that list of observations
    - Once they have downloaded, for each observation, run `obs_autoflag.sh` and `obs_autocal.sh`
-   - Look at the calibraton solutions, and if they generally look OK, for each observation, run `obs_apply_cal.sh` to apply them
+   - Look at the calibraton solutions, and if they generally look OK, for each observation, run `obs_apply_cal.sh` to apply them. There is a helper script (`check_assign_solutions.py`) that aims to select an optimal calibration solution for each obsid
    - Run `obs_uvflag.sh` to flag potential RFI
    - Run some deep imaging via `obs_image.sh`
    - Run the post-imaging processing via `obs_postimage.sh` to perform source-finding, ionospheric de-warping, and flux density scaling to GLEAM.
 
-The approach outlined above would produce a single snapshoot image. If the intent it to produce a night-long mosaic then two extra tasks should be applied against sets of obsids grouped by frequency. These steps are:
-- aggregating bright source information and comparing to the GGSM and applying a final spatially varying flux scaling correction via `drift_rescale.sh`
+The approach outlined above would produce a single snapshot image. If the intent it to produce a night-long mosaic then two extra tasks should be applied against sets of obsids grouped by frequency. These steps are:
+- aggregating bright source information and comparing to the GGSM and applying a final spatially varying flux scaling correction via `drift_rescale.sh`, see below
 - coadding final images into deep co-added images via `drift_mosaic.sh`
 
 ## Detailed script descriptions
+<details>
+<summary>
+<b>check_assign_solutions.py to select calibration solutions</b>
+</summary>
+
+GLEAM-X will direct the main response of the MWA towards a particular direction, and let the sky drift through it as the Earth rotates, and over the processing run will cycle through five frequency configurations. In typical procressing the GLEAM-X pipeline uses an in-field sky model to calibrate each obsid. In some cases this process does not converge to an optimal solution, with common causes being an especially bad ionosphere, or bright sources residing in a location of the primary beam with an especially chromatic response (or in a location with a poorly modeled primary beam response). In these cases we attempt to identify calibration solutions from an obsid nearby in time and at the same frequency. 
+
+When in `assign` mode the `check_assign_solutions.py` will accept a new-line delimited text file of obsids, search for each of their associated calibration solution files, evaluate them, and then assign each obsid a calid -- an obsid whose calibration solutions should be used for the subject obsid. A typical example is:
+
+`check_assign_solutions.py -t 0.25 assign XG_D-27_20180220.txt`
+
+In this example, each calibration solution must have no more than 25% of its contents flagged (i.e. did not calibrate). The solution file contents a 2x2 Jones matrix per antenna per channel per timestep. In the current version of `check_assign_solutions.py`, edge channels flagged automatically are not included as part of the threshold statistics (although can be included with `--include-edge-channels`). 
+
+A slightly more advanced invocation (which is now used in typical processing) is:
+
+`check_assign_solutions.py -t 0.25 --segments 4 --segment-threshold 0.25 assign XG_D-27_20180220.txt --calids-out XG_D-27_20180220_calids.txt --only-calids`
+
+In this example the 768 channels that make up a GLEAM-X measurement set are divided into 4 chunks, and each chunk is also checked in isolate to ensure that there is sufficent data (no more than 25% flagged). A separate new-line delimited text file `XG_D-27_20180220_calids.txt` is created that describes the calid to use for each obsid listed in `XG_D-27_20180220.txt`. 
+
+The GLEAM-X meta-data server is used to obtain the frequency of each presented obsid, which is used when determining which calibration solution should be assigned to a subject obsid. Therefore, this script should only be used when 
+(1) - the environment has been set up to allow communication with the mySQL server running on the nimbus vurtual machine,
+(2) - the obsids are GLEAM-X observations which have been imported into the database. Note that this is not done automatically in typical processing, rathre it is done by an admin on the nimbus machine.
+
+
+
+</details>
+
 <details>
 <summary>
 <b>A few small notes on using tasks</b>
