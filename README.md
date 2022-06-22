@@ -188,11 +188,14 @@ A slightly more advanced invocation (which is now used in typical processing) is
 
 In this example the 768 channels that make up a GLEAM-X measurement set are divided into 4 chunks, and each chunk is also checked in isolate to ensure that there is sufficent data (no more than 25% flagged). A separate new-line delimited text file `XG_D-27_20180220_calids.txt` is created that describes the calid to use for each obsid listed in `XG_D-27_20180220.txt`. 
 
-The GLEAM-X meta-data server is used to obtain the frequency of each presented obsid, which is used when determining which calibration solution should be assigned to a subject obsid. Therefore, this script should only be used when 
-(1) - the environment has been set up to allow communication with the mySQL server running on the nimbus vurtual machine,
-(2) - the obsids are GLEAM-X observations which have been imported into the database. Note that this is not done automatically in typical processing, rathre it is done by an admin on the nimbus machine.
+The GLEAM-X meta-data server is used to obtain the frequency of each presented obsid, which is used when determining which calibration solution should be assigned to a subject obsid. Therefore, this script should only be used when:
 
+1) the environment has been set up to allow communication with the mySQL server running on the nimbus vurtual machine,
+2) the obsids are GLEAM-X observations which have been imported into the database. Note that this is not done automatically in typical processing, rathre it is done by an admin on the nimbus machine.
 
+The hope is that once calids have been assigned to each obsid described in a file (`XG_D-27_20180220.txt`), then the `obs_apply_cal.sh` task may be used as:
+
+`obs_apply_cal.sh -p project -c XG_D-27_20180220_calids.txt XG_D-27_20180220.txt`
 
 </details>
 
