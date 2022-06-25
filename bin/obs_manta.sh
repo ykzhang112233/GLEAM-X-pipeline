@@ -149,8 +149,8 @@ echo "singularity run ${GXCONTAINER} ${script}" >> "${script}.sbatch"
 # This is the only task that should reasonably be expected to run on another cluster. 
 # Export all GLEAM-X pipeline configurable variables and the MWA_ASVO_API_KEY to ensure 
 # obs_mantra completes as expected
-sub="sbatch --export=$(echo ${!GX*} | tr ' ' ','),MWA_ASVO_API_KEY  --time=24:00:00 -M ${GXCOPYM} --output=${output} --error=${error}"
-sub="${sub} ${account} ${queue} ${script}.sbatch"
+sub="sbatch --export=$(echo ${!GX*} | tr ' ' ','),MWA_ASVO_API_KEY  --time=12:00:00 -M ${GXCOPYM} --output=${output} --error=${error}"
+sub="${sub} ${depend} ${account} ${queue} ${script}.sbatch"
 
 if [[ ! -z ${tst} ]]
 then
