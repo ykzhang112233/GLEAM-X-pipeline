@@ -23,6 +23,7 @@ scripts = [
     "gleam_x/bin/aocal_ratio.py",
     "gleam_x/bin/beam_value_at_radec.py",
     "gleam_x/bin/calc_pointing.py",
+    "gleam_x/bin/calc_optimum_pointing.py",
     "gleam_x/bin/calc_mean_pos.py",
     "gleam_x/bin/clip_clean_components.py",
     "gleam_x/bin/crop_catalogue.py",
