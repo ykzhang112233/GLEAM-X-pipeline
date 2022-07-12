@@ -360,7 +360,7 @@ def wsclean_script(
             )
             out.write(taql)
 
-        coords = f"coords=$(calc_pointing.py '{metafits}') \n\n"
+        coords = f"coords=$(calc_optimum_pointing.py --metafits '{metafits}') \n\n"
         out.write(coords)
 
         chg = (
