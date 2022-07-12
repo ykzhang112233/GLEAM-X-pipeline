@@ -38,6 +38,13 @@ if __name__ == "__main__":
     group1.add_argument("--metafits", type=str, help="The metafits file for your observation")
     group1.add_argument("--gridsize", type=float, help="The size of grid to search over (default = 8 degrees)", default=8)
     group1.add_argument("--cellsize", type=float, help="The cellsize of grid to search over (default = 1 degree)", default=1)
+    
     options = parser.parse_args()
-    radec = calc_peak_beam(options.metafits, options.gridsize, options.cellsize)
+    
+    radec = calc_peak_beam(
+        options.metafits, 
+        options.gridsize, 
+        options.cellsize
+    )
+    
     print(radec.to_string("hmsdms"))
