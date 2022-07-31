@@ -29,6 +29,8 @@ LOCATION = EarthLocation.from_geodetic(
 
 MODEL_MODES = ["subtrmodel", "casa", "casaclean", "count", "wsclean"]
 
+mem = os.getenv("GXMEMORY")
+
 # TODO: Make Source use and return proper units
 class Source:
     def __init__(self, name, pos, flux, alpha, beta):
@@ -347,7 +349,7 @@ def wsclean_script(
             spec_fit = "-join-channels -channels-out 64 -fit-spectral-pol 4"
             wsclean = (
                 f"wsclean "
-                f"-mgain 0.8 -abs-mem 30 -nmiter 10 -niter 100000 -size 128 128 -pol XXYY "
+                f"-mgain 0.8 -abs-mem {mem} -nmiter 10 -niter 100000 -size 128 128 -pol XXYY "
                 f"-data-column {datacolumn} -name {imagename} -scale 10arcsec "
                 f"-weight briggs 0.5  -auto-mask 3 -auto-threshold 1 "
                 f" {spec_fit} "
