@@ -94,6 +94,12 @@ then
     flags="$flags 76 80"
 fi
 
+# Late 2017 Tile 40 wasn't great
+if [[ ${obsnum} -gt 1170100000 ]] && [[ $obsnum -lt 1170200000 ]]
+then
+    flags="$flags 40"
+fi
+
 # In January 2018, tile indices 60, 63, and 84 do not look good
 if [[ ${obsnum} -gt 1198800128 ]] && [[ $obsnum -lt 1201400000 ]]
 then
@@ -146,6 +152,37 @@ fi
 if [[ $obsnum -ge 1285758208 ]] && [[ $obsnum -le 1287607136 ]]
 then 
     flags=" $flags 84 "
+fi
+
+# 2022-A -- new extended array with an extra receiver and some tiles missing
+if [[ $obsnum -gt 1338220000 ]] && [[ $obsnum -lt 1350000000 ]]
+then
+    flags=" $flags 84 97 113"
+fi
+
+# 2022-07-15 -- more tiles back in, but some weirdness remains
+if [[ $obsnum -gt 1341900000 ]] && [[ $obsnum -lt 1342000000 ]]
+then
+    flags=" $flags 96 97 98 99 100 101 102 103 128 130 135"
+fi
+
+# 2022-07-16 -- more tiles back in, but some (different!) weirdness remains
+if [[ $obsnum -gt 1342000000 ]] && [[ $obsnum -lt 1342090000 ]]
+then
+    flags=" $flags 72 73 74 75 76 77 78 79 80 130"
+fi
+# 2022-07-17 -- everything works again??
+
+# 2022-07-22 -- just one weird tile?
+if [[ $obsnum -gt 1342500000 ]] && [[ $obsnum -lt 1342600000 ]]
+then
+    flags=" $flags 92"
+fi
+
+# 2022-07-25 -- more intermittent weirdness
+if [[ $obsnum -gt 1342780000 ]] && [[ $obsnum -lt 1342810000 ]]
+then
+    flags=" $flags 130 131 132 134"
 fi
 
 if [[ ! -z ${flags} ]]
