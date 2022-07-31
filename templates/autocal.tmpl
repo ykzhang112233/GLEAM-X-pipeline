@@ -34,6 +34,9 @@ datadir=DATADIR
 if [[ $obsnum -gt 1300000000 ]] && [[ $obsnum -lt 1342950000 ]]
 then
     refant=0
+elif [[ $obsnum -gt 1342950000 ]]
+then
+    refant=8
 else
     refant=127
 fi
@@ -138,7 +141,7 @@ then
     
     echo "Ionospheric calibration finished. Creating plots and statistics. "
     aocal_plot.py --refant="${refant}" --amp_max=2 "${solutions}"
-    aocal_diff.py --metafits="${metafits}" --names "${solutions}"
+    aocal_diff.py --metafits="${metafits}" --names "${solutions}" --refant="${refant}"
     iono_update.py --ionocsv "${obsnum}_ionodiff.csv"
 fi
 
