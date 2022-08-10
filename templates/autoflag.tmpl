@@ -191,12 +191,17 @@ then
     flags=" $flags 62 128 132"
 fi
 
+# 2022-08-03 until... who knows, let's guess -08-05
+if [[ $obsnum -gt 1343492000 ]] && [[ $obsnum -lt 1343824000 ]]
+then
+    flags=" $flags 114"
+fi
+
 # 2022-08-07
 if [[ $obsnum -gt 1343700000 ]] && [[ $obsnum -lt 1344000000 ]]
 then
     flags=" $flags 24 25 26 27 28 29 30 31"
 fi
-
 
 if [[ ! -z ${flags} ]]
 then
