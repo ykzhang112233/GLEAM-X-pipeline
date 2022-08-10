@@ -173,8 +173,8 @@ then
 fi
 # 2022-07-17 -- everything works again??
 
-# 2022-07-22 -- just one weird tile? But it's an absolute BEAST
-if [[ $obsnum -gt 1342500000 ]] && [[ $obsnum -lt 1346310000 ]]
+# 2022-07-22 -- just one weird tile? But it's an absolute BEAST Actually bad for weeks...
+if [[ $obsnum -gt 1342500000 ]] && [[ $obsnum -lt 1345000000 ]]
 then
     flags=" $flags 92"
 fi
@@ -189,6 +189,12 @@ fi
 if [[ $obsnum -gt 1343174512 ]] && [[ $obsnum -lt 1343260480 ]]
 then
     flags=" $flags 62 128 132"
+fi
+
+# 2022-08-07
+if [[ $obsnum -gt 1343700000 ]] && [[ $obsnum -lt 1344000000 ]]
+then
+    flags=" $flags 24 25 26 27 28 29 30 31"
 fi
 
 
