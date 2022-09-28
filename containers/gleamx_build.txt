@@ -26,7 +26,7 @@ mwa-reduce
 %post
 echo "Updating apt repositories"
 apt update && apt upgrade -y 
-apt install -y \
+DEBIAN_FRONTEND=noninteractive apt install -y \
             saods9 \
             csh \
             ffmpeg \
@@ -181,7 +181,7 @@ echo "Pulling CASA version ${version}"
 
 cd / \
     && cd opt \
-    && wget https://casa.nrao.edu/download/distro/casa/release/el6/casa-"${version}".tar.gz \
+    && wget http://casa.nrao.edu/download/distro/casa/release/el6/casa-"${version}".tar.gz \
     && tar -xf casa-"${version}".tar.gz \
     && rm -rf casa-"${version}".tar.gz
 
@@ -211,7 +211,8 @@ pip3 install --no-cache-dir \
             lmfit==1.0.2 \
             tifffile==2021.8.30 \
             jedi==0.17.2 \
-            pandas==1.2.1
+            pandas==1.2.1 \
+            numpy==1.19
 
 pip3 install --no-cache-dir \
             ipython \
@@ -331,6 +332,48 @@ cd / \
 # ------------------------------------------------
 
 # ------------------------------------------------
+# rust
+# ------------------------------------------------
+export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib/:/usr/lib/x86_64-linux-gnu/"
+
+cd / && \
+    mkdir opt && \
+    mkdir /opt/rust /opt/cargo
+
+export RUST_HOME=/opt/rust 
+export RUSTUP_HOME=/opt/rust
+export CARGO_HOME=/opt/cargo
+
+export PATH=$CARGO_HOME/bin:$PATH 
+
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs -sSf | sh -s -- -y
+
+
+export MAKEFLAGS="-j $MAKEFLAGS"
+
+cargo install --force cargo-make
+# ------------------------------------------------
+
+# ------------------------------------------------
+# birli
+# ------------------------------------------------
+cd /opt && \
+    git clone https://github.com/MWATelescope/Birli.git && \
+    cd Birli && \
+    cargo make install_deps && \
+    cargo install --features=aoflagger --path .
+# ------------------------------------------------
+
+# ------------------------------------------------
+# hyperdrive
+# ------------------------------------------------
+cd /opt && \
+    git clone https://github.com/MWATelescope/mwa_hyperdrive && \
+    cd mwa_hyperdrive && \
+    cargo install --features=all-static --path .
+# ------------------------------------------------
+
+# ------------------------------------------------
 # Clean up
 # ------------------------------------------------
 cd / \
@@ -376,6 +419,12 @@ export MWA_PB_JONES='/pb_lookup/gleam_jones.hdf5'
     && export PATH=$MIRBIN:$PATH
 # ------------------------------------------------
 
+# ------------------------------------------------
+# rust
+# ------------------------------------------------
+export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib/:/usr/lib/x86_64-linux-gnu/"
+export PATH=/opt/cargo/bin:$PATH
+# ------------------------------------------------
 
 # ------------------------------------------------
 # Alias 
