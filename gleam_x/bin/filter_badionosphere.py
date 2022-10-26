@@ -21,6 +21,7 @@ import astropy.units as u
 import numpy as np
 import logging 
 
+
 logger = logging.getLogger(__name__)
 logging.basicConfig(format="%(module)s:%(levelname)s:%(lineno)d %(message)s")
 logger.setLevel(logging.INFO)
@@ -37,7 +38,7 @@ def cut_high_rmsobsids(
     for obs in obsids: 
         rmsfile = f"{base_dir}/{obs:10.0f}/{obs:10.0f}_deep-MFS-image-pb_warp_rms.fits"
         if os.path.exists(rmsfile):
-            # plotobs.append(obs)
+            # TODO: plotobs.append(obs)
             hdu = fits.open(rmsfile)
             rms.append(1.e3*hdu[0].data[int(hdu[0].data.shape[0]/2), int(hdu[0].data.shape[1]/2)])
             ra.append(hdu[0].header["CRVAL1"])
@@ -50,7 +51,8 @@ def cut_high_rmsobsids(
 
     if len(missing_obsids)>5:
         logger.warning(f"Large number of missing obsids: {len(missing_obsids)}/{len(obsids)}")
-    if args.save_missing_obsids is not None:
+    if args.save_missing_obsids is True:
+        logger.debug(f"Saving textfile with list of missing obsids: {args.save_missing_obsids}")
         np.savetxt(args.obsids.replace(".txt", "_missing_obsids.txt"), missing_obsids, fmt="%10.0f")
 
 
@@ -59,9 +61,14 @@ def cut_high_rmsobsids(
     
     # Just shouting out that many are high RMS
     # TODO: implement from here a QA check that potentially cans the night if all channels have this or it's some ridiculously large
-    frac_flagged = (len(obslist)/len(obsids))*100
+    frac_flagged = int((1-(len(obslist)/len(obsids)))*100)
     if frac_flagged > 15:
         logger.warning(f"Large number of obsids flagged for high RMS: {frac_flagged}%")
+
+    # TODO: add save bad obsids list
+    # if args.save_bad_obsids is not None:
+    #     np.savetxt(args.obsids.replace(".txt", "_missing_obsids.txt"), missing_obsids, fmt="%10.0f")
+
 
     return obslist 
 
@@ -86,19 +93,17 @@ def crossmatch_cats(
 def cut_cat_bright(
     base_dir, 
     obsid,
-    refcat,
-    # cut_type=cut_type, 
-    # cut_level_int_peak=cut_level_int_peak,
-    # cut_level_int_rms=cut_level_int_rms,
-    # cut_level_snr=cut_level_snr,
-
+    # refcat,
 ):
 
     try:
-        temp = fits.open(f"{base_dir}/{obsid}/{obsid}_deep-MFS-image-pb_warp_rescaled_comp.fits",mmap=True)
+        logger.debug(f"trying to find comp for {obs:10.0f}")
+        temp = fits.open(f"{base_dir}/{obs:10.0f}/{obs:10.0f}_deep-MFS-image-pb_warp_rescaled_comp.fits",mmap=True)
         temp_cat = temp[1].data
+        temp.close()
+
     except:
-        logger.debug(f"No catalogue for io checks: {obsid}")
+        logger.debug(f"No catalogue for io checks: {obs:10.0f}/{obs:10.0f}")
         return 
 
     int_over_peak = temp_cat["int_flux"]/temp_cat["peak_flux"]
@@ -107,31 +112,24 @@ def cut_cat_bright(
     blur = np.log10(temp_cat['int_flux']/temp_cat['peak_flux'])
     std_int_over_peak = np.nanstd(temp_cat['int_flux']/temp_cat['peak_flux'])
 
-    temp_cat["int_over_peak"] = int_over_peak
-    temp_cat["err_int_over_rms"] = err_intoverrms
-    temp_cat["snr"] = snr
-    temp_cat['blur'] = blur
-    temp_cat['std_int_over_peak'] = std_int_over_peak
-
-    if cut_type == "suggested":
-        mask = np.where((int_over_peak<=cut_level_int_peak)&(err_intoverrms<=cut_level_int_rms))
+    if args.cut_type == "suggested":
+        mask = np.where((int_over_peak<=args.cut_level_int_peak)&(err_intoverrms<=args.cut_level_int_rms))
         cat = temp_cat[mask]
 
-    elif cut_type == "snr":
-        mask = np.where((int_over_peak<=cut_level_int_peak)&(snr>=cut_level_snr))
+    elif args.cut_type == "snr":
+        mask = np.where((int_over_peak<=args.cut_level_int_peak)&(snr>=args.cut_level_snr))
         cat = temp_cat[mask]
 
-    elif cut_type == "both":
-        mask = np.where((int_over_peak<=cut_level_int_peak)&(err_intoverrms<=cut_level_int_rms)&(snr>=cut_level_snr))
+    elif args.cut_type == "both":
+        mask = np.where((int_over_peak<=args.cut_level_int_peak)&(err_intoverrms<=args.cut_level_err_int_rms)&(snr>=args.cut_level_snr))
         cat = temp_cat[mask]
     else: 
         logger.warning(f"No cut defined?!?! Carrying on with NO any snr or intoverpeak cuts")
         cat = temp_cat
+    
+    # cat_xm = crossmatch_cats(cat,refcat)
 
-
-    cat_xm = crossmatch_cats(cat,refcat)
-
-    return cat_xm
+    return cat
 
 
 def calc_intoverpeak_stats(
@@ -144,12 +142,17 @@ def calc_intoverpeak_stats(
     for obs in obslist: 
         obsid_cat = cut_cat_bright(base_dir,obs)
 
+        int_over_peak = obsid_cat["int_flux"]/obsid_cat["peak_flux"]
+        err_intoverrms = obsid_cat["err_int_flux"]/obsid_cat["local_rms"]
+        snr = obsid_cat["int_flux"]/obsid_cat["local_rms"]
+        blur = np.log10(obsid_cat['int_flux']/obsid_cat['peak_flux'])
+        std_int_over_peak = np.nanstd(obsid_cat['int_flux']/obsid_cat['peak_flux'])
         # TODO: add plotting option here to plot the obsid intoverpeak per source or something
 
-        mean_int_over_peak.append(np.nanmedian(obsid_cat['int_over_peak']))
-        std_int_over_peak.append(np.nanstd(obsid_cat['int_over_peak']))
+        mean_int_over_peak.append(np.nanmedian(int_over_peak))
+        std_int_over_peak.append(np.nanstd(int_over_peak))
 
-
+    logger.debug(f"mean_int_over_peak: {mean_int_over_peak[0]}")
     return mean_int_over_peak, std_int_over_peak
 
 
@@ -160,6 +163,11 @@ if __name__ == "__main__":
         description="Script to assess the quality of images for obsids and return list of obsids that pass quality assurance to be included in moasics. Note: currently only works on obsids given per channel, not per night. "
     )
     parser.add_argument(
+        'obsids',
+        type=str,
+        help="Path to the .txt file with the new line separated obsids for the given channel"
+    )
+    parser.add_argument(
         '-b',
         '--base_path',
         type=str,
@@ -167,22 +175,19 @@ if __name__ == "__main__":
         help="Path to folder containing obsid folders"
     )
     parser.add_argument(
-        'obsids',
-        type=str,
-        help="Path to the .txt file with the new line separated obsids for the given channel"
-    )
-    parser.add_argument(
         "--catalogue",
         type=str,
-        dest="cat",
+        dest="ref_cat",
         default="GGSM_sparse_unresolved.fits",
-        help="Filename of catalogue to use for comparison, assumed GGSM_sparse_unresolved from GLEAM-X-pipeline",
-    )    
+        help="Filename of catalogue to use for comparison, assumed ./GGSM_sparse_unresolved from GLEAM-X-pipeline",
+    )   
+
+
     parser.add_argument(
         '--sep',
         type=float,
         default=1,
-        help="Separation from reference catalogue to that of obsid. (defualt=1arcmin)"
+        help="Separation from reference catalogue to that of obsid. (default=1arcmin)"
     )
 
 
@@ -201,7 +206,7 @@ if __name__ == "__main__":
     #     help="The name of your Dec column (in decimal degrees) in your catalogue (default = DEJ2000)",
     # )
     parser.add_argument(
-        'output',
+        '--output',
         type=str,
         default=".",
         help="directory of .txt file for output, assumes a .txt file in current directory named after input obsids text file"
@@ -215,7 +220,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         '--flag_bad_io',
-        defualt=True, 
+        default=True, 
         help='Will run the selection cuts for bad ionosphere on individial obsids based on quality checks from Brandon'
     )
 
@@ -228,7 +233,7 @@ if __name__ == "__main__":
         type=str
     )
     parser.add_argument(
-        '--cut_level_int_over_peak',
+        '--cut_level_int_peak',
         help='The ratio of int flux to peak flux below which the sources will be retained. (Default=2).',
         default=2,
         type=float
@@ -248,13 +253,13 @@ if __name__ == "__main__":
 
 
     parser.add_argument(
-        '-save_bad_obsids',
+        '--save_bad_obsids',
         type=str,
         help="If defined, will make a .txt file with the bad obsids"
     )
     parser.add_argument(
-        'save_missing_obsids',
-        type=str,
+        '--save_missing_obsids',
+        default=False,
         help="If defined, will make a .txt file in directory with all obsids with no *MFS-image-pb_warp_rms.fits file"
     )
 
@@ -274,16 +279,16 @@ if __name__ == "__main__":
     # Defining all the global variables based on inputs 
     obsids =  np.loadtxt(args.obsids)
     base_dir = args.base_path
-    cut_type=args.cut_type
-    cut_level_int_rms=args.cut_level_err_int_rms
-    cut_level_int_peak=args.cut_level_int_over_peak
-    cut_level_snr=args.cut_level_SNR
+    # cut_type=args.cut_type
+    # cut_level_int_rms=args.cut_level_err_int_rms
+    # cut_level_int_peak=args.cut_level_int_over_peak
+    # cut_level_snr=args.cut_level_SNR
 
 
     # Double check: I don't think you need this anymore 
-    ggsm = args.cat 
-    ggsm_cat = ggsm[1].data
-    coords = SkyCoord(ggsm_cat[args.racol], ggsm_cat[args.decol], unit=(u.deg, u.deg))
+    # ggsm = args.cat 
+    # ggsm_cat = ggsm[1].data
+    # coords = SkyCoord(ggsm_cat[args.racol], ggsm_cat[args.decol], unit=(u.deg, u.deg))
 
 
     # Actually implementing the cuts using functions above 
@@ -301,11 +306,18 @@ if __name__ == "__main__":
         std_int_over_peak = []
         for obs in obslist: 
             obsid_cat = cut_cat_bright(base_dir,obs)
-
+            
+            int_over_peak = obsid_cat["int_flux"]/obsid_cat["peak_flux"]
+            err_intoverrms = obsid_cat["err_int_flux"]/obsid_cat["local_rms"]
+            snr = obsid_cat["int_flux"]/obsid_cat["local_rms"]
+            blur = np.log10(obsid_cat['int_flux']/obsid_cat['peak_flux'])
+            std_int_over_peak.append(np.nanstd(obsid_cat['int_flux']/obsid_cat['peak_flux']))
             # TODO: add plotting option here to plot the obsid intoverpeak per source or something
-            mean_int_over_peak.append(np.nanmedian(obsid_cat['int_over_peak']))
-            std_int_over_peak.append(np.nanstd(obsid_cat['int_over_peak']))
 
+            mean_int_over_peak.append(np.nanmedian(int_over_peak))
+
+        logger.debug(f"mean_int_over_peak: {mean_int_over_peak[0]}")
+        logger.debug(f"ran cut bright but not crossmatch")
     else: 
         logger.debug(f"Not running the ionosphere analysis")
 
