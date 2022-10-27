@@ -20,11 +20,31 @@ from matplotlib import pyplot as plt
 import astropy.units as u
 import numpy as np
 import logging 
+import matplotlib.ticker as ticker
+from matplotlib import rcParams
+import matplotlib.pyplot as plt
+
 
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format="%(module)s:%(levelname)s:%(lineno)d %(message)s")
 logger.setLevel(logging.INFO)
+
+
+rcParams['font.family'] = 'serif'
+s, dt, axlab = 8, 1.1, 12.
+plt.rcParams["xtick.major.size"] = s
+plt.rcParams["xtick.minor.size"] = s
+plt.rcParams["ytick.major.size"] = s
+plt.rcParams["ytick.minor.size"] = s
+plt.rcParams["xtick.major.width"] = dt
+plt.rcParams["xtick.minor.width"] = dt
+plt.rcParams["ytick.major.width"] = dt
+plt.rcParams["ytick.minor.width"] = dt
+plt.rcParams["xtick.direction"] = 'in'
+plt.rcParams["ytick.direction"] = 'in'
+plt.rcParams["xtick.major.pad"] = 5.
+plt.rcParams["figure.figsize"] = [10., 4.5]
 
 
 def cut_high_rmsobsids(
@@ -97,7 +117,6 @@ def cut_cat_bright(
 ):
 
     try:
-        logger.debug(f"trying to find comp for {obs:10.0f}")
         temp = fits.open(f"{base_dir}/{obs:10.0f}/{obs:10.0f}_deep-MFS-image-pb_warp_rescaled_comp.fits",mmap=True)
         temp_cat = temp[1].data
         temp.close()
@@ -156,6 +175,64 @@ def calc_intoverpeak_stats(
     return mean_int_over_peak, std_int_over_peak
 
 
+def plot_blur_pernight(obsids, blur, ext="png"):
+
+    fig = plt.figure(dpi=plt.rcParams['figure.dpi']*4.0)
+    ax = fig.add_subplot(1,1,1)
+    for i in range(len(obsids)):
+        ax.errorbar(obsids[i], np.mean(blur[i]),yerr=np.nanstd(blur[i]),fmt="o",color="C6")
+    ax.set_ylabel(f"obsid")
+    ax.set_xlabel(f"blur")
+    fig.suptitle(f"{night}: blur")
+    
+    plt.savefig(args.obsids.replace(".txt", f"_intoverpeak.{ext}"), overwrite=True, bbox_inches='tight')
+
+    return 
+
+
+def plot_intoverpeak_pernight(obslist, int_over_peak, std_int_over_peak, ext="png"):
+
+    fig = plt.figure(dpi=plt.rcParams['figure.dpi']*4.0)
+    ax = fig.add_subplot(1,1,1)
+
+    for i in range(len(std_int_over_peak)):
+        ax.scatter(int_over_peak[i],std_int_over_peak[i],s=75,color="C6")
+    ax.axhline(0.15, color="k", alpha=0.3, linestyle="--")
+    ax.axvline(1.15, color="k", alpha=0.3, linestyle="--")
+    ax.set_ylabel(f"std(int/peak)")
+    ax.set_xlabel(f"mean(int/peak)")
+    fig.suptitle(f"{night}: Int/Peak")
+
+    plt.savefig(args.obsids.replace(".txt", f"_intoverpeak.{ext}"), bbox_inches='tight')
+
+    fig = plt.figure(dpi=plt.rcParams['figure.dpi']*4.0)
+    ax = fig.add_subplot(1,1,1)
+
+    ax.errorbar(obslist, int_over_peak,yerr=std_int_over_peak, color="C6")
+    ax.axhline(np.nanmean(int_over_peak), color="k", alpha=0.3, linestyle="--")
+    # ax.axvline(1.15, color="k", alpha=0.3, linestyle="--")
+    ax.set_ylabel(f"mean(int/peak)")
+    ax.set_xlabel(f"obsid")
+    fig.suptitle(f"{night}: Int/Peak")
+
+    plt.savefig(args.obsids.replace(".txt", f"_intoverpeak_perobsid.{ext}"), bbox_inches='tight')
+
+    return 
+
+def plot_intoverpeak_perobs(obsid, int_over_peak, std_int_over_peak, ext="png"):
+
+    fig = plt.figure(dpi=plt.rcParams['figure.dpi']*4.0)
+    ax = fig.add_subplot(1,1,1)
+
+    ax.scatter(int_over_peak,std_int_over_peak,fmt="o",color="C6")
+    ax.axhline(1.15, color="k", alpha=0.3, linestyle="--")
+    ax.axvline(0.15, color="k", alpha=0.3, linestyle="--")
+    ax.set_ylabel(f"integrated flux/peak flux")
+    ax.set_xlabel(f"std(integrated flux/peak flux)")
+    
+    fig.suptitle(f"{obsid}: Int/Peak")
+    plt.savefig(f"{base_dir}/{obsid}/{obsid}_intoverpeak.{ext}", bbox_inches='tight')
+    return 
 
 
 if __name__ == "__main__":
@@ -165,7 +242,7 @@ if __name__ == "__main__":
     parser.add_argument(
         'obsids',
         type=str,
-        help="Path to the .txt file with the new line separated obsids for the given channel"
+        help="Path to the .txt file with the new line separated obsids for the given channel, note: currently uses the name of obsid to split by _ and use that as title for night for plotting"
     )
     parser.add_argument(
         '-b',
@@ -205,12 +282,6 @@ if __name__ == "__main__":
     #     default="DEJ2000",
     #     help="The name of your Dec column (in decimal degrees) in your catalogue (default = DEJ2000)",
     # )
-    parser.add_argument(
-        '--output',
-        type=str,
-        default=".",
-        help="directory of .txt file for output, assumes a .txt file in current directory named after input obsids text file"
-    )
 
 
     parser.add_argument(
@@ -240,8 +311,8 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         '--cut_level_err_int_rms',
-        help='The cut level for the err_int and local_rms, below which sources will be kept. Default=2.'
-        ,default=2,
+        help='The cut level for the err_int and local_rms, below which sources will be kept. Default=2.',
+        default=2,
         type=float
     )
     parser.add_argument(
@@ -251,10 +322,16 @@ if __name__ == "__main__":
         type=float
     )
 
-
+    parser.add_argument(
+        '--plot',
+        '-p',
+        default=None,
+        type=str,
+        help="If True, will plot all plots and save to base_dir "
+    )
     parser.add_argument(
         '--save_bad_obsids',
-        type=str,
+        default=False,
         help="If defined, will make a .txt file with the bad obsids"
     )
     parser.add_argument(
@@ -279,18 +356,9 @@ if __name__ == "__main__":
     # Defining all the global variables based on inputs 
     obsids =  np.loadtxt(args.obsids)
     base_dir = args.base_path
-    # cut_type=args.cut_type
-    # cut_level_int_rms=args.cut_level_err_int_rms
-    # cut_level_int_peak=args.cut_level_int_over_peak
-    # cut_level_snr=args.cut_level_SNR
-
-
-    # Double check: I don't think you need this anymore 
-    # ggsm = args.cat 
-    # ggsm_cat = ggsm[1].data
-    # coords = SkyCoord(ggsm_cat[args.racol], ggsm_cat[args.decol], unit=(u.deg, u.deg))
-
-
+    night = args.obsids.split("/")[0].split("_")[2]
+    
+    make_plots = args.plot
     # Actually implementing the cuts using functions above 
     # First up: checking to extract only obsids with nice RMS 
     if args.flag_high_rms is True: 
@@ -304,17 +372,29 @@ if __name__ == "__main__":
 
         mean_int_over_peak = []
         std_int_over_peak = []
+        blur = []
+        int_over_peak = []
         for obs in obslist: 
             obsid_cat = cut_cat_bright(base_dir,obs)
             
-            int_over_peak = obsid_cat["int_flux"]/obsid_cat["peak_flux"]
+            obs_int_over_peak = obsid_cat["int_flux"]/obsid_cat["peak_flux"]
             err_intoverrms = obsid_cat["err_int_flux"]/obsid_cat["local_rms"]
             snr = obsid_cat["int_flux"]/obsid_cat["local_rms"]
-            blur = np.log10(obsid_cat['int_flux']/obsid_cat['peak_flux'])
-            std_int_over_peak.append(np.nanstd(obsid_cat['int_flux']/obsid_cat['peak_flux']))
+            blur.append(np.log10(obsid_cat['int_flux']/obsid_cat['peak_flux']))
+            std_intpeak = np.nanstd(obsid_cat['int_flux']/obsid_cat['peak_flux'])
+            std_int_over_peak.append(std_intpeak)
+            int_over_peak.append(obs_int_over_peak)
             # TODO: add plotting option here to plot the obsid intoverpeak per source or something
 
-            mean_int_over_peak.append(np.nanmedian(int_over_peak))
+            mean_int_over_peak.append(np.nanmedian(obs_int_over_peak))
+
+        if make_plots is not None: 
+            logger.debug(f"Plotting int over peak for night: {night}")
+            plot_intoverpeak_pernight(obslist, mean_int_over_peak,std_int_over_peak)
+        
+
+
+            
 
         logger.debug(f"mean_int_over_peak: {mean_int_over_peak[0]}")
         logger.debug(f"ran cut bright but not crossmatch")
