@@ -47,6 +47,23 @@ plt.rcParams["xtick.major.pad"] = 5.
 plt.rcParams["figure.figsize"] = [10., 4.5]
 
 
+def remove_missing(obslist):
+
+    good_obsids = []
+    missing_obsids = []
+
+    for obsid in obslist:
+        try:
+            temp = fits.open(f"{base_dir}/{obsid:10.0f}/{obsid:10.0f}_deep-MFS-image-pb_warp_rescaled_comp.fits",mmap=True)
+            temp_cat = temp[1].data
+            temp.close()
+            good_obsids.append(obsid)
+        except:
+            logger.debug(f"No catalogue for io checks: {obsid:10.0f}/{obsid:10.0f}")
+            missing_obsids.append(obsid)
+    logger.debug(f"Number of missing obsids: {len(missing_obsids)}")
+    return good_obsids, missing_obsids
+
 def cut_high_rmsobsids(
     obsids
 ):#, base_dir=args.base_path):
@@ -92,24 +109,6 @@ def cut_high_rmsobsids(
 
     return obslist 
 
-def crossmatch_cats(
-    input_cat,
-    ref_cat,
-    sep,
-):
-    ref_cat_skycoords = SkyCoord(ref_cat.RAJ2000,ref_cat.DEJ2000, frame='fk5',unit=u.deg)
-    input_cat_skycoords = SkyCoord(input_cat.ra, input_cat.dec, frame='fk5', unit=u.deg)
-    
-    # Crossmatching the two catalogues with sep 1arcmin default 
-    # i.e. idx1 is list of indexes for inputcat that have corresponding crossmatch in refcat (but I don't actually care about refcat, just that it's there)
-    idx1,idx2,sep2d,dist3d=search_around_sky(input_cat_skycoords,ref_cat_skycoords,sep*u.arcmin)
-
-    output_cat = input_cat[idx1]
-
-    return output_cat
-
-
-
 def cut_cat_bright(
     base_dir, 
     obsid,
@@ -117,12 +116,13 @@ def cut_cat_bright(
 ):
 
     try:
-        temp = fits.open(f"{base_dir}/{obs:10.0f}/{obs:10.0f}_deep-MFS-image-pb_warp_rescaled_comp.fits",mmap=True)
+        temp = fits.open(f"{base_dir}/{obsid:10.0f}/{obsid:10.0f}_deep-MFS-image-pb_warp_rescaled_comp.fits",mmap=True)
         temp_cat = temp[1].data
         temp.close()
 
     except:
         logger.debug(f"No catalogue for io checks: {obs:10.0f}/{obs:10.0f}")
+
         return 
 
     int_over_peak = temp_cat["int_flux"]/temp_cat["peak_flux"]
@@ -150,31 +150,24 @@ def cut_cat_bright(
 
     return cat
 
-
-def calc_intoverpeak_stats(
-    base_dir,
-    obslist,
+# TODO: Needs fixing up 
+def crossmatch_cats(
+    input_cat,
+    ref_cat,
+    sep,
 ):
+    ref_cat_skycoords = SkyCoord(ref_cat.RAJ2000,ref_cat.DEJ2000, frame='fk5',unit=u.deg)
+    input_cat_skycoords = SkyCoord(input_cat.ra, input_cat.dec, frame='fk5', unit=u.deg)
+    
+    # Crossmatching the two catalogues with sep 1arcmin default 
+    # i.e. idx1 is list of indexes for inputcat that have corresponding crossmatch in refcat (but I don't actually care about refcat, just that it's there)
+    idx1,idx2,sep2d,dist3d=search_around_sky(input_cat_skycoords,ref_cat_skycoords,sep*u.arcmin)
 
-    mean_int_over_peak = []
-    std_int_over_peak = []
-    for obs in obslist: 
-        obsid_cat = cut_cat_bright(base_dir,obs)
+    output_cat = input_cat[idx1]
 
-        int_over_peak = obsid_cat["int_flux"]/obsid_cat["peak_flux"]
-        err_intoverrms = obsid_cat["err_int_flux"]/obsid_cat["local_rms"]
-        snr = obsid_cat["int_flux"]/obsid_cat["local_rms"]
-        blur = np.log10(obsid_cat['int_flux']/obsid_cat['peak_flux'])
-        std_int_over_peak = np.nanstd(obsid_cat['int_flux']/obsid_cat['peak_flux'])
-        # TODO: add plotting option here to plot the obsid intoverpeak per source or something
+    return output_cat
 
-        mean_int_over_peak.append(np.nanmedian(int_over_peak))
-        std_int_over_peak.append(np.nanstd(int_over_peak))
-
-    logger.debug(f"mean_int_over_peak: {mean_int_over_peak[0]}")
-    return mean_int_over_peak, std_int_over_peak
-
-
+# TODO: Needs fixing up 
 def plot_blur_pernight(obsids, blur, ext="png"):
 
     fig = plt.figure(dpi=plt.rcParams['figure.dpi']*4.0)
@@ -189,7 +182,7 @@ def plot_blur_pernight(obsids, blur, ext="png"):
 
     return 
 
-
+# TODO: needs error calculated properly lol 
 def plot_intoverpeak_pernight(obslist, int_over_peak, std_int_over_peak, ext="png"):
 
     fig = plt.figure(dpi=plt.rcParams['figure.dpi']*4.0)
@@ -208,7 +201,7 @@ def plot_intoverpeak_pernight(obslist, int_over_peak, std_int_over_peak, ext="pn
     fig = plt.figure(dpi=plt.rcParams['figure.dpi']*4.0)
     ax = fig.add_subplot(1,1,1)
 
-    ax.errorbar(obslist, int_over_peak,yerr=std_int_over_peak, color="C6")
+    ax.errorbar(obslist, int_over_peak,yerr=std_int_over_peak, fmt="o", color="C6")
     ax.axhline(np.nanmean(int_over_peak), color="k", alpha=0.3, linestyle="--")
     # ax.axvline(1.15, color="k", alpha=0.3, linestyle="--")
     ax.set_ylabel(f"mean(int/peak)")
@@ -251,13 +244,7 @@ if __name__ == "__main__":
         default=".",
         help="Path to folder containing obsid folders"
     )
-    parser.add_argument(
-        "--catalogue",
-        type=str,
-        dest="ref_cat",
-        default="GGSM_sparse_unresolved.fits",
-        help="Filename of catalogue to use for comparison, assumed ./GGSM_sparse_unresolved from GLEAM-X-pipeline",
-    )   
+
 
 
     parser.add_argument(
@@ -266,22 +253,13 @@ if __name__ == "__main__":
         default=1,
         help="Separation from reference catalogue to that of obsid. (default=1arcmin)"
     )
-
-
-
-    # parser.add_argument(
-    #     "--racol",
-    #     type=str,
-    #     default="RAJ2000",
-    #     help="The name of the RA column (in decimal degrees) in your catalogue (default = RAJ2000)",
-    # )
-
-    # parser.add_argument(
-    #     "--decol",
-    #     type=str,
-    #     default="DEJ2000",
-    #     help="The name of your Dec column (in decimal degrees) in your catalogue (default = DEJ2000)",
-    # )
+    parser.add_argument(
+        "--catalogue",
+        type=str,
+        dest="ref_cat",
+        default="GGSM_sparse_unresolved.fits",
+        help="Filename of catalogue to use for comparison, assumed ./GGSM_sparse_unresolved from GLEAM-X-pipeline",
+    )   
 
 
     parser.add_argument(
@@ -293,6 +271,23 @@ if __name__ == "__main__":
         '--flag_bad_io',
         default=True, 
         help='Will run the selection cuts for bad ionosphere on individial obsids based on quality checks from Brandon'
+    )
+    parser.add_argument(
+        '--plot',
+        '-p',
+        default=None,
+        type=str,
+        help="If True, will plot all plots and save to base_dir "
+    )
+    parser.add_argument(
+        '--save_bad_obsids',
+        default=False,
+        help="If defined, will make a .txt file with the bad obsids"
+    )
+    parser.add_argument(
+        '--save_missing_obsids',
+        default=None,
+        help="If defined, will make a .txt file in directory with all obsids with no *MFS-image-pb_warp_rms.fits file"
     )
 
 
@@ -322,23 +317,6 @@ if __name__ == "__main__":
         type=float
     )
 
-    parser.add_argument(
-        '--plot',
-        '-p',
-        default=None,
-        type=str,
-        help="If True, will plot all plots and save to base_dir "
-    )
-    parser.add_argument(
-        '--save_bad_obsids',
-        default=False,
-        help="If defined, will make a .txt file with the bad obsids"
-    )
-    parser.add_argument(
-        '--save_missing_obsids',
-        default=False,
-        help="If defined, will make a .txt file in directory with all obsids with no *MFS-image-pb_warp_rms.fits file"
-    )
 
     parser.add_argument(
         '-v',
@@ -357,15 +335,22 @@ if __name__ == "__main__":
     obsids =  np.loadtxt(args.obsids)
     base_dir = args.base_path
     night = args.obsids.split("/")[0].split("_")[2]
-    
     make_plots = args.plot
+
+    obslist, missing_obs = remove_missing(obsids)
+
+    if args.save_missing_obsids is not None: 
+        logger.debug(f"Saving missing obsids")
+        np.savetxt(args.obsids.replace(".txt", "_missing_obsids.txt"), missing_obs, fmt="%10.0f")
+
+    
     # Actually implementing the cuts using functions above 
     # First up: checking to extract only obsids with nice RMS 
     if args.flag_high_rms is True: 
-        obslist = cut_high_rmsobsids(obsids)
+        good_obsids = cut_high_rmsobsids(obslist)
     else:
         logger.debug("Not running high RMS flagger")
-        obslist = obsids
+        good_obsids = obslist
 
     # Establishing the stats needed to assess quality of night here, not actually doing any of the cuts here just assessing
     if args.flag_bad_io is True: 
@@ -374,7 +359,7 @@ if __name__ == "__main__":
         std_int_over_peak = []
         blur = []
         int_over_peak = []
-        for obs in obslist: 
+        for obs in good_obsids: 
             obsid_cat = cut_cat_bright(base_dir,obs)
             
             obs_int_over_peak = obsid_cat["int_flux"]/obsid_cat["peak_flux"]
@@ -390,7 +375,7 @@ if __name__ == "__main__":
 
         if make_plots is not None: 
             logger.debug(f"Plotting int over peak for night: {night}")
-            plot_intoverpeak_pernight(obslist, mean_int_over_peak,std_int_over_peak)
+            plot_intoverpeak_pernight(good_obsids, mean_int_over_peak,std_int_over_peak)
         
 
 
