@@ -23,7 +23,7 @@ import logging
 import matplotlib.ticker as ticker
 from matplotlib import rcParams
 import matplotlib.pyplot as plt
-
+import cmasher as cmr
 
 
 logger = logging.getLogger(__name__)
@@ -46,34 +46,42 @@ plt.rcParams["ytick.direction"] = 'in'
 plt.rcParams["xtick.major.pad"] = 5.
 plt.rcParams["figure.figsize"] = [10., 4.5]
 
+def read_obsids(filename):
 
-def remove_missing(obslist):
+    try: 
+        channel_obsids = np.loadtxt(f"{args.project}/{filename}")
+    except FileNotFoundError:
+        logger.warning(f"Cannot find txt file with obsids: {args.project}/{filename}")
+        channel_obsids = []
+    return channel_obsids
 
+
+def remove_missing(obsids_list):
+    
     good_obsids = []
     missing_obsids = []
 
-    for obsid in obslist:
-        try:
-            temp = fits.open(f"{base_dir}/{obsid:10.0f}/{obsid:10.0f}_deep-MFS-image-pb_warp_rescaled_comp.fits",mmap=True)
-            temp_cat = temp[1].data
-            temp.close()
+    for obsid in obsids_list:
+        if os.path.exists(f"{base_dir}/{obsid:10.0f}/{obsid:10.0f}_deep-MFS-image-pb_warp_rescaled_comp.fits") is True: 
             good_obsids.append(obsid)
-        except:
-            logger.debug(f"No catalogue for io checks: {obsid:10.0f}/{obsid:10.0f}")
+        else:
+            logger.debug(f"No catalogue for io checks: {obsid:10.0f}")
             missing_obsids.append(obsid)
+
     logger.debug(f"Number of missing obsids: {len(missing_obsids)}")
+    if len(missing_obsids)>5:
+        logger.warning(f"Large number of missing obsids: {len(missing_obsids)}/{len(obsids_list)}")
+
     return good_obsids, missing_obsids
 
-def cut_high_rmsobsids(
-    obsids
-):#, base_dir=args.base_path):
+
+def cut_high_rms(obsids_list):
 
     rms = []
-    ra = [] #needed for the plotting, adding currently but not necessary
-    missing_obsids = [] #badobsids is for the missing ones for reference of what to check up on 
+    ra = []
     
-    for obs in obsids: 
-        rmsfile = f"{base_dir}/{obs:10.0f}/{obs:10.0f}_deep-MFS-image-pb_warp_rms.fits"
+    for i in range(len(obsids_list)):
+        rmsfile = f"{args.project}/{obsids_list[i]:10.0f}/{obsids_list[i]:10.0f}_deep-MFS-image-pb_warp_rms.fits"
         if os.path.exists(rmsfile):
             # TODO: plotobs.append(obs)
             hdu = fits.open(rmsfile)
@@ -81,151 +89,132 @@ def cut_high_rmsobsids(
             ra.append(hdu[0].header["CRVAL1"])
             hdu.close()
         else:
+            logger.debug(f"Found missing obsid while checking RMS, make sure ran check for missing earlier")
             rms.append(np.nan)
-            # plotobs.append(np.nan)
             ra.append(np.nan)
-            missing_obsids.append(obs)
-
-    if len(missing_obsids)>5:
-        logger.warning(f"Large number of missing obsids: {len(missing_obsids)}/{len(obsids)}")
-    if args.save_missing_obsids is True:
-        logger.debug(f"Saving textfile with list of missing obsids: {args.save_missing_obsids}")
-        np.savetxt(args.obsids.replace(".txt", "_missing_obsids.txt"), missing_obsids, fmt="%10.0f")
 
 
     cutoff = np.nanmedian(rms)+np.nanstd(rms)
-    obslist = obsids[rms < cutoff]
-    
-    # Just shouting out that many are high RMS
-    # TODO: implement from here a QA check that potentially cans the night if all channels have this or it's some ridiculously large
-    frac_flagged = int((1-(len(obslist)/len(obsids)))*100)
+    obslist_rmscut = obsids_list[rms<cutoff]
+    obslist_badrms = obsids_list[rms>=cutoff]
+
+    frac_flagged = int((1-(len(obslist_rmscut)/len(obsids_list)))*100)
     if frac_flagged > 15:
         logger.warning(f"Large number of obsids flagged for high RMS: {frac_flagged}%")
 
-    # TODO: add save bad obsids list
-    # if args.save_bad_obsids is not None:
-    #     np.savetxt(args.obsids.replace(".txt", "_missing_obsids.txt"), missing_obsids, fmt="%10.0f")
+    return obslist_rmscut, obslist_badrms
 
 
-    return obslist 
-
-def cut_cat_bright(
-    base_dir, 
-    obsid,
-    # refcat,
-):
-
-    try:
-        temp = fits.open(f"{base_dir}/{obsid:10.0f}/{obsid:10.0f}_deep-MFS-image-pb_warp_rescaled_comp.fits",mmap=True)
-        temp_cat = temp[1].data
-        temp.close()
-
-    except:
-        logger.debug(f"No catalogue for io checks: {obs:10.0f}/{obs:10.0f}")
-
-        return 
-
-    int_over_peak = temp_cat["int_flux"]/temp_cat["peak_flux"]
-    err_intoverrms = temp_cat["err_int_flux"]/temp_cat["local_rms"]
-    snr = temp_cat["int_flux"]/temp_cat["local_rms"]
-    blur = np.log10(temp_cat['int_flux']/temp_cat['peak_flux'])
-    std_int_over_peak = np.nanstd(temp_cat['int_flux']/temp_cat['peak_flux'])
-
-    if args.cut_type == "suggested":
-        mask = np.where((int_over_peak<=args.cut_level_int_peak)&(err_intoverrms<=args.cut_level_int_rms))
-        cat = temp_cat[mask]
-
-    elif args.cut_type == "snr":
-        mask = np.where((int_over_peak<=args.cut_level_int_peak)&(snr>=args.cut_level_snr))
-        cat = temp_cat[mask]
-
-    elif args.cut_type == "both":
-        mask = np.where((int_over_peak<=args.cut_level_int_peak)&(err_intoverrms<=args.cut_level_err_int_rms)&(snr>=args.cut_level_snr))
-        cat = temp_cat[mask]
-    else: 
-        logger.warning(f"No cut defined?!?! Carrying on with NO any snr or intoverpeak cuts")
-        cat = temp_cat
-    
-    # cat_xm = crossmatch_cats(cat,refcat)
-
-    return cat
-
-# TODO: Needs fixing up 
 def crossmatch_cats(
     input_cat,
     ref_cat,
-    sep,
+    sep=1,
 ):
+
     ref_cat_skycoords = SkyCoord(ref_cat.RAJ2000,ref_cat.DEJ2000, frame='fk5',unit=u.deg)
     input_cat_skycoords = SkyCoord(input_cat.ra, input_cat.dec, frame='fk5', unit=u.deg)
-    
-    # Crossmatching the two catalogues with sep 1arcmin default 
-    # i.e. idx1 is list of indexes for inputcat that have corresponding crossmatch in refcat (but I don't actually care about refcat, just that it's there)
-    idx1,idx2,sep2d,dist3d=search_around_sky(input_cat_skycoords,ref_cat_skycoords,sep*u.arcmin)
 
-    output_cat = input_cat[idx1]
+    idx, d2d, d3d = input_cat_skycoords.match_to_catalog_sky(ref_cat_skycoords)
+    sep_constraint = d2d < sep*u.arcmin
+    output_cat = input_cat[sep_constraint]
+    # output_cat = input_cat[idx]
 
-    return output_cat
+    return output_cat 
 
-# TODO: Needs fixing up 
-def plot_blur_pernight(obsids, blur, ext="png"):
+def check_io(obsid):
 
+    # for i in range(len(obsids_list)):
+    catfile = f"{args.project}/{obsid:10.0f}/{obsid:10.0f}_deep-MFS-image-pb_warp_rms.fits"
+    if os.path.exists(catfile):
+        hdu = fits.open(catfile)
+        temp_cat = hdu[1].data
+        hdu.close()
+    else:
+        logger.debug(f"Found missing obsid while checking src quality, make sure ran check for missing earlier")
+        return 
+        
+    int_over_peak = temp_cat["int_flux"]/temp_cat["peak_flux"]
+    err_intoverrms = temp_cat["err_int_flux"]/temp_cat["local_rms"]
+    snr = temp_cat["int_flux"]/temp_cat["local_rms"]   
+    shape = temp_cat["a"]/temp_cat["b"]
+
+    mask = np.where((int_over_peak<=2)&(err_intoverrms<=2)&(snr>=5))
+    cat = temp_cat[mask]
+
+    if args.plot == "all":
+        plt_io_obsid(int_over_peak[mask], shape[mask], f"{obsid:10.0f}")
+
+    cat_xm = crossmatch_cats(cat, args.refcat)
+
+
+    return cat_xm, [np.nanmean(int_over_peak[mask]), np.nanstd(int_over_peak[mask])], [np.nanmean(shape[mask]),np.nanstd(shape[mask])]
+
+
+
+def plt_io_obsid(
+    intoverpeak,
+    shape,
+    obsid,
+    ext="png",
+):
+
+    # Just plotting the shape compared to int/flux 
     fig = plt.figure(dpi=plt.rcParams['figure.dpi']*4.0)
     ax = fig.add_subplot(1,1,1)
-    for i in range(len(obsids)):
-        ax.errorbar(obsids[i], np.mean(blur[i]),yerr=np.nanstd(blur[i]),fmt="o",color="C6")
-    ax.set_ylabel(f"obsid")
-    ax.set_xlabel(f"blur")
-    fig.suptitle(f"{night}: blur")
-    
-    plt.savefig(args.obsids.replace(".txt", f"_intoverpeak.{ext}"), overwrite=True, bbox_inches='tight')
+
+    ax.scatter(intoverpeak,shape,s=50, color="C6")
+    ax.axhline(1,color="k",alpha=0.3, linestyle="--")
+
+    ax.set_xlabel("int_flux/peak_flux")
+    ax.set_ylabel("shape (a/b)")
+    fig.suptitle(f"{obsid}: Int/peak vs shape")
+
+    plt.savefig(f"{args.project}/{obsid}/{obsid}_intoverpeak_shape.{ext}", bbox_inches='tight')
 
     return 
 
-# TODO: needs error calculated properly lol 
-def plot_intoverpeak_pernight(obslist, int_over_peak, std_int_over_peak, ext="png"):
-
+def plt_io_pernight(
+    obslist,
+    intoverpeak,
+    std_intoverpeak,
+    shape,
+    drift,
+    ext="png",
+):
+    colors=cmr.take_cmap_colors(
+        "cmr.flamingo", len(obslist), cmap_range=(0.4, 0.7), return_fmt="hex"
+    )
     fig = plt.figure(dpi=plt.rcParams['figure.dpi']*4.0)
     ax = fig.add_subplot(1,1,1)
-
-    for i in range(len(std_int_over_peak)):
-        ax.scatter(int_over_peak[i],std_int_over_peak[i],s=75,color="C6")
-    ax.axhline(0.15, color="k", alpha=0.3, linestyle="--")
-    ax.axvline(1.15, color="k", alpha=0.3, linestyle="--")
-    ax.set_ylabel(f"std(int/peak)")
-    ax.set_xlabel(f"mean(int/peak)")
-    fig.suptitle(f"{night}: Int/Peak")
-
-    plt.savefig(args.obsids.replace(".txt", f"_intoverpeak.{ext}"), bbox_inches='tight')
-
-    fig = plt.figure(dpi=plt.rcParams['figure.dpi']*4.0)
-    ax = fig.add_subplot(1,1,1)
-
-    ax.errorbar(obslist, int_over_peak,yerr=std_int_over_peak, fmt="o", color="C6")
-    ax.axhline(np.nanmean(int_over_peak), color="k", alpha=0.3, linestyle="--")
+    for i in range(len(obslist)):
+        ax.errorbar(obslist[i], intoverpeak[i],yerr=(std_intoverpeak[i]/np.sqrt(len(obslist[i]))), fmt="o", color=colors[i])
+    ax.axhline(np.nanmean(intoverpeak), color="k", alpha=0.3, linestyle="--")
     # ax.axvline(1.15, color="k", alpha=0.3, linestyle="--")
     ax.set_ylabel(f"mean(int/peak)")
     ax.set_xlabel(f"obsid")
-    fig.suptitle(f"{night}: Int/Peak")
+    fig.suptitle(f"{drift}: Int/Peak")
+    plt.savefig(f"{args.project}/{drift}/{drift}_intoverpeak.{ext}", bbox_inches='tight')
 
-    plt.savefig(args.obsids.replace(".txt", f"_intoverpeak_perobsid.{ext}"), bbox_inches='tight')
-
-    return 
-
-def plot_intoverpeak_perobs(obsid, int_over_peak, std_int_over_peak, ext="png"):
 
     fig = plt.figure(dpi=plt.rcParams['figure.dpi']*4.0)
     ax = fig.add_subplot(1,1,1)
-
-    ax.scatter(int_over_peak,std_int_over_peak,fmt="o",color="C6")
-    ax.axhline(1.15, color="k", alpha=0.3, linestyle="--")
-    ax.axvline(0.15, color="k", alpha=0.3, linestyle="--")
-    ax.set_ylabel(f"integrated flux/peak flux")
-    ax.set_xlabel(f"std(integrated flux/peak flux)")
+    for i in range(len(obslist)):
+        chan_intoverpeak = intoverpeak[i]
+        chan_shape = shape[i]
+        chan_obslist = obslist[i]
+        for j in range(len(chan_obslist)):
+            chanobs_intoverpeak = np.nanmean(chan_intoverpeak[j])
+            chanobs_shape = np.nanmean(chan_shape[j])
+            ax.scatter(chanobs_intoverpeak,chanobs_shape, fmt="o", color=colors[i])
+    ax.axhline(1, color="k", alpha=0.3, linestyle="--")
+    ax.axvline(1, color="k", alpha=0.3, linestyle="--")
+    ax.set_ylabel(f"mean(a/b)")
+    ax.set_xlabel(f"mean(int/peak)")
+    fig.suptitle(f"{drift}: Int/Peak vs shape")
+    plt.savefig(f"{args.project}/{drift}/{drift}_intoverpeak_shape.{ext}", bbox_inches='tight')
     
-    fig.suptitle(f"{obsid}: Int/Peak")
-    plt.savefig(f"{base_dir}/{obsid}/{obsid}_intoverpeak.{ext}", bbox_inches='tight')
     return 
+
 
 
 if __name__ == "__main__":
@@ -233,34 +222,22 @@ if __name__ == "__main__":
         description="Script to assess the quality of images for obsids and return list of obsids that pass quality assurance to be included in moasics. Note: currently only works on obsids given per channel, not per night. "
     )
     parser.add_argument(
-        'obsids',
-        type=str,
-        help="Path to the .txt file with the new line separated obsids for the given channel, note: currently uses the name of obsid to split by _ and use that as title for night for plotting"
-    )
-    parser.add_argument(
-        '-b',
-        '--base_path',
+        '--project',
         type=str,
         default=".",
-        help="Path to folder containing obsid folders"
-    )
-
-
-
-    parser.add_argument(
-        '--sep',
-        type=float,
-        default=1,
-        help="Separation from reference catalogue to that of obsid. (default=1arcmin)"
+        help="Path to project directory containing obsid folders, also where the drift scan folder is containing text files $project/$drift/*.txt (default= ./)"
     )
     parser.add_argument(
-        "--catalogue",
+        'obsids',
         type=str,
-        dest="ref_cat",
+        help="The text file of obsids to be processed. Will work out if its .txt or cenchan_chan.txt, at most plz $project/drift/drift.txt, no extra directories "
+    )
+    parser.add_argument(
+        '--refcat',
+        type=str,
         default="GGSM_sparse_unresolved.fits",
-        help="Filename of catalogue to use for comparison, assumed ./GGSM_sparse_unresolved from GLEAM-X-pipeline",
-    )   
-
+        help="reference catalogue to crossmatch and get only bright, unresolved and sparse sources. (default=./GGSM_sparse_unresolved.fits)"
+    )
 
     parser.add_argument(
         '--flag_high_rms',
@@ -269,53 +246,27 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         '--flag_bad_io',
-        default=True, 
-        help='Will run the selection cuts for bad ionosphere on individial obsids based on quality checks from Brandon'
+        default=True,
+        help="Will run cuts on the quality of sources in each obsid then calculate int/peak etc. to assess io per obsid and over night "
     )
     parser.add_argument(
-        '--plot',
-        '-p',
-        default=None,
+        "--plot",
+        default="all",
         type=str,
-        help="If True, will plot all plots and save to base_dir "
+        help="Level of plotting to do: all, min, none",
     )
-    parser.add_argument(
-        '--save_bad_obsids',
-        default=False,
-        help="If defined, will make a .txt file with the bad obsids"
-    )
+
     parser.add_argument(
         '--save_missing_obsids',
         default=None,
-        help="If defined, will make a .txt file in directory with all obsids with no *MFS-image-pb_warp_rms.fits file"
+        help="If defined, will make a .txt file in directory with all obsids with no *MFS-image-pb_warp_rms.fits file (default=None)"
+    )
+    parser.add_argument(
+        '--save_bad_obsids',
+        default=None,
+        help="Will make a .txt file with the bad obsids (default=None) "
     )
 
-
-
-    parser.add_argument(
-        '--cut_type',
-        help='Can pick either "snr", "suggested" or "both". Suggested is based on two factors, int over peak ratio and int_err vs rms ratio. SNR is based on the SNR as well as the int over peak comparison ratio.',
-        default='both',
-        type=str
-    )
-    parser.add_argument(
-        '--cut_level_int_peak',
-        help='The ratio of int flux to peak flux below which the sources will be retained. (Default=2).',
-        default=2,
-        type=float
-    )
-    parser.add_argument(
-        '--cut_level_err_int_rms',
-        help='The cut level for the err_int and local_rms, below which sources will be kept. Default=2.',
-        default=2,
-        type=float
-    )
-    parser.add_argument(
-        '--cut_level_snr',
-        help='The SNR ratio at which the sources will be cut. Default=5',
-        default=5,
-        type=float
-    )
 
 
     parser.add_argument(
@@ -327,64 +278,110 @@ if __name__ == "__main__":
     )
 
 
+
     args = parser.parse_args()
     if args.verbose:
         logger.setLevel(logging.DEBUG)
-
-    # Defining all the global variables based on inputs 
-    obsids =  np.loadtxt(args.obsids)
-    base_dir = args.base_path
-    night = args.obsids.split("/")[0].split("_")[2]
-    make_plots = args.plot
-
-    obslist, missing_obs = remove_missing(obsids)
-
-    if args.save_missing_obsids is not None: 
-        logger.debug(f"Saving missing obsids")
-        np.savetxt(args.obsids.replace(".txt", "_missing_obsids.txt"), missing_obs, fmt="%10.0f")
-
     
-    # Actually implementing the cuts using functions above 
-    # First up: checking to extract only obsids with nice RMS 
-    if args.flag_high_rms is True: 
-        good_obsids = cut_high_rmsobsids(obslist)
-    else:
-        logger.debug("Not running high RMS flagger")
-        good_obsids = obslist
 
-    # Establishing the stats needed to assess quality of night here, not actually doing any of the cuts here just assessing
-    if args.flag_bad_io is True: 
+    base_dir = args.project
+    txtfile = args.obsids 
+    refcat=  args.refcat
+    logger.debug(f"{txtfile}")
 
-        mean_int_over_peak = []
-        std_int_over_peak = []
-        blur = []
-        int_over_peak = []
-        for obs in good_obsids: 
-            obsid_cat = cut_cat_bright(base_dir,obs)
-            
-            obs_int_over_peak = obsid_cat["int_flux"]/obsid_cat["peak_flux"]
-            err_intoverrms = obsid_cat["err_int_flux"]/obsid_cat["local_rms"]
-            snr = obsid_cat["int_flux"]/obsid_cat["local_rms"]
-            blur.append(np.log10(obsid_cat['int_flux']/obsid_cat['peak_flux']))
-            std_intpeak = np.nanstd(obsid_cat['int_flux']/obsid_cat['peak_flux'])
-            std_int_over_peak.append(std_intpeak)
-            int_over_peak.append(obs_int_over_peak)
-            # TODO: add plotting option here to plot the obsid intoverpeak per source or something
-
-            mean_int_over_peak.append(np.nanmedian(obs_int_over_peak))
-
-        if make_plots is not None: 
-            logger.debug(f"Plotting int over peak for night: {night}")
-            plot_intoverpeak_pernight(good_obsids, mean_int_over_peak,std_int_over_peak)
-        
-
-
-            
-
-        logger.debug(f"mean_int_over_peak: {mean_int_over_peak[0]}")
-        logger.debug(f"ran cut bright but not crossmatch")
+    # Reading in the list of obsids: will deal with the cenchan or all based on what the input txt file is called 
+    if "cenchan" in txtfile:
+        logger.debug(f"Only detected one cenchan, proceeding with just 1")
+        obs_txtfile = [txtfile]
+        split_string = txtfile.split("/")
+        if len(split_string) == 2: 
+            split_string = split_string[-1].split("_cenchan_")
+            drift = split_string[0]
+            chans = [split_string[1].split(".")[0]]
+        elif len(split_string)==1:
+            split_string = split_string[0].split("_cenchan_")
+            chans = [split_string[1].split(".")[0]]
+            drift = split_string[0]
+        logger.debug(f"drift: {drift}")
+        logger.debug(f"cenchan: {chans[0]}")
     else: 
-        logger.debug(f"Not running the ionosphere analysis")
+        split_string = txtfile.split("/")
+        logger.debug(f"Detected no cenchan, proceeding with allchans")
+        if len(split_string) == 2:
+            drift = split_string[-1].replace(".txt", "")
+        elif len(split_string) == 1:
+            drift = split_string[0].replace(".txt","")
+        logger.debug(f"drift: {drift}")
+        chans = ["069", "093", "121", "145", "169"]
+        obs_txtfile = []
+        for chan in chans:
+            obs_txtfile.append(txtfile.replace(".txt",f"_cenchan_{chan}.txt"))
 
-    # TODO: add plotting option to plot the int/peak+/- std as function of obsid over the night. 
+
+    # Looking for any missing obsids so they're removed before assessing 
+    logger.debug(f"{obs_txtfile}")
+    # Reading in the obsids from txt files
+    obsids_perchan = []
+    for i in range(len(chans)):
+        cenchan_obsids = read_obsids(obs_txtfile[i])
+        cenchan_good_obsids, cenchan_missing_obsids = remove_missing(cenchan_obsids)
+        obsids_perchan.append(cenchan_good_obsids)
+        logger.debug(f"{len(obsids_perchan)}")
+
+        if args.save_missing_obsids is not None: 
+            logger.debug(f"Saving missing obsids")
+            np.savetxt(obs_txtfile[i].replace(".txt", "_missing_obsids.txt"), cenchan_missing_obsids, fmt="%10.0f")
+
     
+    # Cutting obsids with high RMS in MFS image 
+    # TODO: ACTUALLY DOWNLOAD SOME OBSIDS TO CHECK 
+    if args.flag_high_rms is True: 
+        obsids_postrms = []
+        obsids_badrms = []
+        for i in range(len(chans)):
+            logger.debug(f"{obsids_perchan[i]}")
+            obsids_postrms_temp, obsids_badrms_temp = cut_high_rms(obsids_perchan[i])
+            obsids_postrms.append(obsids_postrms_temp)
+            obsids_badrms.append(obsids_badrms_temp)
+
+            if args.save_bad_obsids is not None:
+                logger.debug(f"Saving bad rms obsids")
+                np.savetxt(obs_txtfile[i].replace(".txt", "_bad_obsids.txt"), cenchan_missing_obsids, fmt="%10.0f")
+    else: 
+        logger.debug(f"Not running the high RMS cut")
+        obsids_postrms = obsids_perchan
+
+    # Running cut of bad sources to assess io
+    # note: first cuts bad srcs, the xm with GGSM to find nice brihgt etc ones before doing the actually assessment 
+    # TODO: have removed cut levels as variables, I think it should be ok and keeps it clean but check later 
+    if args.flag_bad_io is True: 
+        drift_meanintoverpeak = []
+        drift_stdintoverpeak = []
+        drift_meanshape = []
+        drift_stdshape = []
+        for i in range(len(chans)):
+            logger.debug(f"Running the io check")
+            obslist_iochecks = obsids_postrms[i]
+            obs_meanintoverpeak = []
+            obs_stdintoverpeak = []
+            obs_meanshape = []
+            obs_stdshape = []
+            for o in range(len(obslist_iochecks)):
+                cat_xm, obs_intoverpeak_temp, obs_shape_temp = check_io(obslist_iochecks[o])
+                obs_meanintoverpeak.append(obs_intoverpeak_temp[0])
+                obs_stdintoverpeak.append(obs_intoverpeak_temp[1])
+                obs_meanshape.append(obs_shape_temp[0])
+                obs_stdshape.append(obs_shape_temp[1])
+            drift_meanintoverpeak.append(obs_meanintoverpeak)
+            drift_stdintoverpeak.append(obs_stdintoverpeak)
+            drift_meanshape.append(obs_meanshape)
+            drift_stdshape.append(obs_stdshape)
+        if args.plot in ["all", "min"]:
+            plt_io_pernight(obsids_postrms, drift_meanintoverpeak, drift_stdintoverpeak, drift_meanshape,drift)
+
+
+            
+
+
+
+
