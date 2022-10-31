@@ -10,6 +10,7 @@ TODO: add plotting options
 
 
 from ast import parse
+from gzip import READ
 from mmap import mmap
 import sys
 import os
@@ -111,7 +112,7 @@ def cut_high_rms(obsids_list):
 def crossmatch_cats(
     input_cat,
     ref_cat,
-    sep=1,
+    sep=0.5,
 ):
     ref_cat_file = f"{ref_cat}"
     if os.path.exists(ref_cat_file):
@@ -119,20 +120,33 @@ def crossmatch_cats(
         refcat = hdu[1].data
         hdu.close()
     else:
-        logger.warning(f"Can't find reference GGSM catalogue for xm! ")
+        logger.warning(f"Can't find reference NVSS/SUMSS catalogue for xm! ")
         return input_cat
 
     ref_cat_skycoords = SkyCoord(refcat.RAJ2000,refcat.DEJ2000, frame='fk5',unit=u.deg)
     input_cat_skycoords = SkyCoord(input_cat.ra, input_cat.dec, frame='fk5', unit=u.deg)
+    try: 
+        idx1,idx2,sep2d,dist3d=search_around_sky(input_cat_skycoords,ref_cat_skycoords,1*u.arcmin)
+    except: 
+        logger.debug(f"Catalogue has missing or NaN ra/dec. Cutting.")
+        clean_mask = (~np.isnan(input_cat.ra) & ~np.isnan(input_cat.dec))
+        input_cat_clean = input_cat[clean_mask]
+        input_cat_skycoords = SkyCoord(input_cat_clean.ra, input_cat_clean.dec, frame='fk5', unit=u.deg)
+        idx1,idx2,sep2d,dist3d=search_around_sky(input_cat_skycoords,ref_cat_skycoords,1*u.arcmin)
 
-    idx, d2d, d3d = input_cat_skycoords.match_to_catalog_sky(ref_cat_skycoords)
-    sep_constraint = d2d < sep*u.arcmin
-    output_cat = input_cat[sep_constraint]
-    # output_cat = input_cat[idx]
+    output_cat = input_cat[idx1]
+
+    num_in_xm = len(idx1)
+    frac_flagged = int((1-(len(idx1)/len(input_cat)))*100)
+    if num_in_xm < 500: 
+        logger.debug(f"Not many sources in obsid after xm! {num_in_xm} ({frac_flagged}%)")
+    else: 
+        return output_cat
+
 
     return output_cat 
 
-def check_io(obsid, do_xm):
+def check_io(obsid, do_xm, color):
 
     # for i in range(len(obsids_list)):
     catfile = f"{args.project}/{obsid:10.0f}/{obsid:10.0f}_deep-MFS-image-pb_warp_rescaled_comp.fits"
@@ -143,29 +157,30 @@ def check_io(obsid, do_xm):
     else:
         logger.debug(f"Found missing obsid while checking src quality, make sure ran check for missing earlier")
         return 
+    
+    
+    if do_xm == True:
+        # logger.debug("Doing XM!")
+        cat_xm = crossmatch_cats(temp_cat, args.refcat)
+        logger.debug(f"Found {len(cat_xm)} sources for {obsid:10.0f}")
+    else:
+        logger.debug("NOT RUNNING XM!!")
+        cat_xm = temp_cat
+        # return , [np.nanmean(int_over_peak[mask]), np.nanstd(int_over_peak[mask])], [np.nanmean(shape[mask]),np.nanstd(shape[mask])]
+    
         
-    int_over_peak = temp_cat["int_flux"]/temp_cat["peak_flux"]
-    err_intoverrms = temp_cat["err_int_flux"]/temp_cat["local_rms"]
-    snr = temp_cat["int_flux"]/temp_cat["local_rms"]   
-    shape = temp_cat["b"]/temp_cat["a"]
+    int_over_peak = cat_xm["int_flux"]/cat_xm["peak_flux"]
+    err_intoverrms = cat_xm["err_int_flux"]/cat_xm["local_rms"]
+    snr = cat_xm["int_flux"]/cat_xm["local_rms"]   
+    shape = cat_xm["b"]/cat_xm["a"]
 
     mask = np.where((int_over_peak<=2)&(err_intoverrms<=2)&(snr>=5))
-    cat = temp_cat[mask]
+    cat = cat_xm[mask]
 
     if args.plot == "all":
-        plt_io_obsid(int_over_peak[mask], shape[mask], f"{obsid:10.0f}")
+        plt_io_obsid(int_over_peak[mask], shape[mask], f"{obsid:10.0f}", color=color)
 
-
-    if do_xm == True:
-        cat_xm = crossmatch_cats(cat, args.refcat)
-
-    else:
-        return cat, [np.nanmean(int_over_peak[mask]), np.nanstd(int_over_peak[mask])], [np.nanmean(shape[mask]),np.nanstd(shape[mask])]
-    
-    
-
-
-    return cat_xm, [np.nanmean(int_over_peak[mask]), np.nanstd(int_over_peak[mask])], [np.nanmean(shape[mask]),np.nanstd(shape[mask])]
+    return cat, [np.nanmean(int_over_peak[mask]), np.nanstd(int_over_peak[mask])], [np.nanmean(shape[mask]),np.nanstd(shape[mask])]
 
 
 
@@ -174,14 +189,15 @@ def plt_io_obsid(
     shape,
     obsid,
     ext="png",
+    color="C6"
 ):
 
     # Just plotting the shape compared to int/flux 
     fig = plt.figure(dpi=plt.rcParams['figure.dpi']*4.0)
     ax = fig.add_subplot(1,1,1)
 
-    ax.scatter(intoverpeak,np.log(shape),s=50, color="C6")
-    ax.axhline(1,color="k",alpha=0.3, linestyle="--")
+    ax.scatter(intoverpeak,np.log(shape),s=50, color=color)
+    ax.axhline(0,color="k",alpha=0.3, linestyle="--")
 
     ax.set_xlabel("int_flux/peak_flux")
     ax.set_ylabel("log(shape) (b/a)")
@@ -232,9 +248,9 @@ def plt_io_pernight(
             ax.scatter(chanobs_intoverpeak,chanobs_shape, s=50, color=colors[i+3])
     # ax.axhline(1, color="k", alpha=0.3, linestyle="--")
     # ax.axvline(1, color="k", alpha=0.3, linestyle="--")
-    ax.set_ylabel(f"std(int/peak)")
+    ax.set_ylabel(f"std(log(b/a))")
     ax.set_xlabel(f"mean(int/peak)")
-    fig.suptitle(f"{drift}: Int/Peak vs std")
+    fig.suptitle(f"{drift}: Int/Peak vs Shape")
     ax.legend()
     plt.savefig(f"{args.project}/{drift}/{drift}_intoverpeak_shape.{ext}", bbox_inches='tight')
     plt.close(fig)
@@ -251,9 +267,9 @@ def plt_io_pernight(
             ax.scatter(chanobs_intoverpeak,chanobs_std_intoverpeak, s=50, color=colors[i+3])
     # ax.axhline(1, color="k", alpha=0.3, linestyle="--")
     # ax.axvline(1, color="k", alpha=0.3, linestyle="--")
-    ax.set_ylabel(f"mean(log(b/a))")
+    ax.set_ylabel(f"mean(std(int/peak)))")
     ax.set_xlabel(f"mean(int/peak)")
-    fig.suptitle(f"{drift}: Int/Peak vs shape")
+    fig.suptitle(f"{drift}: Int/Peak")
     plt.savefig(f"{args.project}/{drift}/{drift}_intoverpeak_std.{ext}", bbox_inches='tight')
     plt.close(fig)
 
@@ -280,8 +296,8 @@ if __name__ == "__main__":
     parser.add_argument(
         '--refcat',
         type=str,
-        default="GGSM_sparse_unresolved.fits",
-        help="reference catalogue to crossmatch and get only bright, unresolved and sparse sources. (default=./GGSM_sparse_unresolved.fits)"
+        default="/models/NVSS_SUMSS_psfcal.fits",
+        help="reference catalogue to crossmatch and get only bright, unresolved and sparse sources. (default=./models/NVSS_SUMSS_psfcal.fits)"
     )
 
     parser.add_argument(
@@ -333,6 +349,9 @@ if __name__ == "__main__":
     txtfile = args.obsids 
     refcat=  args.refcat
     logger.debug(f"{txtfile}")
+    cmap = plt.get_cmap("gnuplot2")
+    c_array = np.linspace(0,1,9)
+    colors = cmap(c_array)
 
     ref_cat_file = f"{args.refcat}"
     if os.path.exists(ref_cat_file):
@@ -407,13 +426,13 @@ if __name__ == "__main__":
 
     # Running cut of bad sources to assess io
     # note: first cuts bad srcs, the xm with GGSM to find nice brihgt etc ones before doing the actually assessment 
-    # TODO: have removed cut levels as variables, I think it should be ok and keeps it clean but check later 
     if args.flag_bad_io is True: 
         drift_meanintoverpeak = []
         drift_stdintoverpeak = []
         drift_meanshape = []
         drift_stdshape = []
         for i in range(len(chans)):
+            color = colors[i+3]
             logger.debug(f"Running the io check on chan {chans[i]}")
             obslist_iochecks = obsids_postrms[i]
             obs_meanintoverpeak = []
@@ -421,7 +440,7 @@ if __name__ == "__main__":
             obs_meanshape = []
             obs_stdshape = []
             for o in range(len(obslist_iochecks)):
-                cat_xm, obs_intoverpeak_temp, obs_shape_temp = check_io(obslist_iochecks[o], do_xm)
+                cat_xm, obs_intoverpeak_temp, obs_shape_temp = check_io(obslist_iochecks[o], do_xm, color)
                 obs_meanintoverpeak.append(obs_intoverpeak_temp[0])
                 obs_stdintoverpeak.append(obs_intoverpeak_temp[1])
                 obs_meanshape.append(obs_shape_temp[0])
