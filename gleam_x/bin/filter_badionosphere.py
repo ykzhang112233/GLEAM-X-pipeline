@@ -59,27 +59,32 @@ def read_obsids(filename):
 def remove_missing(obsids_chan):
 
     for i in range(len(obsids_chan)):
-        obsid = obsids_chan[i]
+        obsid = obsids_chan[i] 
         if os.path.exists(f"{base_dir}/{obsid:10.0f}/{obsid:10.0f}_deep-MFS-image-pb_warp_rescaled_comp.fits") is False: 
-            logger.debug(f"No catalogue for io checks: {obsid:10.0f}")
+            logger.warning(f"No catalogue for io checks: {obsid:10.0f}")
             obsids_chan[i] = ma.masked
     
-    num_missing = len(obsids_chan) - len(obsids_chan.compressed())
+    num_missing = ma.count_masked(obsids_chan)
+    missing_mask = obsids_chan.mask
 
     logger.debug(f"Number of missing obsids: {num_missing}")
     if num_missing>5:
         logger.warning(f"Large number of missing obsids: {num_missing}/{len(obsids_chan)}")
 
-    return obsids_chan
+    return obsids_chan, missing_mask 
 
 
 def cut_high_rms(obsids):
 
     # TODO: currently hardcoding limit for bad std(rms) per channel!!! FIX!
     rms_std_cutoff = [40, 15, 10, 10, 10]
+    rms_mask = []
     for i in range(len(obsids)):
-        num_postmissing = len(obsids[i].compressed())
-        rms_chan = ma.array([np.nan]*len(obsids[i])) 
+        num_postmissing = ma.count(obsids[i])
+        total = ma.size(obsids[i])
+        if total == num_postmissing is True: 
+            logger.warning(f"No missing for this channel.. is that right? ")
+        rms_chan = ma.array([np.nan]*len(obsids[i]), mask=obsids[i].mask) 
         obs = obsids[i]
         for j in range(len(obs)):
             if obs[j] is not ma.masked: 
@@ -89,7 +94,7 @@ def cut_high_rms(obsids):
                     rms_chan[j] = 1.e3*hdu[0].data[int(hdu[0].data.shape[0]/2), int(hdu[0].data.shape[1]/2)] 
                     hdu.close()
                 else:
-                    logger.debug(f"Found missing obsid while checking RMS, make sure ran check for missing earlier")
+                    logger.warning(f"Found missing obsid while checking RMS, make sure ran check for missing earlier")
 
         
         logger.debug(f"The std of rms for chan {chans[i]}: {np.nanstd(rms_chan.compressed())}")
@@ -99,32 +104,26 @@ def cut_high_rms(obsids):
         else: 
             cutoff = np.nanmean(rms_chan.compressed())+np.nanstd(rms_chan.compressed())
 
-        rms_masked = ma.masked_greater_equal(rms_chan,cutoff) 
-        obsids[i][rms_masked.mask] = ma.masked
+        rms_masked = ma.masked_greater_equal(rms_chan,cutoff)
+        # obs[rms_masked.mask] = ma.masked
+        rms_mask.append(rms_masked)
         frac_flagged = int((1-(len(rms_masked.compressed())/num_postmissing))*100)
         if frac_flagged > 15:
             logger.warning(f"Large number of obsids flagged for high RMS chan {chans[i]}: {frac_flagged}%")
 
-    return obsids
+    return rms_mask
 
 def crossmatch_cats(
     input_cat,
     ref_cat,
     sep=0.5,
 ):
-    ref_cat_file = f"{ref_cat}"
-    if os.path.exists(ref_cat_file):
-        hdu = fits.open(ref_cat_file)
-        refcat = hdu[1].data
-        hdu.close()
-    else:
-        logger.warning(f"Can't find reference NVSS/SUMSS catalogue for xm! ")
-        return input_cat
 
-    ref_cat_skycoords = SkyCoord(refcat.RAJ2000,refcat.DEJ2000, frame='fk5',unit=u.deg)
+
+    ref_cat_skycoords = SkyCoord(ref_cat.RAJ2000,ref_cat.DEJ2000, frame='fk5',unit=u.deg)
     input_cat_skycoords = SkyCoord(input_cat.ra, input_cat.dec, frame='fk5', unit=u.deg)
     try: 
-        idx1,idx2,sep2d,dist3d=search_around_sky(input_cat_skycoords,ref_cat_skycoords,1*u.arcmin)
+        idx1,idx2,sep2d,dist3d=search_around_sky(input_cat_skycoords,ref_cat_skycoords,sep*u.arcmin)
     except: 
         logger.debug(f"Catalogue has missing or NaN ra/dec. Cutting.")
         clean_mask = (~np.isnan(input_cat.ra) & ~np.isnan(input_cat.dec))
@@ -144,17 +143,17 @@ def crossmatch_cats(
         return output_cat
 
 
-def check_io(obsids):
+def check_io(obsids, missing_mask, xm_cat):
     int_over_peak = []
     std_intoverpeak = []
     shape = []
     std_shape = []
     for i in range(len(obsids)):
-        obs = obsids[i]
-        int_over_peak_chan = ma.array([np.nan]*len(obs))
-        std_intoverpeak_chan = ma.array([np.nan]*len(obs)) 
-        shape_chan = ma.array([np.nan]*len(obs))
-        std_shape_chan = ma.array([np.nan]*len(obs))
+        obs = ma.array(obsids[i].data, mask=missing_mask[i])
+        int_over_peak_chan = ma.array([np.nan]*len(obsids[i].data), mask=missing_mask[i])
+        std_intoverpeak_chan = ma.array([np.nan]*len(obsids[i].data), mask=missing_mask[i])
+        shape_chan = ma.array([np.nan]*len(obsids[i].data), mask=missing_mask[i])
+        std_shape_chan = ma.array([np.nan]*len(obsids[i].data), mask=missing_mask[i])
         for j in range(len(obs)):
             if obs[j] is not ma.masked: 
                 catfile = f"{args.project}/{obs[j]:10.0f}/{obs[j]:10.0f}_deep-MFS-image-pb_warp_rescaled_comp.fits"
@@ -163,7 +162,7 @@ def check_io(obsids):
                     temp_cat = hdu[1].data
                     hdu.close()
                 else:
-                    logger.debug(f"Found missing obsid while checking src quality, make sure ran check for missing earlier") 
+                    logger.warning(f"Found missing obsid while checking src quality, make sure ran check for missing earlier") 
                     obs[j] = ma.masked
                     int_over_peak_chan[j] = ma.masked
                     std_intoverpeak_chan[j] = ma.masked
@@ -172,7 +171,7 @@ def check_io(obsids):
                     continue
 
                 try:
-                    cat_xm = crossmatch_cats(temp_cat, args.refcat)
+                    cat_xm = crossmatch_cats(temp_cat, xm_cat)
                 except Exception: 
                     logger.warning(f"Flagging {obs[j]:10.0f} for too few srcs")
                     int_over_peak_chan[j] = ma.masked
@@ -207,16 +206,24 @@ def check_io(obsids):
                 shape_obs[intoverpeak_mask] = ma.masked
                 shape_obs[err_int_rms_mask] = ma.masked
 
-                int_over_peak_chan[j] = np.nanmean(int_over_peak_obs.compressed())
-                std_intoverpeak_chan[j] = np.nanstd(int_over_peak_obs.compressed())
-                shape_chan[j] = np.nanmean(shape_obs.compressed())
-                std_shape_chan[j] = np.nanstd(shape_obs.compressed())
-                num_srcs_postcut = len(int_over_peak_obs.compressed())
-
-
+                int_over_peak_chan[j] = np.nanmean(int_over_peak_obs.data)
+                std_intoverpeak_chan[j] = np.nanstd(int_over_peak_obs.data)
+                shape_chan[j] = np.nanmean(shape_obs)
+                std_shape_chan[j] = np.nanstd(shape_obs.data)
+                num_srcs_postcut = ma.count_masked(int_over_peak_obs)
 
                 if args.plot == "all":
                     plt_io_obsid(int_over_peak_obs.compressed(), shape_obs.compressed(), f"{obs[j]:10.0f}", color=colors[i+3])
+                
+                frac_srcs_flagged = int((num_srcs_postcut/num_srcs_precut)*100)
+                if frac_srcs_flagged>50:
+                    logger.warning(f"large number of source flagged for this obsid: flagging the whole ones as unreliable: {obs[j]:10.0f}, {frac_srcs_flagged}% flagged")
+                    int_over_peak_chan[j] = ma.masked
+                    std_intoverpeak_chan[j] = ma.masked
+                    shape_chan[j] = ma.masked
+                    std_shape_chan[j] = ma.masked
+                    
+
             else: 
                 int_over_peak_chan[j] = ma.masked
                 std_intoverpeak_chan[j] = ma.masked
@@ -256,15 +263,11 @@ def plt_io_obsid(
 
 def plt_io_pernight(
     obsids,
-    obsids_nomask,
     intoverpeak,
-    intoverpeak_nomask,
     std_intoverpeak,
-    std_intoverpeak_nomask,
     shape,
-    shape_nomask,
     std_shape,
-    std_shape_nomask,
+    mask,
     drift,
     chans,
     ext="png",
@@ -281,15 +284,13 @@ def plt_io_pernight(
     ax = fig.add_subplot(1,1,1)
 
     for i in range(len(obsids)):
-        obs_chan = obsids[i]
-        intoverpeak_chan = intoverpeak[i]
-        std_intoverpeak_chan = std_intoverpeak[i]
-        obs_chan_all = obsids_nomask[i]
-        intoverpeak_chan_all = intoverpeak_nomask[i]
-        std_intoverpeak_chan_all = std_intoverpeak_nomask[i]
+        obs_chan = obsids[i].data
+        chan_mask = mask[i]
+        intoverpeak_chan = intoverpeak[i].data
+        std_intoverpeak_chan = std_intoverpeak[i].data
 
-        ax.errorbar(obs_chan_all, intoverpeak_chan_all,yerr=(std_intoverpeak_chan_all/np.sqrt(len(obs_chan_all))), fmt="o", color=colors[i+3], label=chans[i])
-        ax.errorbar(obs_chan, intoverpeak_chan,yerr=(std_intoverpeak_chan/np.sqrt(len(obs_chan))), fmt="o", color=colors[i+3],markeredgecolor="k")
+        ax.errorbar(obs_chan, intoverpeak_chan,yerr=(std_intoverpeak_chan/np.sqrt(len(obs_chan))), fmt="o", color=colors[i+3], label=chans[i])
+        ax.errorbar(obs_chan[~chan_mask], intoverpeak_chan[~chan_mask],yerr=(std_intoverpeak_chan[~chan_mask]/np.sqrt(len(obs_chan[~chan_mask]))), fmt="o", color=colors[i+3],markeredgecolor="k")
         ax.axhline(np.nanmean(intoverpeak[i]), color=colors[i+3], alpha=0.3, linestyle="--")
     ax.errorbar(np.nan,np.nan, fmt="o", color='none',markeredgecolor="k", alpha=1, label="Selected")
     ax.set_ylabel(f"mean(int/peak)")
@@ -303,10 +304,11 @@ def plt_io_pernight(
     fig = plt.figure(dpi=plt.rcParams['figure.dpi']*4.0)
     ax = fig.add_subplot(1,1,1)
     for i in range(len(obsids)):
-        intoverpeak_chan = intoverpeak[i]
-        shape_chan = shape[i]
-        ax.errorbar(intoverpeak_nomask[i],shape_nomask[i], fmt="o", color=colors[i+3], label=chans[i])
-        ax.errorbar(intoverpeak_chan, shape_chan, fmt="o", color=colors[i+3],markeredgecolor="k")
+        intoverpeak_chan = intoverpeak[i].data
+        shape_chan = shape[i].data
+        chan_mask = mask[i]
+        ax.errorbar(intoverpeak_chan,shape_chan, fmt="o", color=colors[i+3], label=chans[i])
+        ax.errorbar(intoverpeak_chan[~chan_mask], shape_chan[~chan_mask], fmt="o", color=colors[i+3],markeredgecolor="k")
     ax.errorbar(np.nan,np.nan, fmt="o", color='none',markeredgecolor="k", alpha=1, label="Selected")
     ax.set_ylabel(f"mean(a/b)")
     ax.set_xlabel(f"mean(int/peak)")
@@ -319,11 +321,12 @@ def plt_io_pernight(
     fig = plt.figure(dpi=plt.rcParams['figure.dpi']*4.0)
     ax = fig.add_subplot(1,1,1)
     for i in range(len(obsids)):
-        stdshape_chan = std_shape[i]
-        shape_chan = shape[i]
+        stdshape_chan = std_shape[i].data
+        shape_chan = shape[i].data
+        chan_mask = mask[i]
 
-        ax.errorbar(shape_nomask[i],std_shape_nomask[i], fmt="o", color=colors[i+3], label=chans[i])
-        ax.errorbar(shape_chan, stdshape_chan, fmt="o", color=colors[i+3],markeredgecolor="k")
+        ax.errorbar(shape_chan,stdshape_chan, fmt="o", color=colors[i+3], label=chans[i])
+        ax.errorbar(shape_chan[~chan_mask], stdshape_chan[~chan_mask], fmt="o", color=colors[i+3],markeredgecolor="k")
     ax.errorbar(np.nan,np.nan, fmt="o", color='none',markeredgecolor="k", alpha=1, label="Selected")
     ax.set_ylabel(f"std(a/b)")
     ax.set_yscale('log')
@@ -336,11 +339,11 @@ def plt_io_pernight(
     fig = plt.figure(dpi=plt.rcParams['figure.dpi']*4.0)
     ax = fig.add_subplot(1,1,1)
     for i in range(len(obsids)):
-        intoverpeak_chan = intoverpeak[i]
-        std_intoverpeak_chan = std_intoverpeak[i]
-
-        ax.errorbar(std_intoverpeak_nomask[i],intoverpeak_nomask[i], fmt="o", color=colors[i+3], label=chans[i])
-        ax.errorbar(std_intoverpeak_chan, intoverpeak_chan, fmt="o", color=colors[i+3],markeredgecolor="k")
+        intoverpeak_chan = intoverpeak[i].data
+        std_intoverpeak_chan = std_intoverpeak[i].data
+        chan_mask = mask[i]
+        ax.errorbar(std_intoverpeak_chan,intoverpeak_chan, fmt="o", color=colors[i+3], label=chans[i])
+        ax.errorbar(std_intoverpeak_chan[~chan_mask], intoverpeak_chan[~chan_mask], fmt="o", color=colors[i+3],markeredgecolor="k")
     ax.errorbar(np.nan,np.nan, fmt="o", color='none',markeredgecolor="k", alpha=1, label="Selected")
     ax.axhline(1.1, color="k", alpha=0.3, ls="--")
     ax.axvline(0.175, color="k", alpha=0.3, ls="--")
@@ -390,16 +393,7 @@ if __name__ == "__main__":
         default=True,
         help="Will run cuts on the quality of sources in each obsid then calculate int/peak etc. to assess io per obsid and over night options (default=True)"
     )
-    parser.add_argument(
-        '--flag_bad_shape',
-        default=False,
-        help="Will flag obsids where the shape has a huge scatter (suggesting variable io within image) (default=False)"
-    )
-    parser.add_argument(
-        "--flag_bad_intoverpeak",
-        default=False,
-        help="Run harsh check of int/peak to flag ones with huge scatter of int/peak (default=False)"
-    )
+
     parser.add_argument(
         "--plot",
         default="min",
@@ -414,8 +408,8 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         '--save_bad_obsids',
-        default=None,
-        help="Will make a .txt file with the bad obsids (default=None) "
+        default=True,
+        help="Will make a .txt file with the bad obsids (default=True) "
     )
 
 
@@ -446,6 +440,10 @@ if __name__ == "__main__":
     ref_cat_file = f"{args.refcat}"
     if os.path.exists(ref_cat_file):
         do_xm = True
+        if os.path.exists(ref_cat_file):
+            hdu = fits.open(ref_cat_file)
+            do_xm = hdu[1].data
+            hdu.close()
     else:
         logger.warning(f"Can't find reference GGSM catalogue for xm! ")
         do_xm = False
@@ -486,13 +484,17 @@ if __name__ == "__main__":
 
     # Looking for any missing obsids so they're removed before assessing 
     logger.debug(f"{obs_txtfile}")
+    # Hacky just renaming this here so that everything saves with nice format but some drifts have no 0 for 69 and 93 
+    chans = ["069", "093", "121", "145", "169"]
     # Reading in the obsids from txt files
     obsids = []
+    missing_mask = []
     for i in range(len(chans)):
         cenchan_obsids = read_obsids(obs_txtfile[i])
-        obsids_chan = remove_missing(cenchan_obsids)
+        obsids_chan, missing_mask_chan = remove_missing(cenchan_obsids)
         obsids.append(obsids_chan)
-        logger.debug(f"Number of obsids per in channel {chans[i]}: {len(obsids[i].compressed())}")
+        missing_mask.append(missing_mask_chan)
+        logger.debug(f"Number of obsids per in channel {chans[i]}: {ma.count(obsids[i])}")
         if args.save_missing_obsids is not None: 
             logger.debug(f"Saving missing obsids")
             chan_missing_obsids = obsids_chan[obsids_chan.mask]
@@ -502,148 +504,56 @@ if __name__ == "__main__":
 
     # Cutting obsids with high RMS in MFS image 
     if args.flag_high_rms is True: 
-        obsids = cut_high_rms(obsids)
+        rms_mask = cut_high_rms(obsids)
+        for i in range(len(chans)):
+            logger.warning(f"Number of obsids flagged for bad rms for {chans[i]}: {ma.count_masked(rms_mask[i])}")
     else: 
         logger.debug(f"Not running the high RMS cut")
 
     # Running cut of bad sources to assess io
     # note: first cuts bad srcs, the xm with GGSM to find nice brihgt etc ones before doing the actually assessment 
-    drift_intoverpeak, drift_stdintoverpeak, drift_shape, drift_stdshape = check_io(obsids)
+
     if args.flag_bad_io is True: 
+        drift_intoverpeak, drift_stdintoverpeak, drift_shape, drift_stdshape = check_io(obsids, missing_mask, do_xm)
         for i in range(len(chans)):
             color = colors[i+3]
             logger.debug(f"Running the io cut on chan {chans[i]}")
-            num_obsids_precut = len(obsids[i].compressed())
+            num_obsids_precut = ma.count(obsids[i])
 
-            logger.debug(f"STD for drift at chan {chans[i]}: {np.nanstd(drift_intoverpeak[i])}")
+            logger.debug(f"STD for drift at chan {chans[i]}: {drift_intoverpeak[i].std()}")
 
-            drift_intoverpeak[i] = ma.masked_greater(drift_intoverpeak[i], 1.1) 
-            obsids[i][drift_intoverpeak[i].mask] = ma.masked
-            drift_intoverpeak[i][drift_intoverpeak[i].mask] = ma.masked
-            drift_stdintoverpeak[i][drift_intoverpeak[i].mask] = ma.masked
-            drift_shape[i][drift_intoverpeak[i].mask] = ma.masked
-            drift_stdshape[i][drift_intoverpeak[i].mask] = ma.masked
-
-            drift_stdintoverpeak[i] = ma.masked_greater(drift_stdintoverpeak[i],0.175)
-            obsids[i][drift_stdintoverpeak[i].mask] = ma.masked
-            drift_intoverpeak[i][drift_stdintoverpeak[i].mask] = ma.masked
-            drift_stdintoverpeak[i][drift_stdintoverpeak[i].mask] = ma.masked
-            drift_shape[i][drift_stdintoverpeak[i].mask] = ma.masked
-            drift_stdshape[i][drift_stdintoverpeak[i].mask] = ma.masked
+            mask_intoverpeak = ma.masked_greater(drift_intoverpeak[i], 1.1).mask
+            obsids[i][mask_intoverpeak] = ma.masked
 
 
-            num_obsids_postio = len(obsids[i].compressed())
-
-            logger.debug(f"Obsids for chan {chans[i]} before any cuts: {len(obsids[i])}")
-            logger.debug(f"Obsids for chan {chans[i]} after io cuts: {len(obsids[i].compressed())}")
+            mask_stdintoverpeak = ma.masked_greater(drift_stdintoverpeak[i],0.175).mask
+            obsids[i][mask_stdintoverpeak] = ma.masked
 
 
+            num_obsids_postio = ma.count_masked(obsids[i])
 
-            frac_flagged = int((1-(num_obsids_postio/num_obsids_precut))*100)
-            logger.debug(f"Number of obsids with *good* io for {chans[i]}: {num_obsids_postio} ({frac_flagged}%)")
+            logger.debug(f"Obsids for chan {chans[i]} before any cuts: {ma.count(obsids[i])}")
+            logger.debug(f"Number of flagged obsids for chan {chans[i]} after io cuts: {ma.count_masked(obsids[i])}")
+
+            if args.flag_high_rms is True: 
+                obsids[i][rms_mask[i].mask] = ma.masked
+
+            frac_flagged = int(((num_obsids_postio/num_obsids_precut))*100)
+            logger.debug(f"Number of obsids with flagged for bad io for {chans[i]}: {num_obsids_postio} ({frac_flagged}%)")
             if frac_flagged > 20:
                 logger.warning(f"Large number of obsids flagged for bad io at chan {chans[i]}!: {frac_flagged}%")
-
-    if args.flag_bad_shape is True: 
-        for i in range(len(chans)):
-            # Now cutting obsids where shape has huge scatter too:
-            # TODO: Also doing same style cut as RMS with harsh level, change
-            harsh_stdshape_cutoff = [0.1, 0.01, 0.01, 0.01, 0.01]
-            harsh_shape_cutoff = [0.3, 0.3, 0.2, 0.2, 0.2]
-            if np.nanstd(drift_stdshape[i].compressed()) > harsh_stdshape_cutoff[i]:
-                logger.warning(f"HUGE shape scatter for chan {chans[i]}: {np.nanstd(drift_stdshape[i].compressed())}")
-                logger.warning(f"mean of std(shape) for chan {chans[i]}: {np.nanmean(drift_stdshape[i].compressed())}")
-                shape_cutoff = harsh_shape_cutoff[i] + (3*harsh_stdshape_cutoff[i])
-            else: 
-                logger.debug(f"std of std(shape) for chan {chans[i]}: {np.nanstd(drift_stdshape[i].compressed())}")
-                shape_cutoff = np.nanmean(drift_stdshape[i].compressed())+(3*np.nanstd(drift_stdshape[i].compressed()))
-
-            num_preshapecut = len(drift_stdshape[i].compressed())
-            shape_cut = ma.masked_greater(drift_stdshape[i], shape_cutoff)
-            shape_mask = shape_cut.mask
-            num_postshapecut = len(shape_cut.compressed())
-
-
-            logger.debug(f"Cutting {num_preshapecut - num_postshapecut} based on big std of shape!!")
-            frac_flagged = int((1-(num_postshapecut/num_preshapecut))*100)
-            if frac_flagged > 10:
-                logger.warning(f"Large number of obsids flagged for bad shape in {chans[i]}!: {num_preshapecut - num_postshapecut} ({frac_flagged})%")         
-
-            obsids[i][shape_mask] = ma.masked
-            drift_intoverpeak[i][shape_mask] = ma.masked
-            drift_stdintoverpeak[i][shape_mask] = ma.masked
-            drift_shape[i][shape_mask] = ma.masked
-            drift_stdshape[i][shape_mask] = ma.masked
-
-    if args.flag_bad_intoverpeak is True: 
-        for i in range(len(chans)):
-            # Now cutting obsids where std(int/peak) has huge scatter too:
-            intoverpeak_cutoff = np.nanmean(drift_stdintoverpeak[i].compressed())+(3*np.nanstd(drift_stdintoverpeak[i].compressed()))
-
-
-            num_preintcut = len(drift_stdintoverpeak[i].compressed())
-            intoverpeak_cut = ma.masked_greater(drift_stdintoverpeak[i], intoverpeak_cutoff)
-            intoverpeak_mask = intoverpeak_cut.mask
-            num_postintcut = len(intoverpeak_cut.compressed())
-
-
-            logger.debug(f"Cutting {num_preintcut - num_postintcut} based on big std of shape!!")
-            frac_flagged = int((1-(num_postintcut/num_preintcut))*100)
-            if frac_flagged > 10:
-                logger.warning(f"Large number of obsids flagged for bad int/peak in {chans[i]}!: {num_preshapecut - num_postshapecut} ({frac_flagged})%")         
-
-            obsids[i][intoverpeak_mask] = ma.masked
-            drift_intoverpeak[i][intoverpeak_mask] = ma.masked
-            drift_stdintoverpeak[i][intoverpeak_mask] = ma.masked
-            drift_shape[i][intoverpeak_mask] = ma.masked
-            drift_stdshape[i][intoverpeak_mask] = ma.masked
-
+    
+    
+    bad_io_mask = []
+    for i in range(len(chans)):
+        frac_flagged = int((1-ma.count_masked(obsids[i])/ma.size(obsids[i]))*100)
+        logger.warning(f"OBSIDS for {chans[i]} after flagging!: {ma.count(obsids[i])}/{ma.size(obsids[i])} = {ma.count_masked(obsids[i])} ({frac_flagged}%) flagged")
+        io_mask = obsids[i].mask
+        bad_io_mask.append(io_mask)
 
     if args.plot in ["all", "min"]:   
         logger.debug(f"Plotting for drift")     
-        obsids_nomask = []
-        intoverpeak_nomask = []
-        std_intoverpeak_nomask = []
-        shape_nomask = []
-        std_shape_nomask = []
-        obsids_good = []
-        intoverpeak_good = []
-        std_intoverpeak_good = []
-        shape_good = []
-        std_shape_good = []
-        for i in range(len(obsids)):
-            
-            logger.debug(f"Making the non masked arrays")
-            obs_chan_nomask = obsids[i]
-            obsids_good.append(obsids[i].compressed())
-            obs_chan_nomask.mask = ma.nomask 
-            obsids_nomask.append(obs_chan_nomask)
-            
-            intoverpeak_nomask_chan = drift_intoverpeak[i]
-            intoverpeak_good.append(drift_intoverpeak[i].compressed())
-            intoverpeak_nomask_chan.mask = ma.nomask 
-            intoverpeak_nomask.append(intoverpeak_nomask_chan)
-
-            std_intoverpeak_nomask_chan = drift_stdintoverpeak[i]
-            std_intoverpeak_good.append(drift_stdintoverpeak[i].compressed())
-            std_intoverpeak_nomask_chan.mask = ma.nomask 
-            std_intoverpeak_nomask.append(std_intoverpeak_nomask_chan)
-
-            shape_nomask_chan = drift_shape[i]
-            shape_good.append(drift_shape[i].compressed())
-            shape_nomask_chan.mask = ma.nomask 
-            shape_nomask.append(shape_nomask_chan)
-
-            std_shape_nomask_chan = drift_stdshape[i]
-            std_shape_good.append(drift_stdshape[i].compressed())
-            std_shape_nomask_chan.mask = ma.nomask 
-            std_shape_nomask.append(std_shape_nomask_chan)
-
-            logger.debug(f"Num obsids per chan NO CUT: {len(obsids_nomask[i].compressed())}")
-
-            total_frac_flagged = int((1-(len(obsids_good[i])/len(obsids_nomask[i].compressed())))*100)
-            logger.warning(f"Num obsids per chan aftercut/beforecut: {len(obsids_good[i])}/{len(obsids_nomask[i].compressed())} ({total_frac_flagged}%)")
-        plt_io_pernight(obsids_good, obsids_nomask, intoverpeak_good, intoverpeak_nomask, std_intoverpeak_good, std_intoverpeak_nomask, shape_good, shape_nomask, std_shape_good, std_shape_nomask, drift, chans)
+        plt_io_pernight(obsids, drift_intoverpeak, drift_stdintoverpeak, drift_shape, drift_stdshape, bad_io_mask, drift, chans)
         
     if args.save_bad_obsids is not None: 
         logger.debug(f"Saving missing obsids")
