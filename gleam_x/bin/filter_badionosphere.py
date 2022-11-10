@@ -99,7 +99,7 @@ def cut_high_rms(obsids):
         
         logger.debug(f"The std of rms for chan {chans[i]}: {np.nanstd(rms_chan.compressed())}")
         if np.nanstd(rms_chan.compressed()) > rms_std_cutoff[i]:
-            logger.warning(f"The std of rms for chan {chans[i]} is HUGE! Flagging all obsids for this channel! You need to come back and inspect everything further: {np.nanstd(rms_chan.compressed())}")
+            logger.warning(f"The std of rms for chan {chans[i]} is HUGE! Flagging obsids for this channel using a hard cut, come back and inspect: {np.nanstd(rms_chan.compressed())}")
             cutoff = rms_std_cutoff[i]
         else: 
             cutoff = np.nanmean(rms_chan.compressed())+np.nanstd(rms_chan.compressed())
@@ -480,8 +480,8 @@ if __name__ == "__main__":
         obs_txtfile = []
         for chan in chans:
             obs_txtfile.append(txtfile.replace(".txt",f"_cenchan_{chan}.txt"))
-
-
+        obs_txtfile.append(txtfile)
+        
     # Looking for any missing obsids so they're removed before assessing 
     logger.debug(f"{obs_txtfile}")
     # Hacky just renaming this here so that everything saves with nice format but some drifts have no 0 for 69 and 93 
@@ -519,16 +519,13 @@ if __name__ == "__main__":
             color = colors[i+3]
             logger.debug(f"Running the io cut on chan {chans[i]}")
             num_obsids_precut = ma.count(obsids[i])
-
             logger.debug(f"STD for drift at chan {chans[i]}: {drift_intoverpeak[i].std()}")
-
             mask_intoverpeak = ma.masked_greater(drift_intoverpeak[i], 1.1).mask
-            obsids[i][mask_intoverpeak] = ma.masked
-
-
             mask_stdintoverpeak = ma.masked_greater(drift_stdintoverpeak[i],0.175).mask
-            obsids[i][mask_stdintoverpeak] = ma.masked
 
+
+            obsids[i][mask_stdintoverpeak] = ma.masked
+            obsids[i][mask_intoverpeak] = ma.masked
 
             num_obsids_postio = ma.count_masked(obsids[i])
 
@@ -545,20 +542,30 @@ if __name__ == "__main__":
     
     
     bad_io_mask = []
+    all_obsids = ma.asanyarray(())
     for i in range(len(chans)):
         frac_flagged = int((1-ma.count_masked(obsids[i])/ma.size(obsids[i]))*100)
         logger.warning(f"OBSIDS for {chans[i]} after flagging!: {ma.count(obsids[i])}/{ma.size(obsids[i])} = {ma.count_masked(obsids[i])} ({frac_flagged}%) flagged")
         io_mask = obsids[i].mask
         bad_io_mask.append(io_mask)
+        all_obsids = ma.append(all_obsids,obsids_chan)
+
+
+    if args.save_bad_obsids is True: 
+        logger.debug(f"Saving missing obsids")
+        if len(chans) > 1:
+            for i in range(len(chans)):
+                obsids_chan = obsids[i]
+                chan_bad_obsids = obsids_chan[obsids_chan.mask].data
+                np.savetxt(obs_txtfile[i].replace(".txt", "_bad_obsids.txt"), chan_bad_obsids, fmt="%10.0f")
+            np.savetxt(obs_txtfile[-1].replace(".txt", "_bad_obsids.txt") ,all_obsids[all_obsids.mask].data, fmt="%10.0f")   
+        else: 
+            np.savetxt(obs_txtfile[-1].replace(".txt", "_bad_obsids.txt") ,all_obsids[all_obsids.mask].data, fmt="%10.0f") 
+
+    logger.warning(f"Total flagged for drift: {ma.count_masked(all_obsids)}")
 
     if args.plot in ["all", "min"]:   
         logger.debug(f"Plotting for drift")     
         plt_io_pernight(obsids, drift_intoverpeak, drift_stdintoverpeak, drift_shape, drift_stdshape, bad_io_mask, drift, chans)
         
-    if args.save_bad_obsids is not None: 
-        logger.debug(f"Saving missing obsids")
-        for i in range(len(obsids)):
-            obsids_chan = obsids[i]
-            chan_bad_obsids = obsids_chan[obsids_chan.mask]
-            chan_bad_obsids.mask = ma.nomask
-            np.savetxt(obs_txtfile[i].replace(".txt", "_bad_obsids.txt"), chan_bad_obsids.compressed(), fmt="%10.0f")
+
