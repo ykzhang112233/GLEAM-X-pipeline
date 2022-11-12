@@ -239,6 +239,18 @@ then
     flags=" $flags 92 128 129 130 131 132 133 134 135"
 fi
 
+# 2022-09-01
+if [[ $obsnum -gt 1346026000 ]] && [[ $obsnum -lt 1346105000 ]]
+then
+    flags=" $flags 92"
+fi
+
+# 2022-09-08/09
+if [[ $obsnum -gt 1346634500 ]] && [[ $obsnum -lt 1346801200 ]]
+then
+    flags=" $flags 24 25 26 27 28 29 30 31 72 73 74 75 76 77 78 79 96 97 98 99 100 101 102 103 104 105 106 107 108 109 110 111 128 129 130 131 132 133 134 135"
+fi
+
 if [[ ! -z ${flags} ]]
 then
     echo "Flagging tiles $flags"
