@@ -127,7 +127,13 @@ fi
 # Tile indices 72 and 84 have zero amplitudes during May 2018
 if [[ $obsnum -ge 1210700000 ]] && [[ $obsnum -le 1210895560 ]]
 then
-    flags="$flags 72 84"
+    flags="$flags 72"
+fi
+
+# Tile index 84 sometimes strange during May 2018
+if [[ $obsnum -ge 1210700000 ]] && [[ $obsnum -le 1211000000 ]]
+then
+    flags="$flags 84"
 fi
 
 # Tile index 22 is broken on the night of 2018-05-19
@@ -136,8 +142,8 @@ then
     flags="$flags 22"
 fi
 
-# Rx7 has a fibre problem on nights of 2019-01-08 and 2019-06-17
-if [[ $obsnum -ge 1244798800 ]] && [[ $obsnum -le 1244849032 ]]
+# Rx7 has a fibre problem on 2019-01-08 and 2019-06
+if [[ $obsnum -ge 1244300000 ]] && [[ $obsnum -le 1244849032 ]]
 then
     flags="$flags 48 49 50 51 52 53 54 55"
 fi
