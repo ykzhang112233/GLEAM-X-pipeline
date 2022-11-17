@@ -45,8 +45,14 @@ cd "${datadir}/${obsnum}" || exit 1
 
 # Set up telescope-configuration-dependent options
 
+# Tiles 72 and 76 intermittently dodgy in 2013/4
+if [[ ${obsnum} -ge 1060000000 ]] && [[ ${obsnum} -le 1070000000 ]]
+then
+    flags="$flags 72 76"
+fi
+
 # Rx6 has a fibre problem on the nights of 2014-03-03 to 06
-if [[ ${obsnum} -ge 1077880432 ]] && [[ ${obsnum} -le 1078175704 ]]
+if [[ ${obsnum} -ge 1077300000 ]] && [[ ${obsnum} -le 1078175704 ]]
 then
     flags="$flags 40 41 42 43 44 45 46 47"
 fi
@@ -62,6 +68,12 @@ fi
 if [[ ${obsnum} -gt 1086300000 ]] && [[ ${obsnum} -lt 1087200000 ]]
 then
    flags="$flags 112 113 114 115 116 117 118 119"
+fi
+
+# Rx6 has a fibre problem on the night of 
+if [[ ${obsnum} -ge 1102700000 ]] && [[ ${obsnum} -le 1102800000 ]]
+then
+    flags="$flags 40 41 42 43 44 45 46 47"
 fi
 
 # Tile index 107 is broken for night of 2014-12-17
@@ -243,6 +255,12 @@ fi
 if [[ $obsnum -gt 1346634500 ]] && [[ $obsnum -lt 1346801200 ]]
 then
     flags=" $flags 24 25 26 27 28 29 30 31 72 73 74 75 76 77 78 79 96 97 98 99 100 101 102 103 104 105 106 107 108 109 110 111 128 129 130 131 132 133 134 135"
+fi
+
+# 2022-09 late
+if [[ $obsnum -gt 1351000000 ]] && [[ $obsnum -lt 1353000000 ]]
+then
+    flags=" $flags 62 84 128 129 130 131 132 133 134 135"
 fi
 
 if [[ ! -z ${flags} ]]
