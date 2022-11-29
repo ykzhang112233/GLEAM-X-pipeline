@@ -57,11 +57,11 @@ def read_obsids(filename):
     return channel_obsids
 
 
-def remove_missing(obsids_chan):
+def remove_missing(obsids_chan, extra = ""):
 
     for i in range(len(obsids_chan)):
         obsid = obsids_chan[i] 
-        if os.path.exists(f"{base_dir}/{obsid:10.0f}/{obsid:10.0f}_deep-MFS-image-pb_warp_comp.fits") is False: 
+        if os.path.exists(f"{base_dir}/{obsid:10.0f}/{obsid:10.0f}_deep-MFS-image-pb_warp_comp{extra}.fits") is False: 
             logger.warning(f"No catalogue for io checks: {obsid:10.0f}")
             obsids_chan[i] = ma.masked
     
@@ -75,7 +75,7 @@ def remove_missing(obsids_chan):
     return obsids_chan, missing_mask 
 
 
-def cut_high_rms(obsids):
+def cut_high_rms(obsids, extra = ""):
 
     # TODO: currently hardcoding limit for bad std(rms) per channel!!! FIX!
     rms_std_cutoff = [40, 15, 10, 10, 10]
@@ -89,7 +89,7 @@ def cut_high_rms(obsids):
         obs = obsids[i]
         for j in range(len(obs)):
             if obs[j] is not ma.masked: 
-                rmsfile = f"{args.project}/{obsids[i][j]:10.0f}/{obsids[i][j]:10.0f}_deep-MFS-image-pb_warp_rms.fits"
+                rmsfile = f"{args.project}/{obsids[i][j]:10.0f}/{obsids[i][j]:10.0f}_deep-MFS-image-pb_warp_rms{extra}.fits"
                 if os.path.exists(rmsfile):
                     hdu = fits.open(rmsfile)
                     rms_chan[j] = 1.e3*hdu[0].data[int(hdu[0].data.shape[0]/2), int(hdu[0].data.shape[1]/2)] 
@@ -148,7 +148,7 @@ def crossmatch_cats(
         return idx1_iso
 
 
-def check_io(obsids, missing_mask, xm_cat):
+def check_io(obsids, missing_mask, xm_cat, extra = ""):
     int_over_peak = []
     std_intoverpeak = []
     shape = []
@@ -161,8 +161,8 @@ def check_io(obsids, missing_mask, xm_cat):
         std_shape_chan = ma.array([np.nan]*len(obsids[i].data), mask=missing_mask[i])
         for j in range(len(obs)):
             if obs[j] is not ma.masked: 
-                catfile = f"{args.project}/{obs[j]:10.0f}/{obs[j]:10.0f}_deep-MFS-image-pb_warp_comp.fits"
-                savefile = f"{args.project}/{obs[j]:10.0f}/{obs[j]:10.0f}_iocheck_comp.csv"
+                catfile = f"{args.project}/{obs[j]:10.0f}/{obs[j]:10.0f}_deep-MFS-image-pb_warp_comp{extra}.fits"
+                savefile = f"{args.project}/{obs[j]:10.0f}/{obs[j]:10.0f}_iocheck_comp{extra}.csv"
                 if os.path.exists(catfile):
                     try: 
                         hdu=fits.open(catfile)
@@ -418,8 +418,9 @@ def plt_io_pernight(
     chans,
     ext="png",
     cmap = plt.get_cmap("gnuplot2"),
+    comparison = False,
 ):
-    c_array = np.linspace(0,1,len(obsids)+4)
+    c_array = np.linspace(0,1,len(chans)+4)
     colors = cmap(c_array)
     # colors=cmr.take_cmap_colors(
     #     "cmr.flamingo", len(obslist), cmap_range=(0.4, 0.7), return_fmt="hex"
@@ -429,11 +430,17 @@ def plt_io_pernight(
     fig = plt.figure(dpi=plt.rcParams['figure.dpi']*4.0)
     ax = fig.add_subplot(1,1,1)
 
-    for i in range(len(obsids)):
-        obs_chan = obsids[i].data
-        chan_mask = mask[i]
+    for i in range(len(chans)):
+        if comparison is False:
+            obs_chan = obsids[0]
+            chan_mask = mask[0]
+        else:
+            obs_chan = obsids[i].data
+            chan_mask = mask[i]
         intoverpeak_chan = intoverpeak[i].data
         std_intoverpeak_chan = std_intoverpeak[i].data
+        
+            
 
         ax.errorbar(obs_chan, intoverpeak_chan,yerr=(std_intoverpeak_chan/np.sqrt(len(obs_chan))), fmt="o", color=colors[i+3], label=chans[i])
         if chan_mask == False:
@@ -454,9 +461,13 @@ def plt_io_pernight(
     fig = plt.figure(dpi=plt.rcParams['figure.dpi']*4.0)
     ax = fig.add_subplot(1,1,1)
 
-    for i in range(len(obsids)):
-        obs_chan = obsids[i].data
-        chan_mask = mask[i]
+    for i in range(len(chans)):
+        if comparison is False:
+            obs_chan = obsids[0].data
+            chan_mask = mask[0]
+        else:
+            obs_chan = obsids[i].data
+            chan_mask = mask[i]
         shape_chan = shape[i].data
         std_shape_chan = std_shape[i].data
 
@@ -477,10 +488,13 @@ def plt_io_pernight(
 
     fig = plt.figure(dpi=plt.rcParams['figure.dpi']*4.0)
     ax = fig.add_subplot(1,1,1)
-    for i in range(len(obsids)):
+    for i in range(len(chans)):
         intoverpeak_chan = intoverpeak[i].data
         shape_chan = std_shape[i].data
-        chan_mask = mask[i]
+        if args.comparison is False: 
+            chan_mask = mask[0]
+        else:
+            chan_mask = mask[i]
         ax.errorbar(intoverpeak_chan,shape_chan, fmt="o", color=colors[i+3], label=chans[i])
         if chan_mask == False:
             ax.errorbar(intoverpeak_chan, shape_chan, fmt="o", color=colors[i+3],markeredgecolor="k")
@@ -498,10 +512,13 @@ def plt_io_pernight(
 
     fig = plt.figure(dpi=plt.rcParams['figure.dpi']*4.0)
     ax = fig.add_subplot(1,1,1)
-    for i in range(len(obsids)):
+    for i in range(len(chans)):
         stdshape_chan = std_shape[i].data
         shape_chan = shape[i].data
-        chan_mask = mask[i]
+        if args.comparison is False: 
+            chan_mask = mask[0]
+        else:
+            chan_mask = mask[i]
 
         ax.errorbar(shape_chan,stdshape_chan, fmt="o", color=colors[i+3], label=chans[i])
         if chan_mask == False:
@@ -519,10 +536,13 @@ def plt_io_pernight(
 
     fig = plt.figure(dpi=plt.rcParams['figure.dpi']*4.0)
     ax = fig.add_subplot(1,1,1)
-    for i in range(len(obsids)):
+    for i in range(len(chans)):
         intoverpeak_chan = intoverpeak[i].data
         std_intoverpeak_chan = std_intoverpeak[i].data
-        chan_mask = mask[i]
+        if args.comparison is False: 
+            chan_mask = mask[0]
+        else:
+            chan_mask = mask[i]
         ax.errorbar(std_intoverpeak_chan,intoverpeak_chan, fmt="o", color=colors[i+3], label=chans[i])
         if chan_mask == False: 
             ax.errorbar(std_intoverpeak_chan, intoverpeak_chan, fmt="o", color=colors[i+3],markeredgecolor="k")
@@ -589,6 +609,11 @@ if __name__ == "__main__":
         default=True,
         help="Will run cuts on the quality of sources in each obsid then calculate int/peak etc. to assess io per obsid and over night options (default=True)"
     )
+    parser.add_argument(
+        "--comparison",
+        default=False,
+        help="If not None, will look for sub, nosub, newcal images to compare"
+    )
 
     parser.add_argument(
         "--plot",
@@ -645,11 +670,10 @@ if __name__ == "__main__":
         do_xm = False
 
     
-
-    # Reading in the list of obsids: will deal with the cenchan or all based on what the input txt file is called 
-    if "cenchan" in txtfile:
-        logger.debug(f"Only detected one cenchan, proceeding with just 1")
+    if args.comparison is False: 
+        logger.warning(f"Running the comparison verison")
         obs_txtfile = [txtfile]
+        extension = ["_sub", "_nosub", "_newcal"]
         split_string = txtfile.split("/")
         if len(split_string) == 2: 
             split_string = split_string[-1].split("_cenchan_")
@@ -661,22 +685,39 @@ if __name__ == "__main__":
             drift = split_string[0]
         logger.debug(f"drift: {drift}")
         logger.debug(f"cenchan: {chans[0]}")
+
     else: 
-        split_string = txtfile.split("/")
-        logger.debug(f"Detected no cenchan, proceeding with allchans")
-        if len(split_string) == 2:
-            drift = split_string[-1].replace(".txt", "")
-        elif len(split_string) == 1:
-            drift = split_string[0].replace(".txt","")
-        logger.debug(f"drift: {drift}")
-        if drift in ["XG_D-27_20201022", "XG_D-27_20201008", "XG_D-27_20201001"]:
-            chans = ["69", "93", "121", "145", "169"]
+    # Reading in the list of obsids: will deal with the cenchan or all based on what the input txt file is called 
+        if "cenchan" in txtfile:
+            logger.debug(f"Only detected one cenchan, proceeding with just 1")
+            obs_txtfile = [txtfile]
+            split_string = txtfile.split("/")
+            if len(split_string) == 2: 
+                split_string = split_string[-1].split("_cenchan_")
+                drift = split_string[0]
+                chans = [split_string[1].split(".")[0]]
+            elif len(split_string)==1:
+                split_string = split_string[0].split("_cenchan_")
+                chans = [split_string[1].split(".")[0]]
+                drift = split_string[0]
+            logger.debug(f"drift: {drift}")
+            logger.debug(f"cenchan: {chans[0]}")
         else: 
-            chans = ["069", "093", "121", "145", "169"]
-        obs_txtfile = []
-        for chan in chans:
-            obs_txtfile.append(txtfile.replace(".txt",f"_cenchan_{chan}.txt"))
-        obs_txtfile.append(txtfile)
+            split_string = txtfile.split("/")
+            logger.debug(f"Detected no cenchan, proceeding with allchans")
+            if len(split_string) == 2:
+                drift = split_string[-1].replace(".txt", "")
+            elif len(split_string) == 1:
+                drift = split_string[0].replace(".txt","")
+            logger.debug(f"drift: {drift}")
+            if drift in ["XG_D-27_20201022", "XG_D-27_20201008", "XG_D-27_20201001"]:
+                chans = ["69", "93", "121", "145", "169"]
+            else: 
+                chans = ["069", "093", "121", "145", "169"]
+            obs_txtfile = []
+            for chan in chans:
+                obs_txtfile.append(txtfile.replace(".txt",f"_cenchan_{chan}.txt"))
+            obs_txtfile.append(txtfile)
         
     # Looking for any missing obsids so they're removed before assessing 
     logger.debug(f"{obs_txtfile}")
@@ -687,7 +728,7 @@ if __name__ == "__main__":
     missing_mask = []
     for i in range(len(chans)):
         cenchan_obsids = read_obsids(obs_txtfile[i])
-        obsids_chan, missing_mask_chan = remove_missing(cenchan_obsids)
+        obsids_chan, missing_mask_chan = remove_missing(cenchan_obsids, extra=extension[0])
         obsids.append(obsids_chan)
         missing_mask.append(missing_mask_chan)
         logger.debug(f"Number of obsids per in channel {chans[i]}: {ma.count(obsids[i])}")
@@ -735,8 +776,18 @@ if __name__ == "__main__":
             logger.debug(f"Number of obsids with flagged for bad io for {chans[i]}: {num_obsids_postio} ({frac_flagged}%)")
             if frac_flagged > 20:
                 logger.warning(f"Large number of obsids flagged for bad io at chan {chans[i]}!: {frac_flagged}%")
-    
-
+    elif args.comparison is False: 
+        logger.debug(f"Running iocheck but for comparison!")
+        drift_intoverpeak = []
+        drift_stdintoverpeak = []
+        drift_shape = [] 
+        drift_stdshape = []
+        for i in range(len(extension)):
+            drift_intoverpeak_ext, drift_stdintoverpeak_ext, drift_shape_ext, drift_stdshape_ext = check_io(obsids, missing_mask, do_xm, extra=extension[i])
+            drift_intoverpeak.append(drift_intoverpeak_ext[0])
+            drift_stdintoverpeak.append(drift_stdintoverpeak_ext[0])
+            drift_shape.append(drift_shape_ext[0])
+            drift_stdshape.append(drift_stdshape_ext[0])
     else: 
         drift_intoverpeak, drift_stdintoverpeak, drift_shape, drift_stdshape = check_io(obsids, missing_mask, do_xm)
 
@@ -768,7 +819,10 @@ if __name__ == "__main__":
     logger.warning(f"Total flagged for drift: {ma.count_masked(all_obsids)}")
 
     if args.plot in ["all", "min"]:   
-        logger.debug(f"Plotting for drift")     
-        plt_io_pernight(obsids, drift_intoverpeak, drift_stdintoverpeak, drift_shape, drift_stdshape, bad_io_mask, drift, chans)
+        logger.debug(f"Plotting for drift")
+        if args.comparison is False:  
+            plt_io_pernight(obsids, drift_intoverpeak, drift_stdintoverpeak, drift_shape, drift_stdshape, bad_io_mask, drift, extension)
+        else:
+            plt_io_pernight(obsids, drift_intoverpeak, drift_stdintoverpeak, drift_shape, drift_stdshape, bad_io_mask, drift, chans)
         
 
