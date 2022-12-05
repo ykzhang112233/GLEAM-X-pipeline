@@ -439,15 +439,15 @@ def plt_io_pernight(
             chan_mask = mask[i]
         intoverpeak_chan = intoverpeak[i].data
         std_intoverpeak_chan = std_intoverpeak[i].data
-        
+        logger.debug(f"plotting for {chans[i]}")
             
 
         ax.errorbar(obs_chan, intoverpeak_chan,yerr=(std_intoverpeak_chan/np.sqrt(len(obs_chan))), fmt="o", color=colors[i+3], label=chans[i])
         if chan_mask == False:
-            ax.errorbar(obs_chan, intoverpeak_chan,yerr=(std_intoverpeak_chan/np.sqrt(len(obs_chan))), fmt="o", color=colors[i+3],markeredgecolor="k")
+            ax.errorbar(obs_chan, intoverpeak_chan,yerr=(std_intoverpeak_chan/np.sqrt(len(obs_chan))), fmt="o", color=colors[i+3],markeredgecolor="k", label=chans[i])
         else: 
-            ax.errorbar(obs_chan[~chan_mask], intoverpeak_chan[~chan_mask],yerr=(std_intoverpeak_chan[~chan_mask]/np.sqrt(len(obs_chan[~chan_mask]))), fmt="o", color=colors[i+3],markeredgecolor="k")
-        ax.axhline(np.nanmean(intoverpeak_chan), color=colors[i+3], alpha=0.3, linestyle="--")
+            ax.errorbar(obs_chan[~chan_mask], intoverpeak_chan[~chan_mask],yerr=(std_intoverpeak_chan[~chan_mask]/np.sqrt(len(obs_chan[~chan_mask]))), fmt="o", color=colors[i+3],markeredgecolor="k", label=chans[i])
+        ax.axhline(np.nanmean(intoverpeak_chan), color=colors[i+3], alpha=0.3, linestyle="--", label=chans[i])
     ax.errorbar(np.nan,np.nan, fmt="o", color='none',markeredgecolor="k", alpha=1, label="Selected")
     ax.set_ylabel(f"mean(int/peak)")
     ax.axhline(args.intoverpeak_cut, color="k", alpha=0.3, ls="--")
@@ -673,7 +673,7 @@ if __name__ == "__main__":
     if args.comparison is False: 
         logger.warning(f"Running the comparison verison")
         obs_txtfile = [txtfile]
-        extension = ["_sub", "_nosub", "_newcal"]
+        extension = ["_sub", "_nosub", "_newcal", "_newmodel"]
         split_string = txtfile.split("/")
         if len(split_string) == 2: 
             split_string = split_string[-1].split("_cenchan_")
