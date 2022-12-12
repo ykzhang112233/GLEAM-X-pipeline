@@ -431,22 +431,22 @@ def plt_io_pernight(
     ax = fig.add_subplot(1,1,1)
 
     for i in range(len(chans)):
-        if comparison is False:
-            obs_chan = obsids[0]
-            chan_mask = mask[0]
-        else:
-            obs_chan = obsids[i].data
-            chan_mask = mask[i]
+        # if comparison is False:
+        #     obs_chan = obsids[0]
+        #     chan_mask = mask[0]
+        # else:
+        obs_chan = obsids[i].data
+        chan_mask = mask[i]
         intoverpeak_chan = intoverpeak[i].data
         std_intoverpeak_chan = std_intoverpeak[i].data
         logger.debug(f"plotting for {chans[i]}")
             
 
         ax.errorbar(obs_chan, intoverpeak_chan,yerr=(std_intoverpeak_chan/np.sqrt(len(obs_chan))), fmt="o", color=colors[i+3], label=chans[i])
-        if chan_mask == False:
-            ax.errorbar(obs_chan, intoverpeak_chan,yerr=(std_intoverpeak_chan/np.sqrt(len(obs_chan))), fmt="o", color=colors[i+3],markeredgecolor="k", label=chans[i])
-        else: 
-            ax.errorbar(obs_chan[~chan_mask], intoverpeak_chan[~chan_mask],yerr=(std_intoverpeak_chan[~chan_mask]/np.sqrt(len(obs_chan[~chan_mask]))), fmt="o", color=colors[i+3],markeredgecolor="k", label=chans[i])
+        # if chan_mask == False:
+        #     ax.errorbar(obs_chan, intoverpeak_chan,yerr=(std_intoverpeak_chan/np.sqrt(len(obs_chan))), fmt="o", color=colors[i+3],markeredgecolor="k", label=chans[i])
+        # else: 
+        ax.errorbar(obs_chan[~chan_mask], intoverpeak_chan[~chan_mask],yerr=(std_intoverpeak_chan[~chan_mask]/np.sqrt(len(obs_chan[~chan_mask]))), fmt="o", color=colors[i+3],markeredgecolor="k")
         ax.axhline(np.nanmean(intoverpeak_chan), color=colors[i+3], alpha=0.3, linestyle="--", label=chans[i])
     ax.errorbar(np.nan,np.nan, fmt="o", color='none',markeredgecolor="k", alpha=1, label="Selected")
     ax.set_ylabel(f"mean(int/peak)")
@@ -462,20 +462,20 @@ def plt_io_pernight(
     ax = fig.add_subplot(1,1,1)
 
     for i in range(len(chans)):
-        if comparison is False:
-            obs_chan = obsids[0].data
-            chan_mask = mask[0]
-        else:
-            obs_chan = obsids[i].data
-            chan_mask = mask[i]
+        # if comparison is False:
+        #     obs_chan = obsids[0].data
+        #     chan_mask = mask[0]
+        # else:
+        obs_chan = obsids[i].data
+        chan_mask = mask[i]
         shape_chan = shape[i].data
         std_shape_chan = std_shape[i].data
 
         ax.errorbar(obs_chan, shape_chan,yerr=(std_shape_chan/np.sqrt(len(obs_chan))), fmt="o", color=colors[i+3], label=chans[i])
-        if chan_mask == False:
-            ax.errorbar(obs_chan, shape_chan,yerr=(std_shape_chan/np.sqrt(len(obs_chan))), fmt="o", color=colors[i+3],markeredgecolor="k")
-        else:
-            ax.errorbar(obs_chan[~chan_mask], shape_chan[~chan_mask],yerr=(std_shape_chan[~chan_mask]/np.sqrt(len(obs_chan[~chan_mask]))), fmt="o", color=colors[i+3],markeredgecolor="k")
+        # if chan_mask == False:
+        #     ax.errorbar(obs_chan, shape_chan,yerr=(std_shape_chan/np.sqrt(len(obs_chan))), fmt="o", color=colors[i+3],markeredgecolor="k")
+        # else:
+        ax.errorbar(obs_chan[~chan_mask], shape_chan[~chan_mask],yerr=(std_shape_chan[~chan_mask]/np.sqrt(len(obs_chan[~chan_mask]))), fmt="o", color=colors[i+3],markeredgecolor="k")
         ax.axhline(np.nanmean(shape_chan), color=colors[i+3], alpha=0.3, linestyle="--")
     ax.errorbar(np.nan,np.nan, fmt="o", color='none',markeredgecolor="k", alpha=1, label="Selected")
     ax.set_ylabel(f"mean(a*b/psf)")
@@ -491,15 +491,15 @@ def plt_io_pernight(
     for i in range(len(chans)):
         intoverpeak_chan = intoverpeak[i].data
         shape_chan = std_shape[i].data
-        if args.comparison is False: 
-            chan_mask = mask[0]
-        else:
-            chan_mask = mask[i]
+        # if args.comparison is False: 
+        #     chan_mask = mask[0]
+        # else:
+        chan_mask = mask[i]
         ax.errorbar(intoverpeak_chan,shape_chan, fmt="o", color=colors[i+3], label=chans[i])
-        if chan_mask == False:
-            ax.errorbar(intoverpeak_chan, shape_chan, fmt="o", color=colors[i+3],markeredgecolor="k")
-        else: 
-            ax.errorbar(intoverpeak_chan[~chan_mask], shape_chan[~chan_mask], fmt="o", color=colors[i+3],markeredgecolor="k")
+        # if chan_mask == False:
+        #     ax.errorbar(intoverpeak_chan, shape_chan, fmt="o", color=colors[i+3],markeredgecolor="k")
+        # else: 
+        ax.errorbar(intoverpeak_chan[~chan_mask], shape_chan[~chan_mask], fmt="o", color=colors[i+3],markeredgecolor="k")
     ax.errorbar(np.nan,np.nan, fmt="o", color='none',markeredgecolor="k", alpha=1, label="Selected")
     ax.set_ylabel(f"std(a*b/psf)")
     ax.set_xlabel(f"mean(int/peak)")
@@ -515,16 +515,16 @@ def plt_io_pernight(
     for i in range(len(chans)):
         stdshape_chan = std_shape[i].data
         shape_chan = shape[i].data
-        if args.comparison is False: 
-            chan_mask = mask[0]
-        else:
-            chan_mask = mask[i]
+        # if args.comparison is False: 
+        #     chan_mask = mask[0]
+        # else:
+        chan_mask = mask[i]
 
         ax.errorbar(shape_chan,stdshape_chan, fmt="o", color=colors[i+3], label=chans[i])
-        if chan_mask == False:
-            ax.errorbar(shape_chan, stdshape_chan, fmt="o", color=colors[i+3],markeredgecolor="k")
-        else: 
-            ax.errorbar(shape_chan[~chan_mask], stdshape_chan[~chan_mask], fmt="o", color=colors[i+3],markeredgecolor="k")
+        # if chan_mask == False:
+        #     ax.errorbar(shape_chan, stdshape_chan, fmt="o", color=colors[i+3],markeredgecolor="k")
+        # else: 
+        ax.errorbar(shape_chan[~chan_mask], stdshape_chan[~chan_mask], fmt="o", color=colors[i+3],markeredgecolor="k")
     ax.errorbar(np.nan,np.nan, fmt="o", color='none',markeredgecolor="k", alpha=1, label="Selected")
     ax.set_ylabel(f"std(a*b/psf)")
     ax.set_yscale('log')
@@ -539,15 +539,15 @@ def plt_io_pernight(
     for i in range(len(chans)):
         intoverpeak_chan = intoverpeak[i].data
         std_intoverpeak_chan = std_intoverpeak[i].data
-        if args.comparison is False: 
-            chan_mask = mask[0]
-        else:
-            chan_mask = mask[i]
+        # if args.comparison is False: 
+        #     chan_mask = mask[0]
+        # else:
+        chan_mask = mask[i]
         ax.errorbar(std_intoverpeak_chan,intoverpeak_chan, fmt="o", color=colors[i+3], label=chans[i])
-        if chan_mask == False: 
-            ax.errorbar(std_intoverpeak_chan, intoverpeak_chan, fmt="o", color=colors[i+3],markeredgecolor="k")
-        else:
-            ax.errorbar(std_intoverpeak_chan[~chan_mask], intoverpeak_chan[~chan_mask], fmt="o", color=colors[i+3],markeredgecolor="k")
+        # if chan_mask == False: 
+        #     ax.errorbar(std_intoverpeak_chan, intoverpeak_chan, fmt="o", color=colors[i+3],markeredgecolor="k")
+        # else:
+        ax.errorbar(std_intoverpeak_chan[~chan_mask], intoverpeak_chan[~chan_mask], fmt="o", color=colors[i+3],markeredgecolor="k")
     ax.errorbar(np.nan,np.nan, fmt="o", color='none',markeredgecolor="k", alpha=1, label="Selected")
     ax.axhline(args.intoverpeak_cut, color="k", alpha=0.3, ls="--")
     ax.axvline(args.std_cut, color="k", alpha=0.3, ls="--")
@@ -710,7 +710,7 @@ if __name__ == "__main__":
             elif len(split_string) == 1:
                 drift = split_string[0].replace(".txt","")
             logger.debug(f"drift: {drift}")
-            if drift in ["XG_D-27_20201022", "XG_D-27_20201008", "XG_D-27_20201001"]:
+            if drift in ["XG_D-27_20201022", "XG_D-27_20201008", "XG_D-27_20201001", "XG_D-40_20201014_Test"]:
                 chans = ["69", "93", "121", "145", "169"]
             else: 
                 chans = ["069", "093", "121", "145", "169"]
@@ -718,17 +718,19 @@ if __name__ == "__main__":
             for chan in chans:
                 obs_txtfile.append(txtfile.replace(".txt",f"_cenchan_{chan}.txt"))
             obs_txtfile.append(txtfile)
+            if drift == "XG_D-40_20201014_Test":
+                drift = "XG_D-40_20201014"
         
     # Looking for any missing obsids so they're removed before assessing 
     logger.debug(f"{obs_txtfile}")
     # Hacky just renaming this here so that everything saves with nice format but some drifts have no 0 for 69 and 93 
-    # chans = ["069", "093", "121", "145", "169"]
+    chans = ["069", "093", "121", "145", "169"]
     # Reading in the obsids from txt files
     obsids = []
     missing_mask = []
     for i in range(len(chans)):
         cenchan_obsids = read_obsids(obs_txtfile[i])
-        obsids_chan, missing_mask_chan = remove_missing(cenchan_obsids, extra=extension[0])
+        obsids_chan, missing_mask_chan = remove_missing(cenchan_obsids)
         obsids.append(obsids_chan)
         missing_mask.append(missing_mask_chan)
         logger.debug(f"Number of obsids per in channel {chans[i]}: {ma.count(obsids[i])}")
