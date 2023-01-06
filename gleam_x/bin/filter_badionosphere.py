@@ -807,14 +807,16 @@ if __name__ == "__main__":
     if args.save_bad_obsids is True: 
         logger.debug(f"Saving missing obsids")
         if len(chans) > 1:
+            all_good_obsids = ma.asanyarray(())
             for i in range(len(chans)):
                 obsids_chan = obsids[i]
                 chan_bad_obsids = obsids_chan[obsids_chan.mask].data
                 chan_good_obsids = obsids_chan[~obsids_chan.mask].data
                 np.savetxt(obs_txtfile[i].replace(".txt", "_bad_obsids.txt"), chan_bad_obsids, fmt="%10.0f")
                 np.savetxt(obs_txtfile[i].replace(".txt", "_bad_obsids.txt"), chan_bad_obsids, fmt="%10.0f")
+                all_good_obsids = ma.append(all_good_obsids, chan_good_obsids)
             np.savetxt(obs_txtfile[-1].replace(".txt", "_bad_obsids.txt") ,all_obsids[all_obsids.mask].data, fmt="%10.0f") 
-            np.savetxt(obs_txtfile[-1].replace(".txt", "_good_obsids.txt") ,all_obsids[~all_obsids.mask].data, fmt="%10.0f")   
+            np.savetxt(obs_txtfile[-1].replace(".txt", "_good_obsids.txt") ,all_good_obsids.data, fmt="%10.0f")   
         else: 
             np.savetxt(obs_txtfile[-1].replace(".txt", "_bad_obsids.txt") ,all_obsids[all_obsids.mask].data, fmt="%10.0f") 
 
