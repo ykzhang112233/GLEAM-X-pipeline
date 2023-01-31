@@ -75,7 +75,7 @@ def remove_missing(obsids_chan, extra = ""):
     return obsids_chan, missing_mask 
 
 
-def cut_high_rms(obsids, extra = ""):
+def cut_high_rms(obsids, extra = [""]):
 
     # TODO: currently hardcoding limit for bad std(rms) per channel!!! FIX!
     rms_std_cutoff = [40, 15, 10, 10, 10]
@@ -89,7 +89,7 @@ def cut_high_rms(obsids, extra = ""):
         obs = obsids[i]
         for j in range(len(obs)):
             if obs[j] is not ma.masked: 
-                rmsfile = f"{args.project}/{obsids[i][j]:10.0f}/{obsids[i][j]:10.0f}_deep-MFS-image-pb_warp_rms{extra}.fits"
+                rmsfile = f"{args.project}/{obsids[i][j]:10.0f}/{obsids[i][j]:10.0f}_deep-MFS-image-pb_warp_rms{extra[i]}.fits"
                 if os.path.exists(rmsfile):
                     hdu = fits.open(rmsfile)
                     rms_chan[j] = 1.e3*hdu[0].data[int(hdu[0].data.shape[0]/2), int(hdu[0].data.shape[1]/2)] 
@@ -611,7 +611,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--comparison",
-        default=False,
+        default=None,
         help="If not None, will look for sub, nosub, newcal images to compare"
     )
 
@@ -670,20 +670,28 @@ if __name__ == "__main__":
         do_xm = False
 
     
-    if args.comparison is False: 
+    if args.comparison is not None: 
         logger.warning(f"Running the comparison verison")
         obs_txtfile = [txtfile]
         # extension = ["_sub", "_nosub", "_newcal", "_newmodel"]
-        extension = ["", "newcal"]
+        extension = ["", "_newcal"]
         split_string = txtfile.split("/")
         if len(split_string) == 2: 
             split_string = split_string[-1].split("_cenchan_")
             drift = split_string[0]
             chans = [split_string[1].split(".")[0]]
+            obs_txtfile = []
+            for e in extension:
+                obs_txtfile.append(txtfile.replace(".txt",f"{e}.txt"))
+    
         elif len(split_string)==1:
             split_string = split_string[0].split("_cenchan_")
             chans = [split_string[1].split(".")[0]]
             drift = split_string[0]
+            obs_txtfile = []
+            for e in extension:
+                obs_txtfile.append(txtfile.replace(".txt",f"{e}.txt"))
+            # obs_txtfile.append(txtfile)
         logger.debug(f"drift: {drift}")
         logger.debug(f"cenchan: {chans[0]}")
 
@@ -725,13 +733,17 @@ if __name__ == "__main__":
     # Looking for any missing obsids so they're removed before assessing 
     logger.debug(f"{obs_txtfile}")
     # Hacky just renaming this here so that everything saves with nice format but some drifts have no 0 for 69 and 93 
-    chans = ["069", "093", "121", "145", "169"]
+    if args.comparison is not None: 
+        chans = extension
+    else: 
+        chans = ["069", "093", "121", "145", "169"]
+        extension = ["", "", "", "", ""]
     # Reading in the obsids from txt files
     obsids = []
     missing_mask = []
     for i in range(len(chans)):
         cenchan_obsids = read_obsids(obs_txtfile[i])
-        obsids_chan, missing_mask_chan = remove_missing(cenchan_obsids)
+        obsids_chan, missing_mask_chan = remove_missing(cenchan_obsids, extension[i])
         obsids.append(obsids_chan)
         missing_mask.append(missing_mask_chan)
         logger.debug(f"Number of obsids per in channel {chans[i]}: {ma.count(obsids[i])}")
@@ -744,7 +756,7 @@ if __name__ == "__main__":
 
     # Cutting obsids with high RMS in MFS image 
     if args.flag_high_rms is True: 
-        rms_mask = cut_high_rms(obsids)
+        rms_mask = cut_high_rms(obsids, extra=extension)
         for i in range(len(chans)):
             logger.warning(f"Number of obsids flagged for bad rms for {chans[i]}: {ma.count_masked(rms_mask[i])}")
     else: 
@@ -779,7 +791,8 @@ if __name__ == "__main__":
             logger.debug(f"Number of obsids with flagged for bad io for {chans[i]}: {num_obsids_postio} ({frac_flagged}%)")
             if frac_flagged > 20:
                 logger.warning(f"Large number of obsids flagged for bad io at chan {chans[i]}!: {frac_flagged}%")
-    elif args.comparison is False: 
+
+    elif args.comparison is not None: 
         logger.debug(f"Running iocheck but for comparison!")
         drift_intoverpeak = []
         drift_stdintoverpeak = []
@@ -825,7 +838,7 @@ if __name__ == "__main__":
 
     if args.plot in ["all", "min"]:   
         logger.debug(f"Plotting for drift")
-        if args.comparison is False:  
+        if args.comparison is not None:  
             plt_io_pernight(obsids, drift_intoverpeak, drift_stdintoverpeak, drift_shape, drift_stdshape, bad_io_mask, drift, extension)
         else:
             plt_io_pernight(obsids, drift_intoverpeak, drift_stdintoverpeak, drift_shape, drift_stdshape, bad_io_mask, drift, chans)
