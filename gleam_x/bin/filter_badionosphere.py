@@ -61,7 +61,7 @@ def remove_missing(obsids_chan, extra = ""):
 
     for i in range(len(obsids_chan)):
         obsid = obsids_chan[i] 
-        if os.path.exists(f"{base_dir}/{obsid:10.0f}/{obsid:10.0f}_deep-MFS-image-pb_warp_rescaled_comp{extra}.fits") is False: 
+        if os.path.exists(f"{base_dir}/{obsid:10.0f}/{obsid:10.0f}_deep-MFS-image-pb_warp_comp{extra}.fits") is False: 
             logger.warning(f"No catalogue for io checks: {obsid:10.0f}")
             obsids_chan[i] = ma.masked
     
@@ -673,7 +673,8 @@ if __name__ == "__main__":
     if args.comparison is False: 
         logger.warning(f"Running the comparison verison")
         obs_txtfile = [txtfile]
-        extension = ["_sub", "_nosub", "_newcal", "_newmodel"]
+        # extension = ["_sub", "_nosub", "_newcal", "_newmodel"]
+        extension = ["", "newcal"]
         split_string = txtfile.split("/")
         if len(split_string) == 2: 
             split_string = split_string[-1].split("_cenchan_")
