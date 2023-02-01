@@ -148,12 +148,14 @@ def crossmatch_cats(
         return idx1_iso
 
 
-def check_io(obsids, missing_mask, xm_cat, extra = ""):
+def check_io(obsids, missing_mask, xm_cat, extra = [""]):
     int_over_peak = []
     std_intoverpeak = []
     shape = []
     std_shape = []
     for i in range(len(obsids)):
+        extra_chan = extra[i]
+        logger.debug(f"The extension for comparison: {extra_chan}")
         obs = ma.array(obsids[i].data, mask=missing_mask[i])
         int_over_peak_chan = ma.array([np.nan]*len(obsids[i].data), mask=missing_mask[i])
         std_intoverpeak_chan = ma.array([np.nan]*len(obsids[i].data), mask=missing_mask[i])
@@ -161,8 +163,9 @@ def check_io(obsids, missing_mask, xm_cat, extra = ""):
         std_shape_chan = ma.array([np.nan]*len(obsids[i].data), mask=missing_mask[i])
         for j in range(len(obs)):
             if obs[j] is not ma.masked: 
-                catfile = f"{args.project}/{obs[j]:10.0f}/{obs[j]:10.0f}_deep-MFS-image-pb_warp_rescaled_comp{extra}.fits"
-                savefile = f"{args.project}/{obs[j]:10.0f}/{obs[j]:10.0f}_iocheck_comp{extra}.csv"
+                catfile = f"{args.project}/{obs[j]:10.0f}/{obs[j]:10.0f}_deep-MFS-image-pb_warp_comp{extra_chan}.fits"
+                # logger.debug(f"{catfile}")
+                savefile = f"{args.project}/{obs[j]:10.0f}/{obs[j]:10.0f}_iocheck_comp{extra_chan}.csv"
                 if os.path.exists(catfile):
                     try: 
                         hdu=fits.open(catfile)
@@ -446,7 +449,7 @@ def plt_io_pernight(
         # if chan_mask.all() == False:
         #     ax.errorbar(obs_chan, intoverpeak_chan,yerr=(std_intoverpeak_chan/np.sqrt(len(obs_chan))), fmt="o", color=colors[i+3],markeredgecolor="k")
         # else: 
-        ax.errorbar(obs_chan[~chan_mask], intoverpeak_chan[~chan_mask],yerr=(std_intoverpeak_chan[~chan_mask]/np.sqrt(len(obs_chan[~chan_mask]))), fmt="o", color=colors[i+3],markeredgecolor="k")
+        ax.errorbar(obs_chan[~chan_mask], intoverpeak_chan[~chan_mask],yerr=(std_intoverpeak_chan[~chan_mask]/np.sqrt(len(obs_chan[~chan_mask]))), fmt="o", color=colors[i+3],markeredgecolor="k", label=chans[i])
         ax.axhline(np.nanmean(intoverpeak_chan), color=colors[i+3], alpha=0.3, linestyle="--")
     ax.errorbar(np.nan,np.nan, fmt="o", color='none',markeredgecolor="k", alpha=1, label="Selected")
     ax.set_ylabel(f"mean(int/peak)")
@@ -766,7 +769,7 @@ if __name__ == "__main__":
     # note: first cuts bad srcs, the xm with GGSM to find nice brihgt etc ones before doing the actually assessment 
 
     if args.flag_bad_io is True: 
-        drift_intoverpeak, drift_stdintoverpeak, drift_shape, drift_stdshape = check_io(obsids, missing_mask, do_xm)
+        drift_intoverpeak, drift_stdintoverpeak, drift_shape, drift_stdshape = check_io(obsids, missing_mask, do_xm, extra=extension)
         for i in range(len(chans)):
             color = colors[i+3]
             logger.debug(f"Running the io cut on chan {chans[i]}")
