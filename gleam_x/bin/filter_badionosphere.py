@@ -78,7 +78,7 @@ def remove_missing(obsids_chan, extra = ""):
 def cut_high_rms(obsids, extra = [""]):
 
     # TODO: currently hardcoding limit for bad std(rms) per channel!!! FIX!
-    rms_std_cutoff = [40, 15, 10, 10, 10]
+    rms_std_cutoff = [40, 40, 15, 10, 10, 10]
     rms_mask = []
     for i in range(len(obsids)):
         num_postmissing = ma.count(obsids[i])
@@ -421,7 +421,6 @@ def plt_io_pernight(
     chans,
     ext="png",
     cmap = plt.get_cmap("gnuplot2"),
-    comparison = False,
 ):
     c_array = np.linspace(0,1,len(chans)+4)
     colors = cmap(c_array)
@@ -434,10 +433,6 @@ def plt_io_pernight(
     ax = fig.add_subplot(1,1,1)
 
     for i in range(len(chans)):
-        # if comparison is False:
-        #     obs_chan = obsids[0]
-        #     chan_mask = mask[0]
-        # else:
         obs_chan = obsids[i].data
         chan_mask = mask[i]
         intoverpeak_chan = intoverpeak[i].data
@@ -446,10 +441,10 @@ def plt_io_pernight(
             
 
         ax.errorbar(obs_chan, intoverpeak_chan,yerr=(std_intoverpeak_chan/np.sqrt(len(obs_chan))), fmt="o", color=colors[i+3], label=chans[i])
-        # if chan_mask.all() == False:
-        #     ax.errorbar(obs_chan, intoverpeak_chan,yerr=(std_intoverpeak_chan/np.sqrt(len(obs_chan))), fmt="o", color=colors[i+3],markeredgecolor="k")
-        # else: 
-        ax.errorbar(obs_chan[~chan_mask], intoverpeak_chan[~chan_mask],yerr=(std_intoverpeak_chan[~chan_mask]/np.sqrt(len(obs_chan[~chan_mask]))), fmt="o", color=colors[i+3],markeredgecolor="k", label=chans[i])
+        if chan_mask == False:
+            ax.errorbar(obs_chan, intoverpeak_chan,yerr=(std_intoverpeak_chan/np.sqrt(len(obs_chan))), fmt="o", color=colors[i+3],markeredgecolor="k")
+        else: 
+            ax.errorbar(obs_chan[~chan_mask], intoverpeak_chan[~chan_mask],yerr=(std_intoverpeak_chan[~chan_mask]/np.sqrt(len(obs_chan[~chan_mask]))), fmt="o", color=colors[i+3],markeredgecolor="k")
         ax.axhline(np.nanmean(intoverpeak_chan), color=colors[i+3], alpha=0.3, linestyle="--")
     ax.errorbar(np.nan,np.nan, fmt="o", color='none',markeredgecolor="k", alpha=1, label="Selected")
     ax.set_ylabel(f"mean(int/peak)")
@@ -465,20 +460,16 @@ def plt_io_pernight(
     ax = fig.add_subplot(1,1,1)
 
     for i in range(len(chans)):
-        # if comparison is False:
-        #     obs_chan = obsids[0].data
-        #     chan_mask = mask[0]
-        # else:
         obs_chan = obsids[i].data
         chan_mask = mask[i]
         shape_chan = shape[i].data
         std_shape_chan = std_shape[i].data
 
         ax.errorbar(obs_chan, shape_chan,yerr=(std_shape_chan/np.sqrt(len(obs_chan))), fmt="o", color=colors[i+3], label=chans[i])
-        # if chan_mask.all() == False:
-        #     ax.errorbar(obs_chan, shape_chan,yerr=(std_shape_chan/np.sqrt(len(obs_chan))), fmt="o", color=colors[i+3],markeredgecolor="k")
-        # else:
-        ax.errorbar(obs_chan[~chan_mask], shape_chan[~chan_mask],yerr=(std_shape_chan[~chan_mask]/np.sqrt(len(obs_chan[~chan_mask]))), fmt="o", color=colors[i+3],markeredgecolor="k")
+        if chan_mask == False:
+            ax.errorbar(obs_chan, shape_chan,yerr=(std_shape_chan/np.sqrt(len(obs_chan))), fmt="o", color=colors[i+3],markeredgecolor="k")
+        else:
+            ax.errorbar(obs_chan[~chan_mask], shape_chan[~chan_mask],yerr=(std_shape_chan[~chan_mask]/np.sqrt(len(obs_chan[~chan_mask]))), fmt="o", color=colors[i+3],markeredgecolor="k")
         ax.axhline(np.nanmean(shape_chan), color=colors[i+3], alpha=0.3, linestyle="--")
     ax.errorbar(np.nan,np.nan, fmt="o", color='none',markeredgecolor="k", alpha=1, label="Selected")
     ax.set_ylabel(f"mean(a*b/psf)")
@@ -494,15 +485,12 @@ def plt_io_pernight(
     for i in range(len(chans)):
         intoverpeak_chan = intoverpeak[i].data
         shape_chan = std_shape[i].data
-        # if args.comparison is False: 
-        #     chan_mask = mask[0]
-        # else:
         chan_mask = mask[i]
         ax.errorbar(intoverpeak_chan,shape_chan, fmt="o", color=colors[i+3], label=chans[i])
-        # if chan_mask.all() == False:
-        #     ax.errorbar(intoverpeak_chan, shape_chan, fmt="o", color=colors[i+3],markeredgecolor="k")
-        # else: 
-        ax.errorbar(intoverpeak_chan[~chan_mask], shape_chan[~chan_mask], fmt="o", color=colors[i+3],markeredgecolor="k")
+        if chan_mask == False:
+            ax.errorbar(intoverpeak_chan, shape_chan, fmt="o", color=colors[i+3],markeredgecolor="k")
+        else: 
+            ax.errorbar(intoverpeak_chan[~chan_mask], shape_chan[~chan_mask], fmt="o", color=colors[i+3],markeredgecolor="k")
     ax.errorbar(np.nan,np.nan, fmt="o", color='none',markeredgecolor="k", alpha=1, label="Selected")
     ax.set_ylabel(f"std(a*b/psf)")
     ax.set_xlabel(f"mean(int/peak)")
@@ -518,16 +506,13 @@ def plt_io_pernight(
     for i in range(len(chans)):
         stdshape_chan = std_shape[i].data
         shape_chan = shape[i].data
-        # if args.comparison is False: 
-        #     chan_mask = mask[0]
-        # else:
         chan_mask = mask[i]
 
         ax.errorbar(shape_chan,stdshape_chan, fmt="o", color=colors[i+3], label=chans[i])
-        # if chan_mask.all() == False:
-        #     ax.errorbar(shape_chan, stdshape_chan, fmt="o", color=colors[i+3],markeredgecolor="k")
-        # else: 
-        ax.errorbar(shape_chan[~chan_mask], stdshape_chan[~chan_mask], fmt="o", color=colors[i+3],markeredgecolor="k")
+        if chan_mask == False:
+            ax.errorbar(shape_chan, stdshape_chan, fmt="o", color=colors[i+3],markeredgecolor="k")
+        else: 
+            ax.errorbar(shape_chan[~chan_mask], stdshape_chan[~chan_mask], fmt="o", color=colors[i+3],markeredgecolor="k")
     ax.errorbar(np.nan,np.nan, fmt="o", color='none',markeredgecolor="k", alpha=1, label="Selected")
     ax.set_ylabel(f"std(a*b/psf)")
     ax.set_yscale('log')
@@ -542,15 +527,12 @@ def plt_io_pernight(
     for i in range(len(chans)):
         intoverpeak_chan = intoverpeak[i].data
         std_intoverpeak_chan = std_intoverpeak[i].data
-        # if args.comparison is False: 
-        #     chan_mask = mask[0]
-        # else:
         chan_mask = mask[i]
         ax.errorbar(std_intoverpeak_chan,intoverpeak_chan, fmt="o", color=colors[i+3], label=chans[i])
-        # if chan_mask.all() == False:
-        #     ax.errorbar(std_intoverpeak_chan, intoverpeak_chan, fmt="o", color=colors[i+3],markeredgecolor="k")
-        # else:
-        ax.errorbar(std_intoverpeak_chan[~chan_mask], intoverpeak_chan[~chan_mask], fmt="o", color=colors[i+3],markeredgecolor="k")
+        if chan_mask == False:
+            ax.errorbar(std_intoverpeak_chan, intoverpeak_chan, fmt="o", color=colors[i+3],markeredgecolor="k")
+        else:
+            ax.errorbar(std_intoverpeak_chan[~chan_mask], intoverpeak_chan[~chan_mask], fmt="o", color=colors[i+3],markeredgecolor="k")
     ax.errorbar(np.nan,np.nan, fmt="o", color='none',markeredgecolor="k", alpha=1, label="Selected")
     ax.axhline(args.intoverpeak_cut, color="k", alpha=0.3, ls="--")
     ax.axvline(args.std_cut, color="k", alpha=0.3, ls="--")
@@ -614,8 +596,8 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--comparison",
-        default=None,
-        help="If not None, will look for sub, nosub, newcal images to compare"
+        default=True,
+        help="If not True, will look for sub, nosub, newcal images to compare"
     )
 
     parser.add_argument(
@@ -673,11 +655,12 @@ if __name__ == "__main__":
         do_xm = False
 
     
-    if args.comparison is not None: 
+    if args.comparison == True: 
         logger.warning(f"Running the comparison verison")
         obs_txtfile = [txtfile]
-        # extension = ["_sub", "_nosub", "_newcal", "_newmodel"]
-        extension = ["", "_newcal"]
+        # newcal=single good applied to all, nosub=equiv to default, 2compGGSM=new model 
+        extension = ["_nosub", "_newcal"]#, "_2compGGSM"]
+        # extension = ["", "_newcal"]
         split_string = txtfile.split("/")
         if len(split_string) == 2: 
             split_string = split_string[-1].split("_cenchan_")
@@ -725,7 +708,7 @@ if __name__ == "__main__":
             if drift in ["XG_D-27_20201022", "XG_D-27_20201008", "XG_D-27_20201001", "XG_D-40_20201014_Test"]:
                 chans = ["69", "93", "121", "145", "169"]
             else: 
-                chans = ["069", "093", "121", "145", "169"]
+                chans = ["069", "069_newcal", "093", "121", "145", "169"]
             obs_txtfile = []
             for chan in chans:
                 obs_txtfile.append(txtfile.replace(".txt",f"_cenchan_{chan}.txt"))
@@ -736,16 +719,17 @@ if __name__ == "__main__":
     # Looking for any missing obsids so they're removed before assessing 
     logger.debug(f"{obs_txtfile}")
     # Hacky just renaming this here so that everything saves with nice format but some drifts have no 0 for 69 and 93 
-    if args.comparison is not None: 
+    if args.comparison is True: 
         chans = extension
     else: 
-        chans = ["069", "093", "121", "145", "169"]
-        extension = ["", "", "", "", ""]
+        chans = ["069", "069_newcal", "093", "121", "145", "169"]
+        extension = ["","_newcal", "", "", "", ""]
     # Reading in the obsids from txt files
     obsids = []
     missing_mask = []
     for i in range(len(chans)):
         cenchan_obsids = read_obsids(obs_txtfile[i])
+        logger.debug(f"{extension[i]}")
         obsids_chan, missing_mask_chan = remove_missing(cenchan_obsids, extension[i])
         obsids.append(obsids_chan)
         missing_mask.append(missing_mask_chan)
@@ -795,20 +779,21 @@ if __name__ == "__main__":
             if frac_flagged > 20:
                 logger.warning(f"Large number of obsids flagged for bad io at chan {chans[i]}!: {frac_flagged}%")
 
-    elif args.comparison is not None: 
+    elif args.comparison is True: 
         logger.debug(f"Running iocheck but for comparison!")
-        drift_intoverpeak = []
-        drift_stdintoverpeak = []
-        drift_shape = [] 
-        drift_stdshape = []
-        for i in range(len(extension)):
-            drift_intoverpeak_ext, drift_stdintoverpeak_ext, drift_shape_ext, drift_stdshape_ext = check_io(obsids, missing_mask, do_xm, extra=extension[i])
-            drift_intoverpeak.append(drift_intoverpeak_ext[0])
-            drift_stdintoverpeak.append(drift_stdintoverpeak_ext[0])
-            drift_shape.append(drift_shape_ext[0])
-            drift_stdshape.append(drift_stdshape_ext[0])
-    else: 
-        drift_intoverpeak, drift_stdintoverpeak, drift_shape, drift_stdshape = check_io(obsids, missing_mask, do_xm)
+        # drift_intoverpeak = []
+        # drift_stdintoverpeak = []
+        # drift_shape = [] 
+        # drift_stdshape = []
+        # for i in range(len(extension)):
+        drift_intoverpeak, drift_stdintoverpeak, drift_shape, drift_stdshape = check_io(obsids, missing_mask, do_xm, extra=extension)
+            # drift_intoverpeak.append(drift_intoverpeak_ext[0])
+            # drift_stdintoverpeak.append(drift_stdintoverpeak_ext[0])
+            # drift_shape.append(drift_shape_ext[0])
+            # drift_stdshape.append(drift_stdshape_ext[0])
+    else:
+        logger.warning(f"Not doing any kind of io checking! ") 
+    #     drift_intoverpeak, drift_stdintoverpeak, drift_shape, drift_stdshape = check_io(obsids, missing_mask, do_xm)
 
 
     bad_io_mask = []
@@ -841,7 +826,10 @@ if __name__ == "__main__":
 
     if args.plot in ["all", "min"]:   
         logger.debug(f"Plotting for drift")
-        if args.comparison is not None:  
+        if args.comparison is True:
+            for i in range(len(extension)):
+                extension[i] = extension[i].replace("_","")
+            logger.debug(f"Running plotting assuming comparison")
             plt_io_pernight(obsids, drift_intoverpeak, drift_stdintoverpeak, drift_shape, drift_stdshape, bad_io_mask, drift, extension)
         else:
             plt_io_pernight(obsids, drift_intoverpeak, drift_stdintoverpeak, drift_shape, drift_stdshape, bad_io_mask, drift, chans)
