@@ -659,7 +659,7 @@ if __name__ == "__main__":
         logger.warning(f"Running the comparison verison")
         obs_txtfile = [txtfile]
         # newcal=single good applied to all, nosub=equiv to default, 2compGGSM=new model 
-        extension = ["_nosub", "_newcal"]#, "_2compGGSM"]
+        extension = ["_nosub", "_newcal", "_sub", "_2compGGSM"]
         # extension = ["", "_newcal"]
         split_string = txtfile.split("/")
         if len(split_string) == 2: 
@@ -781,16 +781,7 @@ if __name__ == "__main__":
 
     elif args.comparison is True: 
         logger.debug(f"Running iocheck but for comparison!")
-        # drift_intoverpeak = []
-        # drift_stdintoverpeak = []
-        # drift_shape = [] 
-        # drift_stdshape = []
-        # for i in range(len(extension)):
         drift_intoverpeak, drift_stdintoverpeak, drift_shape, drift_stdshape = check_io(obsids, missing_mask, do_xm, extra=extension)
-            # drift_intoverpeak.append(drift_intoverpeak_ext[0])
-            # drift_stdintoverpeak.append(drift_stdintoverpeak_ext[0])
-            # drift_shape.append(drift_shape_ext[0])
-            # drift_stdshape.append(drift_stdshape_ext[0])
     else:
         logger.warning(f"Not doing any kind of io checking! ") 
     #     drift_intoverpeak, drift_stdintoverpeak, drift_shape, drift_stdshape = check_io(obsids, missing_mask, do_xm)
