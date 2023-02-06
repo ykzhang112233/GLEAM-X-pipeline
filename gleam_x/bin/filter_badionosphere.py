@@ -659,7 +659,7 @@ if __name__ == "__main__":
         logger.warning(f"Running the comparison verison")
         obs_txtfile = [txtfile]
         # newcal=single good applied to all, nosub=equiv to default, 2compGGSM=new model 
-        extension = ["_nosub", "_newcal", "_sub", "_2compGGSM"]
+        extension = ["_nosub", "_newcal", "_sub", "_2compGGSM", "_4compGGSM"]
         # extension = ["", "_newcal"]
         split_string = txtfile.split("/")
         if len(split_string) == 2: 
