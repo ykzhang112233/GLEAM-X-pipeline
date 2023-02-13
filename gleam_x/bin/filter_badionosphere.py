@@ -61,7 +61,7 @@ def remove_missing(obsids_chan, extra = ""):
 
     for i in range(len(obsids_chan)):
         obsid = obsids_chan[i] 
-        if os.path.exists(f"{base_dir}/{obsid:10.0f}/{obsid:10.0f}_deep-MFS-image-pb_warp_comp{extra}.fits") is False: 
+        if os.path.exists(f"{base_dir}/{obsid:10.0f}/{obsid:10.0f}_deep-MFS-image-pb_warp_rescaled_comp{extra}.fits") is False: 
             logger.warning(f"No catalogue for io checks: {obsid:10.0f}")
             obsids_chan[i] = ma.masked
     
@@ -163,7 +163,7 @@ def check_io(obsids, missing_mask, xm_cat, extra = [""]):
         std_shape_chan = ma.array([np.nan]*len(obsids[i].data), mask=missing_mask[i])
         for j in range(len(obs)):
             if obs[j] is not ma.masked: 
-                catfile = f"{args.project}/{obs[j]:10.0f}/{obs[j]:10.0f}_deep-MFS-image-pb_warp_comp{extra_chan}.fits"
+                catfile = f"{args.project}/{obs[j]:10.0f}/{obs[j]:10.0f}_deep-MFS-image-pb_warp_rescaled_comp{extra_chan}.fits"
                 # logger.debug(f"{catfile}")
                 savefile = f"{args.project}/{obs[j]:10.0f}/{obs[j]:10.0f}_iocheck_comp{extra_chan}.csv"
                 if os.path.exists(catfile):
@@ -366,7 +366,7 @@ def check_io(obsids, missing_mask, xm_cat, extra = [""]):
                     save_cat.add_column(io_srcs)
                     save_cat.write(savefile,format="csv",overwrite=True)
                 except: 
-                    logger.debug(f"Already have cat, overwriting")
+                    # logger.debug(f"Already have cat, overwriting")
                     save_cat.replace_column("io_srcs", srcs)
                     save_cat.write(savefile,format="csv",overwrite=True)
 
@@ -441,7 +441,7 @@ def plt_io_pernight(
             
 
         ax.errorbar(obs_chan, intoverpeak_chan,yerr=(std_intoverpeak_chan/np.sqrt(len(obs_chan))), fmt="o", color=colors[i+3], label=chans[i])
-        if chan_mask == False:
+        if chan_mask.all() == False:
             ax.errorbar(obs_chan, intoverpeak_chan,yerr=(std_intoverpeak_chan/np.sqrt(len(obs_chan))), fmt="o", color=colors[i+3],markeredgecolor="k")
         else: 
             ax.errorbar(obs_chan[~chan_mask], intoverpeak_chan[~chan_mask],yerr=(std_intoverpeak_chan[~chan_mask]/np.sqrt(len(obs_chan[~chan_mask]))), fmt="o", color=colors[i+3],markeredgecolor="k")
@@ -466,7 +466,7 @@ def plt_io_pernight(
         std_shape_chan = std_shape[i].data
 
         ax.errorbar(obs_chan, shape_chan,yerr=(std_shape_chan/np.sqrt(len(obs_chan))), fmt="o", color=colors[i+3], label=chans[i])
-        if chan_mask == False:
+        if chan_mask.all() == False:
             ax.errorbar(obs_chan, shape_chan,yerr=(std_shape_chan/np.sqrt(len(obs_chan))), fmt="o", color=colors[i+3],markeredgecolor="k")
         else:
             ax.errorbar(obs_chan[~chan_mask], shape_chan[~chan_mask],yerr=(std_shape_chan[~chan_mask]/np.sqrt(len(obs_chan[~chan_mask]))), fmt="o", color=colors[i+3],markeredgecolor="k")
@@ -487,7 +487,7 @@ def plt_io_pernight(
         shape_chan = std_shape[i].data
         chan_mask = mask[i]
         ax.errorbar(intoverpeak_chan,shape_chan, fmt="o", color=colors[i+3], label=chans[i])
-        if chan_mask == False:
+        if chan_mask.all() == False:
             ax.errorbar(intoverpeak_chan, shape_chan, fmt="o", color=colors[i+3],markeredgecolor="k")
         else: 
             ax.errorbar(intoverpeak_chan[~chan_mask], shape_chan[~chan_mask], fmt="o", color=colors[i+3],markeredgecolor="k")
@@ -509,7 +509,7 @@ def plt_io_pernight(
         chan_mask = mask[i]
 
         ax.errorbar(shape_chan,stdshape_chan, fmt="o", color=colors[i+3], label=chans[i])
-        if chan_mask == False:
+        if chan_mask.all() == False:
             ax.errorbar(shape_chan, stdshape_chan, fmt="o", color=colors[i+3],markeredgecolor="k")
         else: 
             ax.errorbar(shape_chan[~chan_mask], stdshape_chan[~chan_mask], fmt="o", color=colors[i+3],markeredgecolor="k")
@@ -529,7 +529,7 @@ def plt_io_pernight(
         std_intoverpeak_chan = std_intoverpeak[i].data
         chan_mask = mask[i]
         ax.errorbar(std_intoverpeak_chan,intoverpeak_chan, fmt="o", color=colors[i+3], label=chans[i])
-        if chan_mask == False:
+        if chan_mask.all() == False:
             ax.errorbar(std_intoverpeak_chan, intoverpeak_chan, fmt="o", color=colors[i+3],markeredgecolor="k")
         else:
             ax.errorbar(std_intoverpeak_chan[~chan_mask], intoverpeak_chan[~chan_mask], fmt="o", color=colors[i+3],markeredgecolor="k")
@@ -659,7 +659,9 @@ if __name__ == "__main__":
         logger.warning(f"Running the comparison verison")
         obs_txtfile = [txtfile]
         # newcal=single good applied to all, nosub=equiv to default, 2compGGSM=new model 
-        extension = ["_nosub", "_newcal", "_sub", "_2compGGSM", "_4compGGSM", "_MWAmodel"]
+        # Complete testing options (mostly just for 069)
+        # extension = ["_nosub", "_newcal", "_sub", "_2compGGSM", "_4compGGSM", "_MWAmodel"]
+        extension = ["_default", "_MWAmodel"]
         # extension = ["", "_newcal"]
         split_string = txtfile.split("/")
         if len(split_string) == 2: 
@@ -706,9 +708,10 @@ if __name__ == "__main__":
                 drift = split_string[0].replace(".txt","")
             logger.debug(f"drift: {drift}")
             if drift in ["XG_D-27_20201022", "XG_D-27_20201008", "XG_D-27_20201001", "XG_D-40_20201014_Test"]:
-                chans = ["69", "93", "121", "145", "169"]
+                chans = ["69", "093", "121", "145", "169"]
             else: 
-                chans = ["069", "069_newcal", "093", "121", "145", "169"]
+                # chans = ["069", "069_newmodel", "093", "093_MWAmodel", "121", "121_MWAmodel", "145", "145_MWAmodel", "169", "169_MWAmodel"]
+                chans = ["069", "069_newmodel", "093", "121", "145", "169"]
             obs_txtfile = []
             for chan in chans:
                 obs_txtfile.append(txtfile.replace(".txt",f"_cenchan_{chan}.txt"))
@@ -722,8 +725,10 @@ if __name__ == "__main__":
     if args.comparison is True: 
         chans = extension
     else: 
-        chans = ["069", "069_newcal", "093", "121", "145", "169"]
-        extension = ["","_newcal", "", "", "", ""]
+        chans = ["069", "069_newmodel", "093", "121", "145", "169"]
+        extension = ["", "_newmodel", "", "", "", ""]
+        # chans = ["069", "069_MWAmodel", "093", "093_MWAmodel", "121", "121_MWAmodel", "145", "145_MWAmodel", "169", "169_MWAmodel"]
+        # extension = ["","_MWAmodel", "","_MWAmodel", "","_MWAmodel", "","_MWAmodel", "","_MWAmodel"]
     # Reading in the obsids from txt files
     obsids = []
     missing_mask = []
