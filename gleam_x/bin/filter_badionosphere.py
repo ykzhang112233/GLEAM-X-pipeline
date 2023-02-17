@@ -7,8 +7,6 @@
 from ast import parse
 from gzip import READ
 from http.client import NON_AUTHORITATIVE_INFORMATION
-from mmap import mmap
-import sys
 import os
 from argparse import ArgumentParser
 from astropy.coordinates import SkyCoord, search_around_sky
@@ -17,11 +15,9 @@ from matplotlib import pyplot as plt
 import astropy.units as u
 import numpy as np
 import logging 
-import matplotlib.ticker as ticker
 from matplotlib import rcParams
 import matplotlib.pyplot as plt
 # import cmasher as cmr
-import matplotlib
 import numpy.ma as ma
 from astropy.table import Table, Column
 
@@ -61,7 +57,8 @@ def remove_missing(obsids_chan, extra = ""):
 
     for i in range(len(obsids_chan)):
         obsid = obsids_chan[i] 
-        if os.path.exists(f"{base_dir}/{obsid:10.0f}/{obsid:10.0f}_deep-MFS-image-pb_warp_rescaled_comp{extra}.fits") is False: 
+        if os.path.exists(f"{base_dir}/{obsid:10.0f}/{obsid:10.0f}_deep-MFS-image-pb_warp_rescaled_comp{extra}.fits") is False:
+        # if os.path.exists(f"{base_dir}/{obsid:10.0f}/{obsid:10.0f}_deep-MFS-image-pb_warp_comp{extra}.fits") is False: 
             logger.warning(f"No catalogue for io checks: {obsid:10.0f}")
             obsids_chan[i] = ma.masked
     
@@ -78,7 +75,8 @@ def remove_missing(obsids_chan, extra = ""):
 def cut_high_rms(obsids, extra = [""]):
 
     # TODO: currently hardcoding limit for bad std(rms) per channel!!! FIX!
-    rms_std_cutoff = [40, 40, 15, 10, 10, 10]
+    # rms_std_cutoff = [40, 40, 15, 15, 10, 10, 10, 10]
+    rms_std_cutoff = [40, 15, 10, 10, 10]
     rms_mask = []
     for i in range(len(obsids)):
         num_postmissing = ma.count(obsids[i])
@@ -164,187 +162,124 @@ def check_io(obsids, missing_mask, xm_cat, extra = [""]):
         for j in range(len(obs)):
             if obs[j] is not ma.masked: 
                 catfile = f"{args.project}/{obs[j]:10.0f}/{obs[j]:10.0f}_deep-MFS-image-pb_warp_rescaled_comp{extra_chan}.fits"
+                # catfile = f"{args.project}/{obs[j]:10.0f}/{obs[j]:10.0f}_deep-MFS-image-pb_warp_comp{extra_chan}.fits"
                 # logger.debug(f"{catfile}")
                 savefile = f"{args.project}/{obs[j]:10.0f}/{obs[j]:10.0f}_iocheck_comp{extra_chan}.csv"
-                if os.path.exists(catfile):
-                    try: 
-                        hdu=fits.open(catfile)
-                        temp_cat = hdu[1].data
-                    except:
-                        hdu_temp = Table.read(catfile, format="votable")
-                        hdu_temp.write(catfile, format="fits", overwrite=True)
-                        hdu = fits.open(catfile)
-                        temp_cat = hdu[1].data
-                    save_cat = Table.read(catfile, format="fits")
-                    uuid_save = save_cat["uuid"]
-                    # hdu.close()
-                    
-                else:
-                    logger.warning(f"Found missing obsid while checking src quality, make sure ran check for missing earlier") 
-                    obs[j] = ma.masked
-                    int_over_peak_chan[j] = ma.masked
-                    std_intoverpeak_chan[j] = ma.masked
-                    shape_chan[j] = ma.masked
-                    std_shape_chan[j] = ma.masked
-                    continue
+                try: 
+                    cat_xm = Table.read(savefile, format="csv")
+                    int_over_peak_obs = ma.array(cat_xm["int_flux"]/cat_xm["peak_flux"])
+                    shape_obs = ma.array((cat_xm["a"]*cat_xm["b"])/(cat_xm["psf_a"]*cat_xm["psf_b"]))
+                    srcs = ma.array(cat_xm["io_srcs"])
+                    bad_srcs_mask = ma.masked_values(srcs, 0.).mask
+                    int_over_peak_obs[bad_srcs_mask] = ma.masked
+                    shape_obs[bad_srcs_mask] = ma.masked
+                    num_srcs_precut = len(int_over_peak_obs.data)
+                except FileNotFoundError:
+                    if os.path.exists(catfile):
+                        try: 
+                            hdu=fits.open(catfile)
+                            temp_cat = hdu[1].data
+                        except:
+                            hdu_temp = Table.read(catfile, format="votable")
+                            hdu_temp.write(catfile, format="fits", overwrite=True)
+                            hdu = fits.open(catfile)
+                            temp_cat = hdu[1].data
+                        save_cat = Table.read(catfile, format="fits")
+                        uuid_save = save_cat["uuid"]
+                        hdu.close()
+                        
+                    else:
+                        logger.warning(f"Found missing obsid while checking src quality, make sure ran check for missing earlier") 
+                        obs[j] = ma.masked
+                        int_over_peak_chan[j] = ma.masked
+                        std_intoverpeak_chan[j] = ma.masked
+                        shape_chan[j] = ma.masked
+                        std_shape_chan[j] = ma.masked
+                        continue
 
-                try:
-                    idx1 = crossmatch_cats(temp_cat, xm_cat)
-                    cat_xm = temp_cat[idx1]
+                    try:
+                        idx1 = crossmatch_cats(temp_cat, xm_cat)
+                        cat_xm = temp_cat[idx1]
+                    except Exception: 
+                        logger.warning(f"Flagging {obs[j]:10.0f} for too few srcs")
+                        int_over_peak_chan[j] = ma.masked
+                        std_intoverpeak_chan[j] = ma.masked
+                        shape_chan[j] = ma.masked
+                        std_shape_chan[j] = ma.masked
+                        obs[j] = ma.masked
+                        continue 
+                    except: 
+                        logger.warning(f"Couldnt do xm!!! Flagging {obs[j]:10.0f}")
+                        int_over_peak_chan[j] = ma.masked
+                        std_intoverpeak_chan[j] = ma.masked
+                        shape_chan[j] = ma.masked
+                        std_shape_chan[j] = ma.masked
+                        obs[j] = ma.masked
+                        continue 
 
-                    
-                    
-                except Exception: 
-                    logger.warning(f"Flagging {obs[j]:10.0f} for too few srcs")
-                    int_over_peak_chan[j] = ma.masked
-                    std_intoverpeak_chan[j] = ma.masked
-                    shape_chan[j] = ma.masked
-                    std_shape_chan[j] = ma.masked
-                    obs[j] = ma.masked
-                    continue 
-                except: 
-                    logger.warning(f"Couldnt do xm!!! Flagging {obs[j]:10.0f}")
-                    int_over_peak_chan[j] = ma.masked
-                    std_intoverpeak_chan[j] = ma.masked
-                    shape_chan[j] = ma.masked
-                    std_shape_chan[j] = ma.masked
-                    obs[j] = ma.masked
-                    continue 
+                    int_over_peak_obs = ma.array(cat_xm["int_flux"]/cat_xm["peak_flux"])
+                    err_int_rms_obs = ma.array(cat_xm["err_int_flux"]/cat_xm["local_rms"])
+                    snr_obs = ma.array(cat_xm["int_flux"]/cat_xm["local_rms"])
+                    shape_obs = ma.array((cat_xm["a"]*cat_xm["b"])/(cat_xm["psf_a"]*cat_xm["psf_b"]))
+                    uuid_xm = ma.array(cat_xm["uuid"])
+                    num_srcs_precut = len(int_over_peak_obs)
+                    background_obs = ma.array(cat_xm["background"])
+                    rms_obs = ma.array(cat_xm["local_rms"])
 
+                    snr_mask = ma.masked_less(snr_obs,50).mask
+                    intoverpeak_mask = ma.masked_greater(int_over_peak_obs,2).mask
+                    err_int_rms_mask = ma.masked_greater(err_int_rms_obs,2).mask
+                    background_cut = ma.masked_greater(background_obs,np.nanmean(background_obs.data)+np.nanstd(background_obs.data)).mask
+                    rms_cut = ma.masked_greater(rms_obs,np.nanmean(rms_obs.data)+np.nanstd(rms_obs.data)).mask
 
+                    int_over_peak_obs[snr_mask] = ma.masked
+                    shape_obs[snr_mask] = ma.masked
+                    uuid_xm[snr_mask] = ma.masked
 
+                    int_over_peak_obs[intoverpeak_mask] = ma.masked
+                    uuid_xm[intoverpeak_mask] = ma.masked
+                    shape_obs[intoverpeak_mask] = ma.masked
 
-                int_over_peak_obs = ma.array(cat_xm["int_flux"]/cat_xm["peak_flux"])
-                err_int_rms_obs = ma.array(cat_xm["err_int_flux"]/cat_xm["local_rms"])
-                snr_obs = ma.array(cat_xm["int_flux"]/cat_xm["local_rms"])
-                shape_obs = ma.array(cat_xm["a"]*cat_xm["b"])
-                psf_obs = ma.array(cat_xm["psf_a"]*cat_xm["psf_b"])
-                uuid_xm = ma.array(cat_xm["uuid"])
-                num_srcs_precut = len(int_over_peak_obs)
-                background_obs = ma.array(cat_xm["background"])
-                rms_obs = ma.array(cat_xm["local_rms"])
+                    shape_obs[err_int_rms_mask] = ma.masked
+                    int_over_peak_obs[err_int_rms_mask] = ma.masked
+                    uuid_xm[err_int_rms_mask] = ma.masked
 
+                    shape_obs[background_cut] = ma.masked
+                    int_over_peak_obs[background_cut] = ma.masked
+                    uuid_xm[background_cut] = ma.masked
 
-                srcs = np.zeros(len(save_cat))
-                # srcs[idx1] = 1
-                good_uuids = uuid_xm.compressed()
-                for i in range(len(good_uuids)):
-                    if good_uuids[i] in uuid_save:
-                        index = np.where(uuid_save == good_uuids[i])
-                        srcs[index] = 1                
-                try:
-                    io_srcs = Column(name="xm_srcs", data=srcs)
-                    save_cat.add_column(io_srcs)
-                    # save_cat.write(catfile,format="fits",overwrite=True)
-                except: 
-                    logger.debug(f"Already have cat, overwriting")
-                    save_cat.replace_column("xm_srcs", srcs)
-                    # save_cat.write(catfile,format="fits",overwrite=True)
-
-
-                snr_mask = ma.masked_less(snr_obs,50).mask
-                intoverpeak_mask = ma.masked_greater(int_over_peak_obs,2).mask
-                err_int_rms_mask = ma.masked_greater(err_int_rms_obs,2).mask
-                background_cut = ma.masked_greater(background_obs,np.nanmean(background_obs.data)+np.nanstd(background_obs.data)).mask
-                rms_cut = ma.masked_greater(rms_obs,np.nanmean(rms_obs.data)+np.nanstd(rms_obs.data)).mask
-
-                int_over_peak_obs[snr_mask] = ma.masked
-                shape_obs[snr_mask] = ma.masked
-                uuid_xm[snr_mask] = ma.masked
-
-                srcs = np.zeros(len(save_cat))
-                # srcs[idx1] = 1
-                good_uuids = uuid_xm.compressed()
-                for i in range(len(good_uuids)):
-                    if good_uuids[i] in uuid_save:
-                        index = np.where(uuid_save == good_uuids[i])
-                        srcs[index] = 1                
-                try:
-                    io_srcs = Column(name="io_snr_cut", data=srcs)
-                    save_cat.add_column(io_srcs)
-                    # save_cat.write(catfile,format="fits",overwrite=True)
-                except: 
-                    logger.debug(f"Already have cat, overwriting")
-                    save_cat.replace_column("io_snr_cut", srcs)
-                    # save_cat.write(catfile,format="fits",overwrite=True)
-
-                int_over_peak_obs[intoverpeak_mask] = ma.masked
-                uuid_xm[intoverpeak_mask] = ma.masked
-                shape_obs[intoverpeak_mask] = ma.masked
-
-                srcs = np.zeros(len(save_cat))
-                # srcs[idx1] = 1
-                good_uuids = uuid_xm.compressed()
-                for i in range(len(good_uuids)):
-                    if good_uuids[i] in uuid_save:
-                        index = np.where(uuid_save == good_uuids[i])
-                        srcs[index] = 1                
-                try:
-                    io_srcs = Column(name="io_int_cut", data=srcs)
-                    save_cat.add_column(io_srcs)
-                    # save_cat.write(catfile,format="fits",overwrite=True)
-                except: 
-                    logger.debug(f"Already have cat, overwriting")
-                    save_cat.replace_column("io_int_cut", srcs)
-                    # save_cat.write(catfile,format="fits",overwrite=True)
+                    shape_obs[rms_cut] = ma.masked
+                    int_over_peak_obs[rms_cut] = ma.masked
+                    uuid_xm[rms_cut] = ma.masked
+                    srcs = np.zeros(len(save_cat))
+                    # srcs[idx1] = 1
+                    good_uuids = uuid_xm.compressed()
+                    for i in range(len(good_uuids)):
+                        if good_uuids[i] in uuid_save:
+                            index = np.where(uuid_save == good_uuids[i])
+                            srcs[index] = 1                
+                    try:
+                        io_srcs = Column(name="io_srcs", data=srcs)
+                        save_cat.add_column(io_srcs)
+                        save_cat.write(savefile,format="csv",overwrite=True)
+                    except: 
+                        # logger.debug(f"Already have cat, overwriting")
+                        save_cat.replace_column("io_srcs", srcs)
+                        save_cat.write(savefile,format="csv",overwrite=True)
 
 
-                shape_obs[err_int_rms_mask] = ma.masked
-                int_over_peak_obs[err_int_rms_mask] = ma.masked
-                uuid_xm[err_int_rms_mask] = ma.masked
-
-                srcs = np.zeros(len(save_cat))
-                # srcs[idx1] = 1
-                good_uuids = uuid_xm.compressed()
-                num_srcs_postcut = len(uuid_xm.compressed())
-                for i in range(len(good_uuids)):
-                    if good_uuids[i] in uuid_save:
-                        index = np.where(uuid_save == good_uuids[i])
-                        srcs[index] = 1                
-                try:
-                    io_srcs = Column(name="io_errint_cut", data=srcs)
-                    save_cat.add_column(io_srcs)
-                    # save_cat.write(catfile,format="fits",overwrite=True)
-                except: 
-                    logger.debug(f"Already have cat, overwriting")
-                    save_cat.replace_column("io_errint_cut", srcs)
-                    # save_cat.write(catfile,format="fits",overwrite=True)    
 
 
-                shape_obs[background_cut] = ma.masked
-                int_over_peak_obs[background_cut] = ma.masked
-                uuid_xm[background_cut] = ma.masked
-
-                shape_obs[rms_cut] = ma.masked
-                int_over_peak_obs[rms_cut] = ma.masked
-                uuid_xm[rms_cut] = ma.masked
-
-                srcs = np.zeros(len(save_cat))
-                # srcs[idx1] = 1
-                good_uuids = uuid_xm.compressed()
-                num_srcs_postcut = len(uuid_xm.compressed())
-                for i in range(len(good_uuids)):
-                    if good_uuids[i] in uuid_save:
-                        index = np.where(uuid_save == good_uuids[i])
-                        srcs[index] = 1                
-                try:
-                    io_srcs = Column(name="io_rms_cut", data=srcs)
-                    save_cat.add_column(io_srcs)
-                    # save_cat.write(catfile,format="fits",overwrite=True)
-                except: 
-                    logger.debug(f"Already have cat, overwriting")
-                    save_cat.replace_column("io_rms_cut", srcs)
-                    # save_cat.write(catfile,format="fits",overwrite=True)    
-
-
-                int_over_peak_chan[j] = np.nanmean(int_over_peak_obs.data)
-                std_intoverpeak_chan[j] = np.nanstd(int_over_peak_obs.data)
+                int_over_peak_chan[j] = np.nanmean(int_over_peak_obs.compressed())
+                std_intoverpeak_chan[j] = np.nanstd(int_over_peak_obs.compressed())
                 shape_chan[j] = np.nanmean(shape_obs)
-                std_shape_chan[j] = np.nanstd(shape_obs.data)
+                std_shape_chan[j] = np.nanstd(shape_obs.compressed())
+        
 
                 if args.plot == "all":
                     plt_io_obsid(int_over_peak_obs.compressed(), shape_obs.compressed(), f"{obs[j]:10.0f}", color=colors[i+3])
                 
+                num_srcs_postcut = len(int_over_peak_obs.compressed())
                 frac_srcs_flagged = int((num_srcs_postcut/num_srcs_precut)*100)
                 if num_srcs_postcut<200:
                     logger.warning(f"Only {num_srcs_postcut} srcs in field: flagging {obs[j]:10.0f}")
@@ -352,32 +287,13 @@ def check_io(obsids, missing_mask, xm_cat, extra = [""]):
                     std_intoverpeak_chan[j] = ma.masked
                     shape_chan[j] = ma.masked
                     std_shape_chan[j] = ma.masked
-
-
-                srcs = np.zeros(len(save_cat))
-                # srcs[idx1] = 1
-                good_uuids = uuid_xm.compressed()
-                for i in range(len(good_uuids)):
-                    if good_uuids[i] in uuid_save:
-                        index = np.where(uuid_save == good_uuids[i])
-                        srcs[index] = 1                
-                try:
-                    io_srcs = Column(name="io_srcs", data=srcs)
-                    save_cat.add_column(io_srcs)
-                    save_cat.write(savefile,format="csv",overwrite=True)
-                except: 
-                    # logger.debug(f"Already have cat, overwriting")
-                    save_cat.replace_column("io_srcs", srcs)
-                    save_cat.write(savefile,format="csv",overwrite=True)
-
-
-                    
-
             else: 
                 int_over_peak_chan[j] = ma.masked
                 std_intoverpeak_chan[j] = ma.masked
                 shape_chan[j] = ma.masked
                 std_shape_chan[j] = ma.masked
+
+
 
         int_over_peak.append(int_over_peak_chan)
         shape.append(shape_chan)
@@ -434,14 +350,14 @@ def plt_io_pernight(
 
     for i in range(len(chans)):
         obs_chan = obsids[i].data
-        chan_mask = mask[i]
+        chan_mask = obsids[i].mask
         intoverpeak_chan = intoverpeak[i].data
         std_intoverpeak_chan = std_intoverpeak[i].data
         logger.debug(f"plotting for {chans[i]}")
             
 
         ax.errorbar(obs_chan, intoverpeak_chan,yerr=(std_intoverpeak_chan/np.sqrt(len(obs_chan))), fmt="o", color=colors[i+3], label=chans[i])
-        if chan_mask.all() == False:
+        if chan_mask.any() == False:
             ax.errorbar(obs_chan, intoverpeak_chan,yerr=(std_intoverpeak_chan/np.sqrt(len(obs_chan))), fmt="o", color=colors[i+3],markeredgecolor="k")
         else: 
             ax.errorbar(obs_chan[~chan_mask], intoverpeak_chan[~chan_mask],yerr=(std_intoverpeak_chan[~chan_mask]/np.sqrt(len(obs_chan[~chan_mask]))), fmt="o", color=colors[i+3],markeredgecolor="k")
@@ -466,7 +382,7 @@ def plt_io_pernight(
         std_shape_chan = std_shape[i].data
 
         ax.errorbar(obs_chan, shape_chan,yerr=(std_shape_chan/np.sqrt(len(obs_chan))), fmt="o", color=colors[i+3], label=chans[i])
-        if chan_mask.all() == False:
+        if chan_mask.any() == False:
             ax.errorbar(obs_chan, shape_chan,yerr=(std_shape_chan/np.sqrt(len(obs_chan))), fmt="o", color=colors[i+3],markeredgecolor="k")
         else:
             ax.errorbar(obs_chan[~chan_mask], shape_chan[~chan_mask],yerr=(std_shape_chan[~chan_mask]/np.sqrt(len(obs_chan[~chan_mask]))), fmt="o", color=colors[i+3],markeredgecolor="k")
@@ -487,7 +403,7 @@ def plt_io_pernight(
         shape_chan = std_shape[i].data
         chan_mask = mask[i]
         ax.errorbar(intoverpeak_chan,shape_chan, fmt="o", color=colors[i+3], label=chans[i])
-        if chan_mask.all() == False:
+        if chan_mask.any() == False:
             ax.errorbar(intoverpeak_chan, shape_chan, fmt="o", color=colors[i+3],markeredgecolor="k")
         else: 
             ax.errorbar(intoverpeak_chan[~chan_mask], shape_chan[~chan_mask], fmt="o", color=colors[i+3],markeredgecolor="k")
@@ -509,7 +425,7 @@ def plt_io_pernight(
         chan_mask = mask[i]
 
         ax.errorbar(shape_chan,stdshape_chan, fmt="o", color=colors[i+3], label=chans[i])
-        if chan_mask.all() == False:
+        if chan_mask.any() == False:
             ax.errorbar(shape_chan, stdshape_chan, fmt="o", color=colors[i+3],markeredgecolor="k")
         else: 
             ax.errorbar(shape_chan[~chan_mask], stdshape_chan[~chan_mask], fmt="o", color=colors[i+3],markeredgecolor="k")
@@ -529,7 +445,7 @@ def plt_io_pernight(
         std_intoverpeak_chan = std_intoverpeak[i].data
         chan_mask = mask[i]
         ax.errorbar(std_intoverpeak_chan,intoverpeak_chan, fmt="o", color=colors[i+3], label=chans[i])
-        if chan_mask.all() == False:
+        if chan_mask.any() == False:
             ax.errorbar(std_intoverpeak_chan, intoverpeak_chan, fmt="o", color=colors[i+3],markeredgecolor="k")
         else:
             ax.errorbar(std_intoverpeak_chan[~chan_mask], intoverpeak_chan[~chan_mask], fmt="o", color=colors[i+3],markeredgecolor="k")
@@ -639,9 +555,7 @@ if __name__ == "__main__":
     txtfile = args.obsids 
     refcat=  args.refcat
     logger.debug(f"{txtfile}")
-    cmap = plt.get_cmap("gnuplot2")
-    c_array = np.linspace(0,1,9)
-    colors = cmap(c_array)
+
 
     ref_cat_file = f"{args.refcat}"
     if os.path.exists(ref_cat_file):
@@ -710,8 +624,8 @@ if __name__ == "__main__":
             if drift in ["XG_D-27_20201022", "XG_D-27_20201008", "XG_D-27_20201001", "XG_D-40_20201014_Test"]:
                 chans = ["69", "093", "121", "145", "169"]
             else: 
-                # chans = ["069", "069_newmodel", "093", "093_MWAmodel", "121", "121_MWAmodel", "145", "145_MWAmodel", "169", "169_MWAmodel"]
-                chans = ["069", "069_newmodel", "093", "121", "145", "169"]
+                # chans = ["069_newmodel", "093_newmodel", "121_newmodel","145_newmodel", "169_newmodel"]
+                chans = ["069", "093", "121", "145", "169"]
             obs_txtfile = []
             for chan in chans:
                 obs_txtfile.append(txtfile.replace(".txt",f"_cenchan_{chan}.txt"))
@@ -725,11 +639,14 @@ if __name__ == "__main__":
     if args.comparison is True: 
         chans = extension
     else: 
-        chans = ["069", "069_newmodel", "093", "121", "145", "169"]
-        extension = ["", "_newmodel", "", "", "", ""]
-        # chans = ["069", "069_MWAmodel", "093", "093_MWAmodel", "121", "121_MWAmodel", "145", "145_MWAmodel", "169", "169_MWAmodel"]
-        # extension = ["","_MWAmodel", "","_MWAmodel", "","_MWAmodel", "","_MWAmodel", "","_MWAmodel"]
+        # chans = ["069_newmodel", "093_newmodel", "121_newmodel", "145_newmodel", "169_newmodel"]
+        # extension = ["_newmodel", "_newmodel", "_newmodel", "_newmodel", "_newmodel"]
+        chans = ["069", "093", "121", "145", "169"]
+        extension = ["", "", "", "", ""]
     # Reading in the obsids from txt files
+    cmap = plt.get_cmap("gnuplot2")
+    c_array = np.linspace(0,1,len(chans)+4)
+    colors = cmap(c_array)
     obsids = []
     missing_mask = []
     for i in range(len(chans)):
