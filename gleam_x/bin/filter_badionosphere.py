@@ -624,8 +624,8 @@ if __name__ == "__main__":
             if drift in ["XG_D-27_20201022", "XG_D-27_20201008", "XG_D-27_20201001", "XG_D-40_20201014_Test"]:
                 chans = ["69", "093", "121", "145", "169"]
             else: 
-                # chans = ["069_newmodel", "093_newmodel", "121_newmodel","145_newmodel", "169_newmodel"]
-                chans = ["069", "093", "121", "145", "169"]
+                chans = ["069_newmodel", "093_newmodel", "121_newmodel","145_newmodel", "169_newmodel"]
+                # chans = ["069", "093", "121", "145", "169"]
             obs_txtfile = []
             for chan in chans:
                 obs_txtfile.append(txtfile.replace(".txt",f"_cenchan_{chan}.txt"))
@@ -639,10 +639,10 @@ if __name__ == "__main__":
     if args.comparison is True: 
         chans = extension
     else: 
-        # chans = ["069_newmodel", "093_newmodel", "121_newmodel", "145_newmodel", "169_newmodel"]
-        # extension = ["_newmodel", "_newmodel", "_newmodel", "_newmodel", "_newmodel"]
-        chans = ["069", "093", "121", "145", "169"]
-        extension = ["", "", "", "", ""]
+        chans = ["069_newmodel", "093_newmodel", "121_newmodel", "145_newmodel", "169_newmodel"]
+        extension = ["_newmodel", "_newmodel", "_newmodel", "_newmodel", "_newmodel"]
+        # chans = ["069", "093", "121", "145", "169"]
+        # extension = ["", "", "", "", ""]
     # Reading in the obsids from txt files
     cmap = plt.get_cmap("gnuplot2")
     c_array = np.linspace(0,1,len(chans)+4)
