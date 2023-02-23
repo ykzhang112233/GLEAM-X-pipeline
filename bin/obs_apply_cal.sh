@@ -123,7 +123,7 @@ fi
 echo '#!/bin/bash' > ${script}.sbatch
 echo "singularity run ${GXCONTAINER} ${script}" >> ${script}.sbatch
 
-if [ ! -z ${GXNCPULINE} ]
+if [ ! -n ${GXNCPULINE} ]
 then
     # autoflag only needs a single CPU core
     GXNCPULINE="--ntasks-per-node=1"
