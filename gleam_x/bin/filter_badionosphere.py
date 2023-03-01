@@ -484,7 +484,7 @@ if __name__ == "__main__":
     parser.add_argument(
         '--refcat',
         type=str,
-        default="/models/NVSS_SUMSS_psfcal.fits",
+        default="${GXBASE}/models/NVSS_SUMSS_psfcal.fits",
         help="reference catalogue to crossmatch and get only bright, unresolved and sparse sources. (default=./models/NVSS_SUMSS_psfcal.fits)"
     )
     parser.add_argument(
@@ -569,80 +569,80 @@ if __name__ == "__main__":
         do_xm = False
 
     
-    if args.comparison == True: 
-        logger.warning(f"Running the comparison verison")
+    # if args.comparison == True: 
+    #     logger.warning(f"Running the comparison verison")
+    #     obs_txtfile = [txtfile]
+    #     # newcal=single good applied to all, nosub=equiv to default, 2compGGSM=new model 
+    #     # Complete testing options (mostly just for 069)
+    #     # extension = ["_nosub", "_newcal", "_sub", "_2compGGSM", "_4compGGSM", "_MWAmodel"]
+    #     extension = ["_default", "_MWAmodel"]
+    #     # extension = ["", "_newcal"]
+    #     split_string = txtfile.split("/")
+    #     if len(split_string) == 2: 
+    #         split_string = split_string[-1].split("_cenchan_")
+    #         drift = split_string[0]
+    #         chans = [split_string[1].split(".")[0]]
+    #         obs_txtfile = []
+    #         for e in extension:
+    #             obs_txtfile.append(txtfile.replace(".txt",f"{e}.txt"))
+    
+    #     elif len(split_string)==1:
+    #         split_string = split_string[0].split("_cenchan_")
+    #         chans = [split_string[1].split(".")[0]]
+    #         drift = split_string[0]
+    #         obs_txtfile = []
+    #         for e in extension:
+    #             obs_txtfile.append(txtfile.replace(".txt",f"{e}.txt"))
+    #         # obs_txtfile.append(txtfile)
+    #     logger.debug(f"drift: {drift}")
+    #     logger.debug(f"cenchan: {chans[0]}")
+
+    # else: 
+    # Reading in the list of obsids: will deal with the cenchan or all based on what the input txt file is called 
+    if "cenchan" in txtfile:
+        logger.debug(f"Only detected one cenchan, proceeding with just 1")
         obs_txtfile = [txtfile]
-        # newcal=single good applied to all, nosub=equiv to default, 2compGGSM=new model 
-        # Complete testing options (mostly just for 069)
-        # extension = ["_nosub", "_newcal", "_sub", "_2compGGSM", "_4compGGSM", "_MWAmodel"]
-        extension = ["_default", "_MWAmodel"]
-        # extension = ["", "_newcal"]
         split_string = txtfile.split("/")
         if len(split_string) == 2: 
             split_string = split_string[-1].split("_cenchan_")
             drift = split_string[0]
             chans = [split_string[1].split(".")[0]]
-            obs_txtfile = []
-            for e in extension:
-                obs_txtfile.append(txtfile.replace(".txt",f"{e}.txt"))
-    
         elif len(split_string)==1:
             split_string = split_string[0].split("_cenchan_")
             chans = [split_string[1].split(".")[0]]
             drift = split_string[0]
-            obs_txtfile = []
-            for e in extension:
-                obs_txtfile.append(txtfile.replace(".txt",f"{e}.txt"))
-            # obs_txtfile.append(txtfile)
         logger.debug(f"drift: {drift}")
         logger.debug(f"cenchan: {chans[0]}")
-
     else: 
-    # Reading in the list of obsids: will deal with the cenchan or all based on what the input txt file is called 
-        if "cenchan" in txtfile:
-            logger.debug(f"Only detected one cenchan, proceeding with just 1")
-            obs_txtfile = [txtfile]
-            split_string = txtfile.split("/")
-            if len(split_string) == 2: 
-                split_string = split_string[-1].split("_cenchan_")
-                drift = split_string[0]
-                chans = [split_string[1].split(".")[0]]
-            elif len(split_string)==1:
-                split_string = split_string[0].split("_cenchan_")
-                chans = [split_string[1].split(".")[0]]
-                drift = split_string[0]
-            logger.debug(f"drift: {drift}")
-            logger.debug(f"cenchan: {chans[0]}")
-        else: 
-            split_string = txtfile.split("/")
-            logger.debug(f"Detected no cenchan, proceeding with allchans")
-            if len(split_string) == 2:
-                drift = split_string[-1].replace(".txt", "")
-            elif len(split_string) == 1:
-                drift = split_string[0].replace(".txt","")
-            logger.debug(f"drift: {drift}")
-            if drift in ["XG_D-27_20201022", "XG_D-27_20201008", "XG_D-27_20201001", "XG_D-40_20201014_Test"]:
-                chans = ["69", "093", "121", "145", "169"]
-            else: 
-                chans = ["069_newmodel", "093_newmodel", "121_newmodel","145_newmodel", "169_newmodel"]
-                # chans = ["069", "093", "121", "145", "169"]
-            obs_txtfile = []
-            for chan in chans:
-                obs_txtfile.append(txtfile.replace(".txt",f"_cenchan_{chan}.txt"))
-            obs_txtfile.append(txtfile)
-            if drift == "XG_D-40_20201014_Test":
-                drift = "XG_D-40_20201014"
+        split_string = txtfile.split("/")
+        logger.debug(f"Detected no cenchan, proceeding with allchans")
+        if len(split_string) == 2:
+            drift = split_string[-1].replace(".txt", "")
+        elif len(split_string) == 1:
+            drift = split_string[0].replace(".txt","")
+        # logger.debug(f"drift: {drift}")
+        # if drift in ["XG_D-27_20201022", "XG_D-27_20201008", "XG_D-27_20201001", "XG_D-40_20201014_Test"]:
+        #     chans = ["69", "093", "121", "145", "169"]
+        # else: 
+        #     # chans = ["069_newmodel", "093_newmodel", "121_newmodel","145_newmodel", "169_newmodel"]
+        chans = ["069", "093", "121", "145", "169"]
+        obs_txtfile = []
+        for chan in chans:
+            obs_txtfile.append(txtfile.replace(".txt",f"_cenchan_{chan}.txt"))
+        obs_txtfile.append(txtfile)
+        if drift == "XG_D-40_20201014_Test":
+            drift = "XG_D-40_20201014"
         
     # Looking for any missing obsids so they're removed before assessing 
     logger.debug(f"{obs_txtfile}")
     # Hacky just renaming this here so that everything saves with nice format but some drifts have no 0 for 69 and 93 
-    if args.comparison is True: 
-        chans = extension
-    else: 
-        chans = ["069_newmodel", "093_newmodel", "121_newmodel", "145_newmodel", "169_newmodel"]
-        extension = ["_newmodel", "_newmodel", "_newmodel", "_newmodel", "_newmodel"]
-        # chans = ["069", "093", "121", "145", "169"]
-        # extension = ["", "", "", "", ""]
+    # if args.comparison is True: 
+    #     chans = extension
+    # else: 
+    # chans = ["069_newmodel", "093_newmodel", "121_newmodel", "145_newmodel", "169_newmodel"]
+    # extension = ["_newmodel", "_newmodel", "_newmodel", "_newmodel", "_newmodel"]
+    chans = ["069", "093", "121", "145", "169"]
+    extension = ["", "", "", "", ""]
     # Reading in the obsids from txt files
     cmap = plt.get_cmap("gnuplot2")
     c_array = np.linspace(0,1,len(chans)+4)
@@ -700,10 +700,9 @@ if __name__ == "__main__":
             logger.debug(f"Number of obsids with flagged for bad io for {chans[i]}: {num_obsids_postio} ({frac_flagged}%)")
             if frac_flagged > 20:
                 logger.warning(f"Large number of obsids flagged for bad io at chan {chans[i]}!: {frac_flagged}%")
-
-    elif args.comparison is True: 
-        logger.debug(f"Running iocheck but for comparison!")
-        drift_intoverpeak, drift_stdintoverpeak, drift_shape, drift_stdshape = check_io(obsids, missing_mask, do_xm, extra=extension)
+    # elif args.comparison is True: 
+    #     logger.debug(f"Running iocheck but for comparison!")
+    #     drift_intoverpeak, drift_stdintoverpeak, drift_shape, drift_stdshape = check_io(obsids, missing_mask, do_xm, extra=extension)
     else:
         logger.warning(f"Not doing any kind of io checking! ") 
     #     drift_intoverpeak, drift_stdintoverpeak, drift_shape, drift_stdshape = check_io(obsids, missing_mask, do_xm)
@@ -718,22 +717,20 @@ if __name__ == "__main__":
         bad_io_mask.append(io_mask)
         all_obsids = ma.append(all_obsids,obsids_chan)
 
-
-    if args.save_bad_obsids is True: 
-        logger.debug(f"Saving missing obsids")
-        if len(chans) > 1:
-            all_good_obsids = ma.asanyarray(())
-            for i in range(len(chans)):
-                obsids_chan = obsids[i]
-                chan_bad_obsids = obsids_chan[obsids_chan.mask].data
-                chan_good_obsids = obsids_chan[~obsids_chan.mask].data
-                np.savetxt(obs_txtfile[i].replace(".txt", "_bad_obsids.txt"), chan_bad_obsids, fmt="%10.0f")
-                np.savetxt(obs_txtfile[i].replace(".txt", "_bad_obsids.txt"), chan_bad_obsids, fmt="%10.0f")
-                all_good_obsids = ma.append(all_good_obsids, chan_good_obsids)
-            np.savetxt(obs_txtfile[-1].replace(".txt", "_bad_obsids.txt") ,all_obsids[all_obsids.mask].data, fmt="%10.0f") 
-            np.savetxt(obs_txtfile[-1].replace(".txt", "_good_obsids.txt") ,all_good_obsids.data, fmt="%10.0f")   
-        else: 
-            np.savetxt(obs_txtfile[-1].replace(".txt", "_bad_obsids.txt") ,all_obsids[all_obsids.mask].data, fmt="%10.0f") 
+    logger.debug(f"Saving missing obsids")
+    if len(chans) > 1:
+        all_good_obsids = ma.asanyarray(())
+        for i in range(len(chans)):
+            obsids_chan = obsids[i]
+            chan_bad_obsids = obsids_chan[obsids_chan.mask].data
+            chan_good_obsids = obsids_chan[~obsids_chan.mask].data
+            np.savetxt(obs_txtfile[i].replace(".txt", "_bad_obsids.txt"), chan_bad_obsids, fmt="%10.0f")
+            np.savetxt(obs_txtfile[i].replace(".txt", "_good_obsids.txt"), chan_good_obsids, fmt="%10.0f")
+            all_good_obsids = ma.append(all_good_obsids, chan_good_obsids)
+        np.savetxt(obs_txtfile[-1].replace(".txt", "_bad_obsids.txt") ,all_obsids[all_obsids.mask].data, fmt="%10.0f") 
+        np.savetxt(obs_txtfile[-1].replace(".txt", "_good_obsids.txt") ,all_good_obsids.data, fmt="%10.0f")   
+    else: 
+        np.savetxt(obs_txtfile[-1].replace(".txt", "_bad_obsids.txt") ,all_obsids[all_obsids.mask].data, fmt="%10.0f") 
 
     logger.warning(f"Total flagged for drift: {ma.count_masked(all_obsids)}")
 
