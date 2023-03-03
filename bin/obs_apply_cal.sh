@@ -121,7 +121,7 @@ fi
 
 # sbatch submissions need to start with a shebang
 echo '#!/bin/bash' > ${script}.sbatch
-echo "srun --cpus-per-tasks=1 --ntasks=1 --ntasks-per-node=1 singularity run ${GXCONTAINER} ${script}" >> ${script}.sbatch
+echo "srun --cpus-per-task=1 --ntasks=1 --ntasks-per-node=1 singularity run ${GXCONTAINER} ${script}" >> ${script}.sbatch
 
 if [ ! -n ${GXNCPULINE} ]
 then
