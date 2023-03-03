@@ -123,9 +123,9 @@ chmod 755 "${script}"
 
 # sbatch submissions need to start with a shebang
 echo '#!/bin/bash' > "${script}.sbatch"
-echo 'module load singularity' >> "${script}.sbatch"
-echo "export SINGULARITY_BINDPATH=${SINGULARITY_BINDPATH}" >> "${script}.sbatch"
-echo "singularity run ${GXCONTAINER} ${script}" >> "${script}.sbatch"
+# echo 'module load singularity/3.8.6' >> "${script}.sbatch"
+# echo "export SINGULARITY_BINDPATH=${SINGULARITY_BINDPATH}" >> "${script}.sbatch"
+echo "srun --cpus-per-tasks=1 --ntasks=1 --ntasks-per-node=1 singularity run ${GXCONTAINER} ${script}" >> "${script}.sbatch"
 
 if [ ! -z ${GXNCPULINE} ]
 then
