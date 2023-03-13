@@ -2,12 +2,47 @@
 
 set -x
 
+base=BASEDIR
 pipeuser=PIPEUSER
 mosaicnm=MOSAICNM
 mosaicdir=MOSAICDIR
 lowres_freq=LOWRES_FREQ
 highres_freq=HIGHRES_FREQ
 combined_freq=COMB_FREQ
+
+cd "${base}" || exit 1
+
+if [[ -z $mosaicdir ]]
+then 
+    mosaicdir="mosaic"
+    echo "Using directory ${mosaicdir}"
+    if [[ ! -d ${mosaicdir} ]]
+    then
+        echo "No such directory!!"
+        exit 1
+    else
+        cd $mosaicdir
+    fi
+fi
+
+
+fi
+
+if [[ -z ${lowres_freq} ]]
+then 
+    lowres_freq="170-200MHz"
+fi
+
+if [[ -z ${highres_freq} ]]
+then 
+    highres_freq="200-231MHz"
+fi 
+
+if [[ -z ${combined_freq} ]]
+then 
+    combined_freq="170-231MHz"
+fi 
+
 
 
 # If obsnum is a file, then we are in an array job
@@ -61,7 +96,6 @@ fits in="${highres_im}.fits" out="${highres_im}.mir" op=xyin
 
 # Put the extracted values into the files, even the low frequency ones. Not entirely sure how often
 # they are used by miriad, so lets just be sure they are in.
-# TODO: Tidy this up so it actually works currently just tims version 
 puthd in="${highres_im}.mir/bmaj" value="${high_maj},arcseconds"
 puthd in="${highres_im}.mir/bmin" value="${high_min},arcseconds"
 puthd in="${lowres_im}.mir/bmaj" value="${low_maj},arcseconds"
