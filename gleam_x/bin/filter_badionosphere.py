@@ -484,7 +484,7 @@ if __name__ == "__main__":
     parser.add_argument(
         '--refcat',
         type=str,
-        default="${GXBASE}/models/NVSS_SUMSS_psfcal.fits",
+        default="NVSS_SUMSS_psfcal.fits",
         help="reference catalogue to crossmatch and get only bright, unresolved and sparse sources. (default=./models/NVSS_SUMSS_psfcal.fits)"
     )
     parser.add_argument(
@@ -512,7 +512,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--comparison",
-        default=True,
+        default=False,
         help="If not True, will look for sub, nosub, newcal images to compare"
     )
 
