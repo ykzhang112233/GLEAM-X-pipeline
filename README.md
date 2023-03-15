@@ -1,4 +1,4 @@
-#GLEAM-X-pipeline
+## GLEAM-X-pipeline
 The goal of this pipeline is to reduce the data observed as part of the GLEAM-X project (G0008), but it is also applicable to many other MWA datasets. The pipeline was originally written for the Pawsey Magnus and Zeus systems, but has been adapted for compatibility with wider HPC systems. Software dependencies are built within a singularity container, which is subsequently used throughout the execution of the pipeline. It borrows significantly from the MWA-Fast-Transients pipeline written by Paul Hancock and Gemma Anderson: https://github.com/PaulHancock/MWA-fast-image-transients.
 
 ## Credits
