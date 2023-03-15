@@ -1,0 +1,12 @@
+#!/bin/bash -l
+
+pipeuser=PIPEUSER
+
+set -x
+
+base=BASEDIR
+obslist=OBSLIST
+mosaicdir=MOSAICDIR
+
+cd "${base}" || exit 1
+obss=($(sort $obslist))
