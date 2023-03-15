@@ -10,3 +10,9 @@ mosaicdir=MOSAICDIR
 
 cd "${base}" || exit 1
 obss=($(sort $obslist))
+
+if [[ -z ${mosaicdir} ]]
+then
+    mosaicdir='mosaic'
+fi
+

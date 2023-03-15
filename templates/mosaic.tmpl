@@ -265,7 +265,8 @@ if [[ ! -e "${outname}_ddmod.fits" ]] || [[ ! -e "${outname}_psf.fits" ]]; then
 
     # Generate a measured PSF map
     if [[ ! -e "${outname}_psf.fits" ]]
-    then
+    the
+    n
         psf_select.py --input="${outname}_comp.fits" --prefix="${low}-${high}"
         psf_create.py --input="${outname}_comp_psfcat.fits"
     fi
