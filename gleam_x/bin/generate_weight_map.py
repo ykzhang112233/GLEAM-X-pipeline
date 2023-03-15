@@ -4,8 +4,6 @@ from astropy.io import fits
 import numpy as np
 import sys
 
-old_method = False
-
 in_xx = sys.argv[1]
 in_yy = sys.argv[2]
 in_rms = sys.argv[3]
@@ -33,11 +31,8 @@ cen_rms = bscale * np.nanmean(
     ]
 )
 
-if not old_method:
-    weight = stokes_I ** 2 / cen_rms ** 2
-else:
-    weight = 1.0 / (cen_rms) ** 2
 
-hdu_xx[0].data = weight * stokes_I
+weight = stokes_I ** 2 / cen_rms ** 2
+hdu_xx[0].data = weight
 hdu_xx.writeto(out_weight)
 

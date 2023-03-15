@@ -105,9 +105,9 @@ chmod 755 "${script}"
 
 # sbatch submissions need to start with a shebang
 echo '#!/bin/bash' > ${script}.sbatch
-echo "singularity run ${GXCONTAINER} ${script}" >> ${script}.sbatch
+echo "srun --cpus-per-task=1 --ntasks=1 --ntasks-per-node=1  singularity run ${GXCONTAINER} ${script}" >> ${script}.sbatch
 
-if [ ! -z ${GXNCPULINE} ]
+if [ -z ${GXNCPULINE} ]
 then
     # autoflag only needs a single CPU core
     GXNCPULINE="--ntasks-per-node=1"
