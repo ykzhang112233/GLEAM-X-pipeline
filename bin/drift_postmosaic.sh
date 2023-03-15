@@ -70,7 +70,7 @@ fi
 base="${GXSCRATCH}/${project}"
 listbase=$(basename "${obslist}")
 listbase=${listbase%%.*}
-script="${GXSCRIPT}/mosaic_${listbase}.sh"
+script="${GXSCRIPT}/postmosaic_${listbase}.sh"
 
 
 cat "${GXBASE}/templates/postmosaic.tmpl" | sed -e "s:BASEDIR:${base}:g" \
