@@ -115,7 +115,7 @@ echo 'module load singularity' >> "${script}.sbatch"
 echo "export SINGULARITY_BINDPATH=${SINGULARITY_BINDPATH}" >> "${script}.sbatch"
 echo "singularity run ${GXCONTAINER} ${script}" >> "${script}.sbatch"
 
-if [ ! -z ${GXNCPULINE} ]
+if [ -z ${GXNCPULINE} ]
 then
     # archive only needs a single CPU core
     GXNCPULINE="--ntasks-per-node=1"
