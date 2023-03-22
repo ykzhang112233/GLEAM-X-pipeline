@@ -5,6 +5,7 @@ usage()
 echo "drift_postmosaic.sh [-p project] [-d dep] [-t] [-m mosaicdir] [-l lowres_freq] [-r highres_freq] [-c comb_freq] -n mosaic_name
   -p project  : project, (must be specified, no default)
   -d dep      : job number for dependency (afterok)
+  -b basedir  : basedir for the software to store the config files etc (default=/software/projects/$gxaccount/$user/)
   -t          : test. Don't submit job, just make the batch file
                 and then return the submission command  
   -m mosaicdir: Directory name where mosaics stored (default=project/mosaic) 
@@ -25,16 +26,18 @@ mosaicdir=
 lowres_freq=
 highres_freq=
 comb_freq=
-
+codedir="/software/projects/${GXACCOUNT}/${USER}/"
 
 # parse args and set options
-while getopts ':td:p:m:l:r:c:n:' OPTION
+while getopts ':td:p:b:m:l:r:c:n:' OPTION
 do
     case "$OPTION" in
     d)
         dep=${OPTARG} ;;
     p)
         project=${OPTARG} ;;
+    b) 
+        codedir=${OPTARG} ;;
     m) 
         mosaicdir=${OPTARG} ;;
     t)
@@ -79,7 +82,8 @@ cat "${GXBASE}/templates/postmosaic.tmpl" | sed -e "s:BASEDIR:${base}:g" \
                                                 -e "s:MOSAICDIR:${mosaicdir}:g" \
                                                 -e "s:LOWRES_FREQ:${lowres_freq}:g" \
                                                 -e "s:HIGHRES_FREQ:${highres_freq}:g" \
-                                                -e "s:COMB_FREQ:g" \
+                                                -e "s:COMB_FREQ:${comb_freq}:g" \
+                                                -e "s:CODEDIR:${codedir}:g" \
 
 
 output="${GXLOG}/postmosaic_${listbase}.o%A_%a"
