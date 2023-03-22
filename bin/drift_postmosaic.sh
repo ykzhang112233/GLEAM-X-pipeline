@@ -111,3 +111,34 @@ output=${output//%A/"${jobid}"}
 
 echo "${output}"
 echo "${error}"
+
+# Ok this is a bold choice, but we're going to try submitting an array job AFTER the postmosaic job (only to run once the postmosaic has been given the all clear) and then this next part will submit an array of jobs that is the priorized fitting based on the output of the postmosaic. Could I do them as separate scripts? Probably but I like having all the "post" stuff together so lets give it a whirl 
+
+freq_exts=(
+    "072-080"
+    "080-088"
+    "088-095"
+    "095-103"
+    "072-103"
+    "103-111"
+    "111-118"
+    "118-126"
+    "126-134"
+    "103-134"
+    "139-147"
+    "147-154"
+    "154-162"
+    "162_170"
+    "139-170"
+    "170-177"
+    "177-185"
+    "185-193"
+    "193-200"
+    "170-200"
+    "200-208"
+    "208-216"
+    "216-223"
+    "223-231"
+    "200-231"
+)
+

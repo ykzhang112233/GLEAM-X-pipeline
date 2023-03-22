@@ -1,0 +1,93 @@
+#!/bin/bash -l
+
+pipeuser=PIPEUSER
+
+set -x
+
+base=BASEDIR
+mosaicdir=MOSAICDIR
+mosaicnm=MOSAICNM
+combined_freq=COMB_FREQ
+
+
+cd "${base}" || exit 1
+
+if [[ -z $mosaicdir ]]
+then 
+    mosaicdir="mosaic"
+    echo "Using directory ${mosaicdir}"
+    if [[ ! -d ${mosaicdir} ]]
+    then
+        echo "No such directory!!"
+        exit 1
+    else
+        cd $mosaicdir
+    fi
+fi
+
+
+if [[ -z ${combined_freq} ]]
+then 
+    combined_freq="170-231MHz"
+fi 
+
+taskid=${SLURM_ARRAY_TASK_ID}
+jobid=${SLURM_ARRAY_JOB_ID}
+freqs=(
+    "072-080"
+    "080-088"
+    "088-095"
+    "095-103"
+    "072-103"
+    "103-111"
+    "111-118"
+    "118-126"
+    "126-134"
+    "103-134"
+    "139-147"
+    "147-154"
+    "154-162"
+    "162_170"
+    "139-170"
+    "170-177"
+    "177-185"
+    "185-193"
+    "193-200"
+    "170-200"
+    "200-208"
+    "208-216"
+    "216-223"
+    "223-231"
+    "200-231"
+)
+channel=${freqs[$SLURM_ARRAY_TASK_ID]}
+
+imname="${mosaicnm}_${channel}MHz"
+# TODO: double check that this is the final output catalogue from postmosaic that we want to use!
+prior_cat="${mosaicnm}_${comb_freq}MHz_ddmod_comp_rescaled.fits"
+
+echo "jobid: ${jobid}"
+echo "taskid: ${taskid}"
+echo "chan: ${channel}"
+
+track_task.py start_mosaic  --jobid="${jobid}" --taskid="${taskid}"  --start_time="$(date +%s)"
+
+
+
+aegean \
+--regroup-eps 5 \
+--cores 1 \
+--background "${imname}_ddmod_bkg.fits" \
+--noise "${imname}_ddmod_rms.fits" \
+--psf "${imname}_projpsf_psf.fits" \
+--table "${imname}_ddmod.fits" \
+--priorized 1 \
+--input "${prior_cat}" \
+--progress \
+"${imname}_ddmod.fits"
+
+python mosaic_global_rescale.py "${imname}_ddmod_comp.fits" "${imname}_ddmod.fits" "${GXBASE}/models/GGSM_sparse_unresolved.fits" --plot --verbose --apply --sigma-thres 75
+
+# TODO: Double check, the nextflow stuff has a move to rename things but I think I've already got things named how i want? check. 
+
+# Now the add the joing catalogues.py for both the regular catalogue and the rescaled catalogue, will need to make new python scripts in directory with these stuff 

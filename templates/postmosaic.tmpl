@@ -159,6 +159,8 @@ aegean \
 --table="${combined_im}.fits" \
 "${combined_im}.fits"
 
+# SO THE PRIORIZED CAT SHOULD BE: "${combined_im}_comp.fits" but then we do a rescale below so I'm not sure what the output from that is...  
+
 mosaic_global_rescale.py \
 "${combined_im}_comp.fits" \
 "${combined_im}.fits" \
@@ -166,4 +168,3 @@ mosaic_global_rescale.py \
 --plot \
 --verbose \
 --apply
-
