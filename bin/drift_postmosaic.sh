@@ -78,7 +78,7 @@ cat "${GXBASE}/templates/postmosaic.tmpl" | sed -e "s:BASEDIR:${base}:g" \
                                                 -e "s:MOSAICDIR:${mosaicdir}:g" \
                                                 -e "s:LOWRES_FREQ:${lowres_freq}:g" \
                                                 -e "s:HIGHRES_FREQ:${highres_freq}:g" \
-                                                -e "s:COMB_FREQ:${comb_freq}:g" \ > ${script}
+                                                -e "s:COMB_FREQ:${comb_freq}:g" > ${script}
 
 
 output="${GXLOG}/postmosaic_${listbase}.o%A_%a"
