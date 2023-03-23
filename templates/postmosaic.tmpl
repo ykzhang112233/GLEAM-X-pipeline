@@ -132,7 +132,7 @@ fits in="${combined_im}.mir" out="${combined_im}.fits" op=xyout
 # Tidying up and removing the miriad files we just made since we don't need them 
 find . -iname "*.mir" -type d -exec rm -rf {} +
 
-BANE --cores 1\
+BANE --cores 1 \
 --compress \
 --noclobber \
 "${combined_im}.fits"
@@ -168,3 +168,7 @@ mosaic_global_rescale.py \
 --plot \
 --verbose \
 --apply
+
+# TODO: Check output of the mosaic global rescale, I think it just changes so the ending is _rescaled.fits from whatever the imagenm is, checked Tims nextflow business and noticed an updated name but that's just ot name it with the drift name not the generic name
+
+python prep_priorized_fitting.py --mosaic "${mosaicnm}"

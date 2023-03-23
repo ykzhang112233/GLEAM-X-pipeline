@@ -81,8 +81,8 @@ cat "${GXBASE}/templates/postmosaic.tmpl" | sed -e "s:BASEDIR:${base}:g" \
                                                 -e "s:COMB_FREQ:${comb_freq}:g" > ${script}
 
 
-output="${GXLOG}/postmosaic_${listbase}.o%A_%a"
-error="${GXLOG}/postmosaic_${listbase}.e%A_%a"
+output="${GXLOG}/postmosaic_${listbase}.o%A"
+error="${GXLOG}/postmosaic_${listbase}.e%A"
 
 chmod 755 "${script}"
 
@@ -114,31 +114,46 @@ echo "${error}"
 
 # Ok this is a bold choice, but we're going to try submitting an array job AFTER the postmosaic job (only to run once the postmosaic has been given the all clear) and then this next part will submit an array of jobs that is the priorized fitting based on the output of the postmosaic. Could I do them as separate scripts? Probably but I like having all the "post" stuff together so lets give it a whirl 
 
-freq_exts=(
-    "072-080"
-    "080-088"
-    "088-095"
-    "095-103"
-    "072-103"
-    "103-111"
-    "111-118"
-    "118-126"
-    "126-134"
-    "103-134"
-    "139-147"
-    "147-154"
-    "154-162"
-    "162_170"
-    "139-170"
-    "170-177"
-    "177-185"
-    "185-193"
-    "193-200"
-    "170-200"
-    "200-208"
-    "208-216"
-    "216-223"
-    "223-231"
-    "200-231"
-)
+# OK SINCE YOU KNOW HOW MANY THERE ARE GOING TO BE YOU CAN JUST HAVE ARRAY= AND HARD CODE IT BECAUSE THE BUSINESS ACTUALLY COMES IN THE TEMPLATE AND I ALREADY SET THAT UP
+script="${GXSCRIPT}/priorized_fitting_${listbase}.sh"
+
+cat "${GXBASE}/templates/priorized_fitting.tmpl" | sed -e "s:BASEDIR:${base}:g" \
+                                                -e "s:PIPEUSER:${pipeuser}:g" \
+                                                -e "s:MOSAICNM:${mosaicnm}:g" \
+                                                -e "s:MOSAICDIR:${mosaicdir}:g" \
+                                                -e "s:COMB_FREQ:${comb_freq}:g" > ${script}
+
+output="${GXLOG}/priorized_fitting_${listbase}.o%A_%a"
+error="${GXLOG}/priorized_fitting_${listbase}.e%A_%a"
+
+chmod 755 "${script}"
+
+# sbatch submissions need to start with a shebang
+echo '#!/bin/bash' > "${script}.sbatch"
+echo "srun --cpus-per-task=${GXNCPUS} --ntasks=1 --ntasks-per-node=1 singularity run ${GXCONTAINER} ${script}" >> "${script}.sbatch"
+
+# Automatically runs a job array for each sub-band
+sub="sbatch  --begin=now+5minutes --dependency=afterok:${jobid} --array=25  --export=ALL  --time=10:00:00 --mem=${GXABSMEMORY}G -M ${GXCOMPUTER} --output=${output} --error=${error}"
+sub="${sub} ${GXNCPULINE} ${account} ${GXTASKLINE} ${queue} ${script}.sbatch"
+if [[ ! -z ${tst} ]]
+then
+    echo "script is ${script}"
+    echo "submit via:"
+    echo "${sub}"
+    exit 0
+fi
+
+# submit job
+jobid=($(${sub}))
+jobid=${jobid[3]}
+
+
+
+# TODO: Double check, the nextflow stuff has a move to rename things but I think I've already got things named how i want? check. 
+
+# python join_catalogues.py --epochs "${mosaicnm}_catalogues.csv" --refcat "${mosaicnm}_${comb_freq}_comp_rescaled.fits" --out "${mosaicnm}_joined_comp.vot" --all 
+
+# Note the nextflow has a line that makes a new rescaled .csv file, I already make it in the prep python script so no need 
+# python join_cataloges.py --epochs "${mosaicnm}_catalogues_rescaled.csv" --refcat "${mosaicnm}_${comb_freq}_comp_rescaled.fits" --out "${mosaicnm}_joined_rescaled_comp.vot" --all 
+
 

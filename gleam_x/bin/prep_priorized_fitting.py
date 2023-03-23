@@ -84,10 +84,13 @@ if __name__ == "__main__":
     psf = []
     suffixes = []
     prefixes = []
+    rescaled_cats = []
+
 
     for i in range(len(extensions)):
         ext=extensions[i]
         catalogues.append(f"{mosaicnm}_{ext}MHz_ddmod_comp.fits")
+        rescaled_cats.append(f"{mosaicnm}_{ext}MHz_ddmod_comp_rescaled.fits")
         if i in [2, 7, 12, 17, 22]:
             suffixes.append(f"_W_{freq_suffixes[i]}MHz")
         else: 
@@ -101,6 +104,7 @@ if __name__ == "__main__":
 
     csv_catalogues_fields = ["#catalogue", "prefix", "suffix"]
     csv_catalogues = [catalogues, prefixes, suffixes]
+    csv_catalogues_rescaled = [rescaled_cats, prefixes, suffixes]
 
     csv_image_fields = ["name", "image", "bkg", "rms", "psf"]
     csv_image = [names, images, bkg, rms, psf]    
@@ -113,6 +117,7 @@ if __name__ == "__main__":
         csvwriter = csv.writer(csvfile)
         csvwriter.writerow(csv_image_fields)
         csvwriter.writerows(csv_image)
-
-
-
+    with open(f"{mosaicnm}_catalogues_rescaled.csv", "w") as csvfile:
+        csvwriter - csv.writer(csvfile)
+        csvwriter.writerow(csv_catalogues_fields)
+        csvwriter.writerows(csv_catalogues_rescaled)
