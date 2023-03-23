@@ -149,6 +149,40 @@ jobid=${jobid[3]}
 
 
 
+script="${GXSCRIPT}/join_cats_${listbase}.sh"
+
+cat "${GXBASE}/templates/join_cats.tmpl" | sed -e "s:BASEDIR:${base}:g" \
+                                                -e "s:PIPEUSER:${pipeuser}:g" \
+                                                -e "s:MOSAICNM:${mosaicnm}:g" \
+                                                -e "s:MOSAICDIR:${mosaicdir}:g" \
+                                                -e "s:COMB_FREQ:${comb_freq}:g" > ${script}
+
+output="${GXLOG}/join_cats_${listbase}.o%A"
+error="${GXLOG}/join_cats_${listbase}.e%A"
+
+chmod 755 "${script}"
+
+# sbatch submissions need to start with a shebang
+echo '#!/bin/bash' > "${script}.sbatch"
+echo "srun --cpus-per-task=${GXNCPUS} --ntasks=1 --ntasks-per-node=1 singularity run ${GXCONTAINER} ${script}" >> "${script}.sbatch"
+
+# Automatically runs a job array for each sub-band
+sub="sbatch  --begin=now+5minutes --dependency=afterok:${jobid} --export=ALL  --time=02:00:00 --mem=${GXABSMEMORY}G -M ${GXCOMPUTER} --output=${output} --error=${error}"
+sub="${sub} ${GXNCPULINE} ${account} ${GXTASKLINE} ${queue} ${script}.sbatch"
+if [[ ! -z ${tst} ]]
+then
+    echo "script is ${script}"
+    echo "submit via:"
+    echo "${sub}"
+    exit 0
+fi
+
+# submit job
+jobid=($(${sub}))
+jobid=${jobid[3]}
+
+
+
 # TODO: Double check, the nextflow stuff has a move to rename things but I think I've already got things named how i want? check. 
 
 # python join_catalogues.py --epochs "${mosaicnm}_catalogues.csv" --refcat "${mosaicnm}_${comb_freq}_comp_rescaled.fits" --out "${mosaicnm}_joined_comp.vot" --all 
