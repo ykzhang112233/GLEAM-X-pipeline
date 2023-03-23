@@ -6,13 +6,8 @@ set -x
 
 base=BASEDIR
 obslist=OBSLIST
-mosaicdir=MOSAICDIR
+mosaicnm=MOSAICNM 
 
 cd "${base}" || exit 1
-obss=($(sort $obslist))
 
-if [[ -z ${mosaicdir} ]]
-then
-    mosaicdir='mosaic'
-fi
-
+python filter_badionosphere.py --refcat "${GXBASE}/models/NVSS_SUMSS_psfcal.fits" "${mosaicnm}.txt"

@@ -53,15 +53,11 @@ script="${GXSCRIPT}/prepmosaic_${listbase}.sh"
 
 cat "${GXBASE}/templates/prepmosaic.tmpl" | sed -e "s:BASEDIR:${base}:g" \
                                                 -e "s:PIPEUSER:${pipeuser}:g" \
-                                                -e "s:MOSAICNM:${mosaicnm}:g" \
-                                                -e "s:MOSAICDIR:${mosaicdir}:g" \
-                                                -e "s:LOWRES_FREQ:${lowres_freq}:g" \
-                                                -e "s:HIGHRES_FREQ:${highres_freq}:g" \
-                                                -e "s:COMB_FREQ:g" \
+                                                -e "s:MOSAICNM:${mosaicnm}:g" > ${script}
 
 
-output="${GXLOG}/prepmosaic_${listbase}.o%A_%a"
-error="${GXLOG}/prepmosaic_${listbase}.e%A_%a"
+output="${GXLOG}/prepmosaic_${listbase}.o%A"
+error="${GXLOG}/prepmosaic_${listbase}.e%A"
 
 chmod 755 "${script}"
 
@@ -70,7 +66,7 @@ echo '#!/bin/bash' > "${script}.sbatch"
 echo "srun --cpus-per-task=${GXNCPUS} --ntasks=1 --ntasks-per-node=1 singularity run ${GXCONTAINER} ${script}" >> "${script}.sbatch"
 
 # Automatically runs a job array for each sub-band
-sub="sbatch  --begin=now+5minutes --export=ALL  --time=10:00:00 --mem=${GXABSMEMORY}G -M ${GXCOMPUTER} --output=${output} --error=${error}"
+sub="sbatch  --begin=now+5minutes --export=ALL  --time=01:00:00 --mem=${GXABSMEMORY}G -M ${GXCOMPUTER} --output=${output} --error=${error}"
 sub="${sub} ${GXNCPULINE} ${account} ${GXTASKLINE} ${depend} ${queue} ${script}.sbatch"
 if [[ ! -z ${tst} ]]
 then

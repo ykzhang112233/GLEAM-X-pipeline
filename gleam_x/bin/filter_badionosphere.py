@@ -75,8 +75,9 @@ def remove_missing(obsids_chan, extra = ""):
 def cut_high_rms(obsids, extra = [""]):
 
     # TODO: currently hardcoding limit for bad std(rms) per channel!!! FIX!
+    # TODO: Hard limit is ok, but doens't work for high dec (particularly +20, need to find new average)
     # rms_std_cutoff = [40, 40, 15, 15, 10, 10, 10, 10]
-    rms_std_cutoff = [40, 15, 10, 10, 10]
+    rms_std_cutoff = [80, 45, 30, 30, 30]
     rms_mask = []
     for i in range(len(obsids)):
         num_postmissing = ma.count(obsids[i])
@@ -153,7 +154,8 @@ def check_io(obsids, missing_mask, xm_cat, extra = [""]):
     std_shape = []
     for i in range(len(obsids)):
         extra_chan = extra[i]
-        logger.debug(f"The extension for comparison: {extra_chan}")
+        # logger.debug(f"The extension for comparison: {extra_chan}")
+        # logger.debug(f"Checking IO for channel: {chan[i]}")
         obs = ma.array(obsids[i].data, mask=missing_mask[i])
         int_over_peak_chan = ma.array([np.nan]*len(obsids[i].data), mask=missing_mask[i])
         std_intoverpeak_chan = ma.array([np.nan]*len(obsids[i].data), mask=missing_mask[i])
@@ -231,11 +233,6 @@ def check_io(obsids, missing_mask, xm_cat, extra = [""]):
                     err_int_rms_mask = ma.masked_greater(err_int_rms_obs,2).mask
                     background_cut = ma.masked_greater(background_obs,np.nanmean(background_obs.data)+np.nanstd(background_obs.data)).mask
                     rms_cut = ma.masked_greater(rms_obs,np.nanmean(rms_obs.data)+np.nanstd(rms_obs.data)).mask
-
-                    int_over_peak_obs[snr_mask] = ma.masked
-                    shape_obs[snr_mask] = ma.masked
-                    uuid_xm[snr_mask] = ma.masked
-
                     int_over_peak_obs[intoverpeak_mask] = ma.masked
                     uuid_xm[intoverpeak_mask] = ma.masked
                     shape_obs[intoverpeak_mask] = ma.masked
@@ -269,19 +266,25 @@ def check_io(obsids, missing_mask, xm_cat, extra = [""]):
 
 
 
-
-                int_over_peak_chan[j] = np.nanmean(int_over_peak_obs.compressed())
-                std_intoverpeak_chan[j] = np.nanstd(int_over_peak_obs.compressed())
-                shape_chan[j] = np.nanmean(shape_obs)
-                std_shape_chan[j] = np.nanstd(shape_obs.compressed())
-        
+                try: 
+                    int_over_peak_chan[j] = np.nanmean(int_over_peak_obs.compressed())
+                    std_intoverpeak_chan[j] = np.nanstd(int_over_peak_obs.compressed())
+                    shape_chan[j] = np.nanmean(shape_obs)
+                    std_shape_chan[j] = np.nanstd(shape_obs.compressed())
+                except: 
+                    logger.warning(f"Couldn't calculate mean or std of sources in obsid: {obs[j]:10.0f}, flagging!")
+                    int_over_peak_chan[j] = ma.masked
+                    std_intoverpeak_chan[j] = ma.masked
+                    shape_chan[j] = ma.masked
+                    std_shape_chan[j] = ma.masked
+                    continue
 
                 if args.plot == "all":
                     plt_io_obsid(int_over_peak_obs.compressed(), shape_obs.compressed(), f"{obs[j]:10.0f}", color=colors[i+3])
                 
                 num_srcs_postcut = len(int_over_peak_obs.compressed())
                 frac_srcs_flagged = int((num_srcs_postcut/num_srcs_precut)*100)
-                if num_srcs_postcut<200:
+                if num_srcs_postcut<100:
                     logger.warning(f"Only {num_srcs_postcut} srcs in field: flagging {obs[j]:10.0f}")
                     int_over_peak_chan[j] = ma.masked
                     std_intoverpeak_chan[j] = ma.masked
@@ -368,7 +371,7 @@ def plt_io_pernight(
     ax.set_xlabel(f"obsid")
     ax.legend()
     fig.suptitle(f"{drift}: Int/Peak")
-    plt.savefig(f"{args.project}/{drift}/{drift}_iocheck_intoverpeak_perobs.{ext}", bbox_inches='tight')
+    plt.savefig(f"{args.project}/{drift}_iocheck_intoverpeak_perobs.{ext}", bbox_inches='tight')
     plt.close(fig)
 
 
@@ -392,7 +395,7 @@ def plt_io_pernight(
     ax.set_xlabel(f"obsid")
     ax.legend()
     fig.suptitle(f"{drift}: Shape")
-    plt.savefig(f"{args.project}/{drift}/{drift}_iocheck_shape_perobs.{ext}", bbox_inches='tight')
+    plt.savefig(f"{args.project}/{drift}_iocheck_shape_perobs.{ext}", bbox_inches='tight')
     plt.close(fig)
 
 
@@ -413,7 +416,7 @@ def plt_io_pernight(
     ax.axvline(args.intoverpeak_cut, color="k", alpha=0.3, ls="--")
     fig.suptitle(f"{drift}: Int/Peak vs Shape")
     ax.legend()
-    plt.savefig(f"{args.project}/{drift}/{drift}_iocheck_intoverpeak_shape.{ext}", bbox_inches='tight')
+    plt.savefig(f"{args.project}/{drift}_iocheck_intoverpeak_shape.{ext}", bbox_inches='tight')
     plt.close(fig)
 
 
@@ -435,7 +438,7 @@ def plt_io_pernight(
     ax.set_xlabel(f"mean(a*b/psf)")
     fig.suptitle(f"{drift}: Shape")
     ax.legend()
-    plt.savefig(f"{args.project}/{drift}/{drift}_iocheck_shape.{ext}", bbox_inches='tight')
+    plt.savefig(f"{args.project}/{drift}_iocheck_shape.{ext}", bbox_inches='tight')
     plt.close(fig)
 
     fig = plt.figure(dpi=plt.rcParams['figure.dpi']*4.0)
@@ -456,7 +459,7 @@ def plt_io_pernight(
     ax.set_xlabel(f"std(int/peak)")
     fig.suptitle(f"{drift}: Int/Peak")
     ax.legend()
-    plt.savefig(f"{args.project}/{drift}/{drift}_iocheck_intoverpeak.{ext}", bbox_inches='tight')
+    plt.savefig(f"{args.project}/{drift}_iocheck_intoverpeak.{ext}", bbox_inches='tight')
     plt.close(fig)
 
 
@@ -485,7 +488,7 @@ if __name__ == "__main__":
         '--refcat',
         type=str,
         default="NVSS_SUMSS_psfcal.fits",
-        help="reference catalogue to crossmatch and get only bright, unresolved and sparse sources. (default=./models/NVSS_SUMSS_psfcal.fits)"
+        help="reference catalogue to crossmatch and get only bright, unresolved and sparse sources. (default=NVSS_SUMSS_psfcal.fits)"
     )
     parser.add_argument(
         '--intoverpeak_cut',
