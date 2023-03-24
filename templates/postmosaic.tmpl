@@ -68,8 +68,6 @@ function test_fail {
     fi
 }
 
-track_task.py start --jobid="${jobid}" --taskid="${taskid}" --start_time="$(date +%s)"
-
 # Deleting the miriad files from previous rounds in case so that miriad doesn't freak out and crash
 find . -iname "*.mir" -type d -exec rm -rf {} +
 
@@ -173,7 +171,7 @@ if [[ ! -e "${combined_im}_comp.fits" ]]
     --psf="${combined_im}_projpsf_psf.fits" \
     --table="${combined_im}.fits" \
     "${combined_im}.fits"
-    
+
 else
     echo "Already have final catalogue, not rerunning."
 fi 
@@ -191,3 +189,11 @@ mosaic_global_rescale.py \
 # TODO: Check output of the mosaic global rescale, I think it just changes so the ending is _rescaled.fits from whatever the imagenm is, checked Tims nextflow business and noticed an updated name but that's just ot name it with the drift name not the generic name
 
 python prep_priorized_fitting.py --mosaic "${mosaicnm}"
+
+if [[ -e ${combined_im}_comp.fits ]]
+then
+    echo "Convolution and catalogue successful!"
+else
+    echo "Mosaic failed! Can't find catalogue for priorized fitting :( "
+    exit 1
+fi
