@@ -94,11 +94,19 @@ fi
 jobid=($(${sub}))
 jobid=${jobid[3]}
 
-echo "Submitted ${script} as ${jobid} . Follow progress here:"
-
 # rename the err/output files as we now know the jobid
 error=${error//%A/"${jobid}"}
 output=${output//%A/"${jobid}"}
 
-echo "${output}"
-echo "${error}"
+echo "Submitted ${script} as ${jobid} . Follow progress here:"
+# record submission
+for taskid in $(seq 1 1 25)
+do
+    terror="${error//%a/${taskid}}"
+    toutput="${output//%a/${taskid}}"
+    subchan=${subchans[$taskid]}
+
+    echo "${toutput}"
+    echo "${terror}"
+
+done 
