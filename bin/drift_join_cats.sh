@@ -2,13 +2,12 @@
 
 usage()
 {
-echo "drift_priorized_fitting.sh [-p project] [-d dep] [-t] [-m mosaicdir] [-c comb_freq] -n mosaic_name
+echo "drift_join_cats.sh [-p project] [-d dep] [-t] [-m mosaicdir] [-c comb_freq] -n mosaic_name
   -p project  : project, (must be specified, no default)
   -d dep      : job number for dependency (afterok)
   -t          : test. Don't submit job, just make the batch file
                 and then return the submission command  
-  -m mosaicdir: Directory name where mosaics stored (default=project/mosaic) 
-  -c comb     : Frequency range of combined image (default=170-231MHz)
+  -m mosaicdir: Directory name where mosaics stored (default=project/mosaic)
   -n mosaicnm : Name of the mosaic, typically the drift name e.g. XG_D-27_20201015 (no default, must be specified)" 1>&2;
 exit 1;
 }
@@ -61,17 +60,16 @@ fi
 base="${GXSCRATCH}/${project}"
 listbase=$(basename "${mosaicnm}")
 listbase=${listbase%%.*}
+script="${GXSCRIPT}/join_cats_${listbase}.sh"
 
-script="${GXSCRIPT}/priorized_fitting_${listbase}.sh"
-
-cat "${GXBASE}/templates/priorized_fitting.tmpl" | sed -e "s:BASEDIR:${base}:g" \
+cat "${GXBASE}/templates/join_cats.tmpl" | sed -e "s:BASEDIR:${base}:g" \
                                                 -e "s:PIPEUSER:${pipeuser}:g" \
                                                 -e "s:MOSAICNM:${mosaicnm}:g" \
                                                 -e "s:MOSAICDIR:${mosaicdir}:g" \
                                                 -e "s:COMB_FREQ:${comb_freq}:g" > ${script}
 
-output="${GXLOG}/priorized_fitting_${listbase}.o%A_%a"
-error="${GXLOG}/priorized_fitting_${listbase}.e%A_%a"
+output="${GXLOG}/join_cats_${listbase}.o%A"
+error="${GXLOG}/join_cats_${listbase}.e%A"
 
 chmod 755 "${script}"
 
@@ -80,7 +78,7 @@ echo '#!/bin/bash' > "${script}.sbatch"
 echo "srun --cpus-per-task=${GXNCPUS} --ntasks=1 --ntasks-per-node=1 singularity run ${GXCONTAINER} ${script}" >> "${script}.sbatch"
 
 # Automatically runs a job array for each sub-band
-sub="sbatch  --begin=now+5minutes --dependency=afterok:${jobid} --array=25  --export=ALL  --time=10:00:00 --mem=${GXABSMEMORY}G -M ${GXCOMPUTER} --output=${output} --error=${error}"
+sub="sbatch  --begin=now+5minutes --dependency=afterok:${jobid} --export=ALL  --time=02:00:00 --mem=${GXABSMEMORY}G -M ${GXCOMPUTER} --output=${output} --error=${error}"
 sub="${sub} ${GXNCPULINE} ${account} ${GXTASKLINE} ${queue} ${script}.sbatch"
 if [[ ! -z ${tst} ]]
 then
@@ -93,5 +91,3 @@ fi
 # submit job
 jobid=($(${sub}))
 jobid=${jobid[3]}
-
-
