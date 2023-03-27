@@ -70,7 +70,7 @@ echo "jobid: ${jobid}"
 echo "taskid: ${taskid}"
 echo "chan: ${channel}"
 
-track_task.py start_mosaic  --jobid="${jobid}" --taskid="${taskid}"  --start_time="$(date +%s)"
+# track_task.py start_mosaic  --jobid="${jobid}" --taskid="${taskid}"  --start_time="$(date +%s)"
 
 
 
@@ -88,3 +88,12 @@ aegean \
 
 python mosaic_global_rescale.py "${imname}_ddmod_comp.fits" "${imname}_ddmod.fits" "${GXBASE}/models/GGSM_sparse_unresolved.fits" --plot --verbose --apply --sigma-thres 75
 
+# TODO: Add check if successful, need to knwo what the output of globalrescale will be 
+
+# if [[ -e "${mosaicnm}_joined_rescaled_comp.vot" ]]
+# then
+#     echo "Combined catalogues! Successful!!"
+# else
+#     echo "Failed! Could not join catalogues"
+#     exit 1
+# fi

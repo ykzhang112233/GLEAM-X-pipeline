@@ -190,7 +190,7 @@ mosaic_global_rescale.py \
 
 python prep_priorized_fitting.py --mosaic "${mosaicnm}"
 
-if [[ -e ${combined_im}_comp.fits ]]
+if [[ -e "${combined_im}_comp.fits" ]]
 then
     echo "Convolution and catalogue successful!"
 else
