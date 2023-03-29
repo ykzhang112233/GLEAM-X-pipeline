@@ -160,6 +160,12 @@ then
     flags="$flags 72"
 fi
 
+# Noticed tile 84 acting a bit off, so far just this night but may expand
+if [[ $obsnum -ge 1287659216 ]] && [[ $obsnum -le 1287693296 ]]
+then 
+    flags="$flags 84"
+fi
+
 # Loads of receiver problems on 21st April 2021!
 if [[ $obsnum -ge 1302970000 ]] && [[ $obsnum -le 1303130000 ]]
 then
