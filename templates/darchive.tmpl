@@ -73,7 +73,7 @@ do
     fi
 
     # Compress the primary beam warped weight map
-    warp="${obsnum}_deep-${subchan}-image-pb_warp_weight.fits"
+    warp="${obsnum}_deep-${subchan}-image-pb_warp_rescaled_weight.fits"
     compress="${warp}.sr6"
     if [[ ! -e "${compress}" ]]
     then
