@@ -93,6 +93,7 @@ highfreq=$(echo "$centfreq $bandwidth" | awk '{printf("%00d\n",$1+($2/2.)+0.5)}'
 freqrange="${lowfreq}-${highfreq}"
 
 # Calculate min uvw in metres
+minuv=75
 minuvm=$(echo "234 * $minuv / $chan" | bc -l)
 # In wavelengths, maximum 128T baseline at 200MHz was 1667 lambda long
 # 300/1.28 * 1667 = 390000
