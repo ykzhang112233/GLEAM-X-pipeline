@@ -86,14 +86,14 @@ fi
 
 # start the real program
 
-script="${GXSCRIPT}/image_${obsnum}.sh"
-cat "${GXBASE}/templates/image.tmpl" | sed -e "s:OBSNUM:${obsnum}:g" \
+script="${GXSCRIPT}/selfcal_${obsnum}.sh"
+cat "${GXBASE}/templates/selfcal.tmpl" | sed -e "s:OBSNUM:${obsnum}:g" \
                                  -e "s:BASEDIR:${base}:g" \
                                  -e "s:DEBUG:${debug}:g" \
                                  -e "s:PIPEUSER:${pipeuser}:g" > "${script}"
 
-output="${GXLOG}/image_${obsnum}.o%A"
-error="${GXLOG}/image_${obsnum}.e%A"
+output="${GXLOG}/selfcal_${obsnum}.o%A"
+error="${GXLOG}/selfcal_${obsnum}.e%A"
 
 if [[ -f ${obsnum} ]]
 then
@@ -107,7 +107,7 @@ chmod 755 "${script}"
 echo '#!/bin/bash' > ${script}.sbatch
 echo "srun --cpus-per-task=${GXNCPUS} --ntasks=1 --ntasks-per-node=1 singularity run ${GXCONTAINER} ${script}" >> ${script}.sbatch
 
-sub="sbatch --begin=now+5minutes --export=ALL  --time=12:00:00 --mem=${GXABSMEMORY}G -M ${GXCOMPUTER} --output=${output} --error=${error}"
+sub="sbatch --begin=now --export=ALL  --time=05:00:00 --mem=${GXABSMEMORY}G -M ${GXCOMPUTER} --output=${output} --error=${error}"
 sub="${sub} ${GXNCPULINE} ${account} ${GXTASKLINE} ${jobarray} ${depend} ${queue} ${script}.sbatch"
 if [[ ! -z ${tst} ]]
 then
