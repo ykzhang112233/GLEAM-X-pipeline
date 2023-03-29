@@ -173,27 +173,30 @@ done
 set -o pipefail
 # shallow clean (for selfcal)
 # Note: the autothreshold is set to 3 instead of 1 for s/n point to stop (want only shallow clean) also note, currently just doing the I pol to make sure it works but realistically, should do per pol 
-
-wsclean \
-        -abs-mem ${GXMEMORY} \
-        $multiscale \
-        -nmiter 1 \
-        -niter 40000 \
-        -stop-negative \
-        -name ${obsnum}_initial \
-        -size ${imsize} ${imsize} \
-        -scale ${scale:0:8} \
-        -weight briggs ${robust} \
-        -pol I \
-        -join-channels \
-        -channels-out 4 \
-        -data-column ${datacolumn} \
-        "${obsnum}.ms" | tee wsclean.log
-
+if [[ ! -e ${obsnum}_initial-0000-image.fits ]]
+then
+    wsclean \
+            -abs-mem ${GXMEMORY} \
+            $multiscale \
+            -nmiter 1 \
+            -niter 40000 \
+            -stop-negative \
+            -name ${obsnum}_initial \
+            -size ${imsize} ${imsize} \
+            -scale ${scale:0:8} \
+            -weight briggs ${robust} \
+            -pol I \
+            -join-channels \
+            -channels-out 4 \
+            -data-column ${datacolumn} \
+            "${obsnum}.ms" | tee wsclean.log
+else
+    echo "Already have initial images, not reimaging shallow clean"
+fi 
 
 
 # Check if it made initial images 
-if [[ ! -e ${obsnum}_initial-0000-I-image.fits ]]
+if [[ ! -e ${obsnum}_initial-0000-image.fits ]]
 then
     echo "Initial image did not generate! Something probs happened with WSClean"
     exit 1
