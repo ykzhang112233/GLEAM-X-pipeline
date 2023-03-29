@@ -187,7 +187,6 @@ wsclean \
         -pol I \
         -join-channels \
         -channels-out 4 \
-        -save-source-list \
         -data-column ${datacolumn} \
         "${obsnum}.ms" | tee wsclean.log
 
@@ -197,7 +196,7 @@ wsclean \
 if [[ ! -e ${obsnum}_initial-0000-I-image.fits ]]
 then
     echo "Initial image did not generate! Something probs happened with WSClean"
-    test_fail $?
+    exit 1
 fi
 
 calibrate \
