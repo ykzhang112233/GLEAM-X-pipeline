@@ -44,7 +44,7 @@ fi
 # WSClean suffixes for subchannels and MFS
 subchans="MFS 0000 0001 0002 0003"
 # S/N Level at which to choose masked pixels for deepclean
-msigma=3
+msigma=1
 # S/N Threshold at which to stop cleaning
 tsigma=1
 
@@ -105,25 +105,25 @@ multiscale="-multiscale -mgain 0.85 -multiscale-gain 0.15"
 # Check whether the phase centre has already changed
 current=$(chgcentre "${obsnum}.ms")
 
-if [[ $current == *"shift"* ]]
-then
-    echo "Detected that this measurement set has already had its phase centre changed. Not shifting."
-else
-    # Determine whether to shift the pointing centre to be more optimally-centred 
-    # on the peak of the primary beam sensitivity
-    coords=$(calc_pointing.py "${metafits}")
-    echo "Optimally shifting co-ordinates of measurement set to $coords, with zenith shiftback."
-    chgcentre \
-            "${obsnum}.ms" \
-            ${coords}
+# if [[ $current == *"shift"* ]]
+# then
+#     echo "Detected that this measurement set has already had its phase centre changed. Not shifting."
+# else
+#     # Determine whether to shift the pointing centre to be more optimally-centred 
+#     # on the peak of the primary beam sensitivity
+#     coords=$(calc_pointing.py "${metafits}")
+#     echo "Optimally shifting co-ordinates of measurement set to $coords, with zenith shiftback."
+#     chgcentre \
+#             "${obsnum}.ms" \
+#             ${coords}
 
-    # Now shift the pointing centre to point straight up, 
-    # which approximates minw without making the phase centre rattle around
-    chgcentre \
-            -zenith \
-            -shiftback \
-            "${obsnum}.ms"
-fi
+#     # Now shift the pointing centre to point straight up, 
+#     # which approximates minw without making the phase centre rattle around
+#     chgcentre \
+#             -zenith \
+#             -shiftback \
+#             "${obsnum}.ms"
+# fi
 
 # Create a template image that has all the same properties as our eventual WSClean image
 if [[ ! -e "${obsnum}_template.fits" ]]
@@ -157,12 +157,12 @@ do
     cstart=${chans[$i]}
     j=$((i + 5))
     cend=${chans[$j]}
-    if [[ ! -e "${obsnum}_000${n}-${pol}-beam.fits" ]]
-    then
-        lookup_jones.py ${obsnum} _template.fits ${obsnum}_000${n}- -c $cstart-$cend --wsclean_names
-    fi
     for pol in $pols
-    do
+    do 
+        if [[ ! -e "${obsnum}_000${n}-${pol}-beam.fits" ]]
+        then
+            lookup_jones.py ${obsnum} _template.fits ${obsnum}_000${n}- -c $cstart-$cend --wsclean_names
+        fi
         ln -s "${obsnum}_000${n}-${pol}-beam.fits" "${obsnum}_deep-000${n}-beam-${pol}.fits"
     done
 done
@@ -179,8 +179,7 @@ wsclean \
         $multiscale \
         -nmiter 1 \
         -niter 40000 \
-        -auto-mask ${msigma} \
-        -auto-threshold 3 \
+        -stop-negative \
         -name ${obsnum}_initial \
         -size ${imsize} ${imsize} \
         -scale ${scale:0:8} \
