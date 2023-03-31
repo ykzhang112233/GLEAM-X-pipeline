@@ -12,19 +12,13 @@ combined_freq=COMB_FREQ
 
 cd "${base}" || exit 1
 
-if [[ -z $mosaicdir ]]
-then 
-    mosaicdir="mosaic"
-    echo "Using directory ${mosaicdir}"
-    if [[ ! -d ${mosaicdir} ]]
-    then
-        echo "No such directory!!"
-        exit 1
-    else
-        cd $mosaicdir
-    fi
+if [[ ! -d ${mosaicdir} ]]
+then
+    mkdir ${mosaicdir}
 fi
 
+echo "Using directory ${mosaicdir}"
+cd "${mosaicdir}/" || exit 1
 
 if [[ -z ${lowres_freq} ]]
 then 
