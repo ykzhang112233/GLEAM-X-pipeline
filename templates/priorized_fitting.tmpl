@@ -64,7 +64,7 @@ channel=${freqs[$SLURM_ARRAY_TASK_ID]}
 
 imname="${mosaicnm}_${channel}MHz"
 # TODO: double check that this is the final output catalogue from postmosaic that we want to use!
-prior_cat="${mosaicnm}_${comb_freq}MHz_ddmod_comp_rescaled.fits"
+prior_cat="${mosaicnm}_${combined_freq}MHz_ddmod_comp_rescaled.fits"
 
 echo "jobid: ${jobid}"
 echo "taskid: ${taskid}"
