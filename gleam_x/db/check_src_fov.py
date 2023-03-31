@@ -12,7 +12,7 @@ from argparse import ArgumentParser
 
 def check_coords(w, coords):
     x, y =  w.all_world2pix(coords.ra.deg,coords.dec.deg,0)
-    if 0 < x < w.naxis[0] and 0 < y < w.naxis[1]:
+    if 0 < x < w._naxis[0] and 0 < y < w._naxis[1]:
         return True
     else:
         return False
