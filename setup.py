@@ -30,7 +30,7 @@ scripts = [
     "gleam_x/bin/dd_flux_mod.py",
     "gleam_x/bin/extract_lowhigh_psf_beam.py",
     "gleam_x/bin/filter_blurred_obsids.py",
-    "gleam_x/bin/filter_badionosphere.py"
+    "gleam_x/bin/filter_badionosphere.py",
     "gleam_x/bin/generate_beam_list.py",
     "gleam_x/bin/generate_weight_map.py",
     "gleam_x/bin/iono_update.py",
