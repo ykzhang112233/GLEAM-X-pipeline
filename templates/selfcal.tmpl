@@ -129,33 +129,15 @@ fi
 crab_fov=$(check_src_fov.py -f "${obsnum}_template.fits" -s "Crab")
 cyga_fov=$(check_src_fov.py -f "${obsnum}_template.fits" -s "CygA")
 
-if [[ "$crab_fov" == "False" ]] && [[ "$cyg_fox" == "False" ]]
+if [[ "$crab_fov" == "False" ]] && [[ "$cyga_fov" == "False" ]]
 then
     echo "There is neither Crab nor CygA in the fov, no self cal needed!"
     exit 0
+else
+    echo "Either Crab or CygA is in the FOV, carrying on with selfcal"
+    echo "Crab: $crab_fov"
+    echo "CygA: $cyga_fov"
 fi 
-
-
-
-# Hardcoding John's PB script location for now
-# Also hardcoding creating four sub-band beams
-pols="XX XXi XY XYi YX YXi YY YYi"
-
-for n in {0..3}
-do
-    i=$((n * 6))
-    cstart=${chans[$i]}
-    j=$((i + 5))
-    cend=${chans[$j]}
-    for pol in $pols
-    do 
-        if [[ ! -e "${obsnum}_000${n}-${pol}-beam.fits" ]]
-        then
-            lookup_jones.py ${obsnum} _template.fits ${obsnum}_000${n}- -c $cstart-$cend --wsclean_names
-        fi
-        ln -s "${obsnum}_000${n}-${pol}-beam.fits" "${obsnum}_deep-000${n}-beam-${pol}.fits"
-    done
-done
 
 
 # Initial shallow clean to populate the model column 
@@ -206,6 +188,7 @@ result=$(check_assign_solutions.py -t "0.25" check "${obsnum}_selfsolutions.bin"
 if echo "${result}" | grep -q fail
 then
     mv "${obsnum}_selfsolutions.bin" "${obsnum}_selfsolutions_failed.bin"
+    echo "FAILED SELF CAL!"
     test_fail 1
 fi
 
