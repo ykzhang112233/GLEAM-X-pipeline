@@ -34,7 +34,7 @@ scripts = [
     "gleam_x/bin/generate_beam_list.py",
     "gleam_x/bin/generate_weight_map.py",
     "gleam_x/bin/iono_update.py",
-    "gleam_x/bin/join_catalogues.py"
+    "gleam_x/bin/join_catalogues.py",
     "gleam_x/bin/make_imstack.py",
     "gleam_x/bin/make_time_cube.py",
     "gleam_x/bin/mask_image.py",
