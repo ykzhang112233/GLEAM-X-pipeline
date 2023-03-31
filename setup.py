@@ -30,9 +30,11 @@ scripts = [
     "gleam_x/bin/dd_flux_mod.py",
     "gleam_x/bin/extract_lowhigh_psf_beam.py",
     "gleam_x/bin/filter_blurred_obsids.py",
+    "gleam_x/bin/filter_badionosphere.py"
     "gleam_x/bin/generate_beam_list.py",
     "gleam_x/bin/generate_weight_map.py",
     "gleam_x/bin/iono_update.py",
+    "gleam_x/bin/join_catalogues.py"
     "gleam_x/bin/make_imstack.py",
     "gleam_x/bin/make_time_cube.py",
     "gleam_x/bin/mask_image.py",
@@ -43,6 +45,7 @@ scripts = [
     "gleam_x/bin/multiply.py",
     "gleam_x/bin/new_fk5_template.py",
     "gleam_x/bin/polyfit_snapshots.py",
+    "gleam_x/bin/prep_priorized_fitting.py",
     "gleam_x/bin/psf_combine_axes.py",
     "gleam_x/bin/psf_combine_nights.py",
     "gleam_x/bin/psf_create.py",
@@ -65,9 +68,9 @@ scripts = [
 setup(
     name="gleam_x",
     version="0.1",
-    author="Natasha Hurley-Walker, Paul Hancock, Tim Galvin",
+    author="Natasha Hurley-Walker, Paul Hancock, Tim Galvin, Kat Ross",
     description="Python scripts to support the processing of GLEAM-X data.",
-    url="https://github.com/nhurleywalker/GLEAM-X-pipeline",
+    url="https://github.com/GLEAM-X/GLEAM-X-pipeline",
     long_description=open("README.md").read(),
     packages=["gleam_x", "gleam_x.bin", "gleam_x.db", "gleam_x.utils"],
     requires=reqs,

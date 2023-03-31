@@ -182,7 +182,7 @@ mosaic_global_rescale.py \
 
 # TODO: Check output of the mosaic global rescale, I think it just changes so the ending is _rescaled.fits from whatever the imagenm is, checked Tims nextflow business and noticed an updated name but that's just ot name it with the drift name not the generic name
 
-python prep_priorized_fitting.py --mosaic "${mosaicnm}"
+prep_priorized_fitting.py --mosaic "${mosaicnm}"
 
 if [[ -e "${combined_im}_comp.fits" ]]
 then
