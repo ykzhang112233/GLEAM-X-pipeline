@@ -23,8 +23,11 @@ then
     else
         cd $mosaicdir
     fi
+else
+then 
+    echo "Using directory ${mosaicdir}"
+    cd $mosaicdir
 fi
-
 
 if [[ -z ${combined_freq} ]]
 then 
