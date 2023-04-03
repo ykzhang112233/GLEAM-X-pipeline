@@ -28,6 +28,10 @@ else
     cd $mosaicdir 
 fi 
 
+if [[ -z ${combined_freq} ]]
+then 
+    comb_freq="170-231MHz"
+fi 
 
 
 # TODO: Double check, the nextflow stuff has a move to rename things but I think I've already got things named how i want? check. 

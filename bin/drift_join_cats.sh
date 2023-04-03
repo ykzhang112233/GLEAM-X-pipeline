@@ -91,3 +91,13 @@ fi
 # submit job
 jobid=($(${sub}))
 jobid=${jobid[3]}
+
+
+echo "Submitted ${script} as ${jobid} Follow progress here:"
+# rename the err/output files as we now know the jobid
+error=${error//%A/"${jobid}"}
+output=${output//%A/"${jobid}"}
+
+echo "$output"
+echo "$error"
+
