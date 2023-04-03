@@ -10,7 +10,7 @@ mosaicnm=MOSAICNM
 
 cd "${base}" || exit 1
 
-python filter_badionosphere.py --refcat "${GXBASE}/models/NVSS_SUMSS_psfcal.fits" "${mosaicnm}.txt"
+filter_badionosphere.py --refcat "${GXBASE}/models/NVSS_SUMSS_psfcal.fits" "${mosaicnm}.txt"
 
 if [[ -e ${mosaicnm}_good_obsids.txt ]]
 then
