@@ -163,7 +163,7 @@ def check_io(obsids, missing_mask, xm_cat, extra = [""]):
         std_shape_chan = ma.array([np.nan]*len(obsids[i].data), mask=missing_mask[i])
         for j in range(len(obs)):
             if obs[j] is not ma.masked: 
-                catfile = f"{args.project}/{obs[j]:10.0f}/{obs[j]:10.0f}_deep-MFS-image-pb_warp_rescaled_comp{extra_chan}.fits"
+                catfile = f"{args.project}/{obs[j]:10.0f}/{obs[j]:10.0f}_deep-MFS-image-pb_warp_comp{extra_chan}.fits"
                 # catfile = f"{args.project}/{obs[j]:10.0f}/{obs[j]:10.0f}_deep-MFS-image-pb_warp_comp{extra_chan}.fits"
                 # logger.debug(f"{catfile}")
                 savefile = f"{args.project}/{obs[j]:10.0f}/{obs[j]:10.0f}_iocheck_comp{extra_chan}.csv"
@@ -477,7 +477,7 @@ if __name__ == "__main__":
         '--project',
         type=str,
         default=".",
-        help="Path to project directory containing obsid folders, also where the drift scan folder is containing text files $project/$drift/*.txt (default= ./)"
+        help="Path to project directory containing obsid folders, also where the drift scan folder is containing text files $project/*.txt (default= ./)"
     )
     parser.add_argument(
         'obsids',
