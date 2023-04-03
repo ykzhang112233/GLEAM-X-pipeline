@@ -177,8 +177,8 @@ def check_coords_mask(w: WCS, coords: SkyCoord, border_size: int) -> bool:
 
     x, y = w.all_world2pix(coords.ra.deg, coords.dec.deg, 0)
 
-    if (0 + border_size) < x < (w._naxis1 - border_size) and (0 + border_size) < y < (
-        w._naxis2 - border_size
+    if (0 + border_size) < x < (w._naxis[0] - border_size) and (0 + border_size) < y < (
+        w._naxis[1] - border_size
     ):
         return True
     else:
@@ -205,8 +205,8 @@ def create_wcs(ra, dec, cenchan):
     w.wcs.crval = [ra, dec]
     w.wcs.ctype = ["RA---SIN", "DEC--SIN"]
     w.wcs.cunit = ["deg", "deg"]
-    w._naxis1 = 8000
-    w._naxis2 = 8000
+    w._naxis = [8000, 8000]
+    # w._naxis2 = 8000
 
     return w
 
