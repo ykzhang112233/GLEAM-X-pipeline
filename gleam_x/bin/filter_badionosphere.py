@@ -57,7 +57,7 @@ def remove_missing(obsids_chan, extra = ""):
 
     for i in range(len(obsids_chan)):
         obsid = obsids_chan[i] 
-        if os.path.exists(f"{base_dir}/{obsid:10.0f}/{obsid:10.0f}_deep-MFS-image-pb_warp_rescaled_comp{extra}.fits") is False:
+        if os.path.exists(f"{base_dir}/{obsid:10.0f}/{obsid:10.0f}_deep-MFS-image-pb_warp_comp{extra}.fits") is False:
         # if os.path.exists(f"{base_dir}/{obsid:10.0f}/{obsid:10.0f}_deep-MFS-image-pb_warp_comp{extra}.fits") is False: 
             logger.warning(f"No catalogue for io checks: {obsid:10.0f}")
             obsids_chan[i] = ma.masked
