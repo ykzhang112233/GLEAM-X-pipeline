@@ -23,7 +23,11 @@ then
     else
         cd $mosaicdir
     fi
-fi
+else
+    echo "Using directory ${mosaicdir}"
+    cd $mosaicdir 
+fi 
+
 
 
 # TODO: Double check, the nextflow stuff has a move to rename things but I think I've already got things named how i want? check. 
