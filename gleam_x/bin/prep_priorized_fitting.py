@@ -118,6 +118,6 @@ if __name__ == "__main__":
         csvwriter.writerow(csv_image_fields)
         csvwriter.writerows(csv_image)
     with open(f"{mosaicnm}_catalogues_rescaled.csv", "w") as csvfile:
-        csvwriter - csv.writer(csvfile)
+        csvwriter = csv.writer(csvfile)
         csvwriter.writerow(csv_catalogues_fields)
         csvwriter.writerows(csv_catalogues_rescaled)
