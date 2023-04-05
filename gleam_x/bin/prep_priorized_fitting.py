@@ -104,20 +104,23 @@ if __name__ == "__main__":
 
     csv_catalogues_fields = ["#catalogue", "prefix", "suffix"]
     csv_catalogues = [catalogues, prefixes, suffixes]
+    csv_cats = zip(*csv_catalogues)
     csv_catalogues_rescaled = [rescaled_cats, prefixes, suffixes]
+    csv_cats_rescaled = zip(*csv_catalogues_rescaled)
 
     csv_image_fields = ["name", "image", "bkg", "rms", "psf"]
     csv_image = [names, images, bkg, rms, psf]    
+    csv_ims = zip(*csv_image)
 
     with open(f"{mosaicnm}_catalogues.csv", "w") as csvfile:
         csvwriter = csv.writer(csvfile)
         csvwriter.writerow(csv_catalogues_fields)
-        csvwriter.writerows(csv_catalogues)
+        csvwriter.writerows(csv_cats)
     with open(f"{mosaicnm}_images.csv", "w") as csvfile:
         csvwriter = csv.writer(csvfile)
         csvwriter.writerow(csv_image_fields)
-        csvwriter.writerows(csv_image)
+        csvwriter.writerows(csv_ims)
     with open(f"{mosaicnm}_catalogues_rescaled.csv", "w") as csvfile:
         csvwriter = csv.writer(csvfile)
         csvwriter.writerow(csv_catalogues_fields)
-        csvwriter.writerows(csv_catalogues_rescaled)
+        csvwriter.writerows(csv_cats_rescaled)
