@@ -125,6 +125,20 @@ then
     mv "${obsnum}_template-image.fits" "${obsnum}_template.fits"
 fi
 
+# Check whether Crab or Cyg is in the fov and whether we need to run selfcal or not
+crab_fov=$(check_src_fov.py -f "${obsnum}_template.fits" -s "Crab")
+cyga_fov=$(check_src_fov.py -f "${obsnum}_template.fits" -s "CygA")
+
+if [[ "$crab_fov" == "False" ]] && [[ "$cyga_fov" == "False" ]]
+then
+    echo "There is neither Crab nor CygA in the fov, no self cal needed!"
+    exit 0
+else
+    echo "Either Crab or CygA is in the FOV, carrying on with selfcal"
+    echo "Crab: $crab_fov"
+    echo "CygA: $cyga_fov"
+fi 
+
 # Hardcoding John's PB script location for now
 # Also hardcoding creating four sub-band beams
 pols="XX XXi XY XYi YX YXi YY YYi"
@@ -144,21 +158,6 @@ do
         ln -s "${obsnum}_000${n}-${pol}-beam.fits" "${obsnum}_initial-000${n}-beam-${pol}.fits"
     done
 done
-
-# Check whether Crab or Cyg is in the fov and whether we need to run selfcal or not
-crab_fov=$(check_src_fov.py -f "${obsnum}_template.fits" -s "Crab")
-cyga_fov=$(check_src_fov.py -f "${obsnum}_template.fits" -s "CygA")
-
-if [[ "$crab_fov" == "False" ]] && [[ "$cyga_fov" == "False" ]]
-then
-    echo "There is neither Crab nor CygA in the fov, no self cal needed!"
-    exit 0
-else
-    echo "Either Crab or CygA is in the FOV, carrying on with selfcal"
-    echo "Crab: $crab_fov"
-    echo "CygA: $cyga_fov"
-fi 
-
 
 # Initial shallow clean to populate the model column 
 # Set the pipefail so the test_fail does not test for tee
