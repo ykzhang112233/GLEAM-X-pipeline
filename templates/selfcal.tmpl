@@ -177,6 +177,7 @@ then
             -scale ${scale:0:8} \
             -weight briggs ${robust} \
             -pol XX,YY,XY,YX \
+            -join-polarizations \
             -channels-out 4 \
             -data-column ${datacolumn} \
             "${obsnum}.ms" | tee wsclean.log
