@@ -75,7 +75,7 @@ echo "chan: ${channel}"
 # track_task.py start_mosaic  --jobid="${jobid}" --taskid="${taskid}"  --start_time="$(date +%s)"
 
 
-if [[ ! -e "${imname}_ddmod_comp.fits" ]]
+if [[ ! -e "${imname}_ddmod_prior_comp.fits" ]]
 then 
     aegean \
     --regroup-eps 5 \
@@ -83,7 +83,7 @@ then
     --background "${imname}_ddmod_bkg.fits" \
     --noise "${imname}_ddmod_rms.fits" \
     --psf "${imname}_projpsf_psf.fits" \
-    --table "${imname}_ddmod.fits" \
+    --table "${imname}_ddmod_prior.fits" \
     --priorized 1 \
     --input "${prior_cat}" \
     --progress \
@@ -91,7 +91,7 @@ then
 fi
 
 
-mosaic_global_rescale.py "${imname}_ddmod_comp.fits" "${imname}_ddmod.fits" "${GXBASE}/models/GGSM_sparse_unresolved.fits" --plot --verbose --apply --sigma-thres 75
+mosaic_global_rescale.py "${imname}_ddmod_prior_comp.fits" "${imname}_ddmod.fits" "${GXBASE}/models/GGSM_sparse_unresolved.fits" --plot --verbose --apply --sigma-thres 75
 
 # TODO: Add check if successful, need to knwo what the output of globalrescale will be 
 
