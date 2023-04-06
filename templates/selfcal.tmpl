@@ -164,7 +164,7 @@ done
 set -o pipefail
 # shallow clean (for selfcal)
 # Note: the autothreshold is set to 3 instead of 1 for s/n point to stop (want only shallow clean) also note, currently just doing the I pol to make sure it works but realistically, should do per pol 
-if [[ ! -e ${obsnum}_initial-0000-image.fits ]]
+if [[ ! -e ${obsnum}_initial-MFS-XX-image.fits ]]
 then
     wsclean \
             -abs-mem ${GXMEMORY} \
@@ -187,7 +187,7 @@ fi
 
 
 # Check if it made initial images 
-if [[ ! -e ${obsnum}_initial-0000-image.fits ]]
+if [[ ! -e ${obsnum}_initial-MFS-XX-image.fits ]]
 then
     echo "Initial image did not generate! Something probs happened with WSClean"
     test_fail 1
