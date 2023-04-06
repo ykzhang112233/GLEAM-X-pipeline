@@ -89,8 +89,8 @@ if __name__ == "__main__":
 
     for i in range(len(extensions)):
         ext=extensions[i]
-        catalogues.append(f"{mosaicnm}_{ext}MHz_ddmod_comp.fits")
-        rescaled_cats.append(f"{mosaicnm}_{ext}MHz_ddmod_comp_rescaled.fits")
+        catalogues.append(f"{mosaicnm}_{ext}MHz_ddmod_prior_comp.fits")
+        rescaled_cats.append(f"{mosaicnm}_{ext}MHz_ddmod_prior_comp_rescaled.fits")
         if i in [2, 7, 12, 17, 22]:
             suffixes.append(f"_W_{freq_suffixes[i]}MHz")
         else: 
