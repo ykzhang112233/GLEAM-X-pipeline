@@ -178,7 +178,10 @@ then
             -weight briggs ${robust} \
             -pol XX,YY,XY,YX \
             -join-polarizations \
-            -channels-out 4 \
+            -channels-out 16 \
+            -join-channels \
+            -fit-spectral-pol 4 \
+            -deconvolution-channels 8 \
             -data-column ${datacolumn} \
             "${obsnum}.ms" | tee wsclean.log
 else
