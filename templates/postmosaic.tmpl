@@ -12,6 +12,11 @@ combined_freq=COMB_FREQ
 
 cd "${base}" || exit 1
 
+if [[ -z ${mosaicdir} ]]
+then 
+    mosaicdir="mosaic"
+fi 
+
 if [[ ! -d ${mosaicdir} ]]
 then
     mkdir ${mosaicdir}
