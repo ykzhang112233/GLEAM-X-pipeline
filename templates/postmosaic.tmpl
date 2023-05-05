@@ -138,7 +138,8 @@ fi
 if [[ ! -e "${combined_im}_comp.fits" ]]
     then 
     BANE \
-    --cores 1 \
+    --cores ${GXNCPUS} \
+    --stripes ${GXNCPUS} \
     --compress \
     --noclobber \
     "${combined_im}.fits"
@@ -148,7 +149,6 @@ if [[ ! -e "${combined_im}_comp.fits" ]]
         aegean \
         --seedclip=10 \
         --maxsummits=5 \
-        --cores 1 \
         --progress \
         --autoload \
         --table="${combined_im}_projpsf.fits" \
@@ -164,7 +164,6 @@ if [[ ! -e "${combined_im}_comp.fits" ]]
     aegean \
     --seedclip=4 \
     --maxsummits=5 \
-    --cores 1 \
     --autoload \
     --progress \
     --psf="${combined_im}_projpsf_psf.fits" \
