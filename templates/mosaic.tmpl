@@ -131,6 +131,11 @@ resampdir="./resamp_${low}-${high}/"
 # Update processing database
 # track_task.py start --jobid=${SLURM_JOBID} --taskid=$SLURM_ARRAY_TASK_ID --start_time=`date +%s`
 
+if [[ -z ${mosaicdir} ]]
+then
+    mosaicdir="mosaic"
+fi
+
 if [[ ! -d ${mosaicdir} ]]
 then
     mkdir ${mosaicdir}
