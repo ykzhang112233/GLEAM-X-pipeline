@@ -179,7 +179,7 @@ then
             -pol XX,YY,XY,YX \
             -channels-out 4 \
             -join-channels \
-            -fit-spectral-pol 2 \
+            -join-polarizations \
             -data-column ${datacolumn} \
             "${obsnum}.ms" | tee wsclean.log
 else
