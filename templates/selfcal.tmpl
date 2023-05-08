@@ -129,15 +129,15 @@ fi
 crab_fov=$(check_src_fov.py -f "${obsnum}_template.fits" -s "Crab")
 cyga_fov=$(check_src_fov.py -f "${obsnum}_template.fits" -s "CygA")
 
-if [[ "$crab_fov" == "False" ]] && [[ "$cyga_fov" == "False" ]]
-then
-    echo "There is neither Crab nor CygA in the fov, no self cal needed!"
-    exit 0
-else
-    echo "Either Crab or CygA is in the FOV, carrying on with selfcal"
-    echo "Crab: $crab_fov"
-    echo "CygA: $cyga_fov"
-fi 
+# if [[ "$crab_fov" == "False" ]] && [[ "$cyga_fov" == "False" ]]
+# then
+#     echo "There is neither Crab nor CygA in the fov, no self cal needed!"
+#     exit 0
+# else
+#     echo "Either Crab or CygA is in the FOV, carrying on with selfcal"
+#     echo "Crab: $crab_fov"
+#     echo "CygA: $cyga_fov"
+# fi 
 
 # Hardcoding John's PB script location for now
 # Also hardcoding creating four sub-band beams
