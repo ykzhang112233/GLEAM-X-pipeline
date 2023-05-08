@@ -91,10 +91,10 @@ if __name__ == "__main__":
         ext=extensions[i]
         catalogues.append(f"{mosaicnm}_{ext}MHz_ddmod_prior_comp.fits")
         rescaled_cats.append(f"{mosaicnm}_{ext}MHz_ddmod_prior_comp_rescaled.fits")
-        if i in [2, 7, 12, 17, 22]:
-            suffixes.append(f"_W_{freq_suffixes[i]}MHz")
-        else: 
-            suffixes.append(f"_N_{freq_suffixes[i]}MHz")
+        # if i in [2, 7, 12, 17, 22]:
+        #     suffixes.append(f"_W_{freq_suffixes[i]}MHz")
+        # else: 
+        suffixes.append(f"_{freq_suffixes[i]}MHz")
         prefixes.append("")
         names.append(f"{mosaicnm}_{ext}MHz")
         images.append(f"{mosaicnm}_{ext}MHz_ddmod.fits")
