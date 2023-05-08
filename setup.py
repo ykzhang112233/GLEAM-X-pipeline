@@ -42,6 +42,7 @@ scripts = [
     "gleam_x/bin/mosaic_global_rescale.py",
     "gleam_x/bin/ms_flag_by_direction.py",
     "gleam_x/bin/ms_flag_by_uvdist.py",
+    "gleam_x/bin/get_mwa_pb_lobes.py",
     "gleam_x/bin/multiply.py",
     "gleam_x/bin/new_fk5_template.py",
     "gleam_x/bin/polyfit_snapshots.py",
