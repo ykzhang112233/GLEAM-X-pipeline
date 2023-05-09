@@ -83,6 +83,12 @@ centfreq="$(pyhead.py -p FREQCENT ${metafits} | awk '{print $3}')"
 chans="$(pyhead.py -p CHANNELS ${metafits} | awk '{print $3}' | sed 's/,/ /g')"
 chans=($chans)
 
+if [[ $chan -eq 169 ]] || [[ $chan -eq 145 ]] || [[ $chan -eq 121 ]]
+then 
+    echo "Making larger imsize"
+    imsize=15000
+fi
+
 # Pixel scale
  # At least 4 pix per synth beam for each channel
 scale=$(echo "$basescale / $chan" | bc -l)
@@ -164,7 +170,7 @@ done
 set -o pipefail
 # shallow clean (for selfcal)
 # Note: the autothreshold is set to 3 instead of 1 for s/n point to stop (want only shallow clean) also note, currently just doing the I pol to make sure it works but realistically, should do per pol 
-if [[ ! -e ${obsnum}_initial-MFS-XX-image.fits ]]
+if [[ ! -e "${obsnum}_initial-MFS-XX-image.fits" ]]
 then
     wsclean \
             -abs-mem ${GXMEMORY} \
@@ -187,28 +193,30 @@ fi
 
 
 # Check if it made initial images 
-if [[ ! -e ${obsnum}_initial-MFS-XX-image.fits ]]
+if [[ ! -e "${obsnum}_initial-MFS-XX-image.fits" ]]
 then
-    echo "Initial image did not generate! Something probs happened with WSClean"
-    test_fail 1
-fi
+    echo 'Initial image did not generate! Something probs happened with WSClean'
+    exit 1
+else
+    calibrate \
+            -j ${GXNCPUS} \
+            -absmem ${GXABSMEMORY} \
+            -minuv ${minuvm} \
+            -maxuv ${maxuvm} \
+            -datacolumn ${datacolumn} \
+            "${obsnum}.ms" \
+            "${obsnum}_selfsolutions.bin" | tee calibrate.log 
 
-calibrate \
-        -j ${GXNCPUS} \
-        -absmem ${GXABSMEMORY} \
-        -minuv ${minuvm} \
-        -maxuv ${maxuvm} \
-        -datacolumn ${datacolumn} \
-        "${obsnum}.ms" \
-        "${obsnum}_selfsolutions.bin" | tee calibrate.log 
+    aocal_plot.py --refant=127 ${obsnum}_selfsolutions.bin 
+    result=$(check_assign_solutions.py -t "0.25" check "${obsnum}_selfsolutions.bin")
+fi 
 
-aocal_plot.py --refant=127 ${obsnum}_selfsolutions.bin 
-result=$(check_assign_solutions.py -t "0.25" check "${obsnum}_selfsolutions.bin")
+
 if echo "${result}" | grep -q fail
 then
     mv "${obsnum}_selfsolutions.bin" "${obsnum}_selfsolutions_failed.bin"
     echo "FAILED SELF CAL!"
-    test_fail 1
+    exit 1
 fi
 
 
