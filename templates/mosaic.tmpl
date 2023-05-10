@@ -255,7 +255,7 @@ fi
 
 # Blur correction and final PSF generation
 if [[ ! -e "${outname}_ddmod.fits" ]] || [[ ! -e "${outname}_psf.fits" ]]; then
-    BANE --noclobber --cores ${GXNCPUS} --stripes ${GXNCPUS} "${outname}.fits"
+    BANE --noclobber --cores 1 "${outname}.fits"
 
     # To create the final PSF map that I will use later, run source-finding without any PSF input
     if [[ ! -e "${outname}_comp.fits" ]]
@@ -297,7 +297,7 @@ fi
 # Rerun source-finding on blur-corrected map with measured PSF map
 if [[ ! -e "${outname}_ddmod_comp.fits" ]]
 then
-    BANE --cores ${GXNCPUS} --stripes ${GXNCPUS} --noclobber "${outname}_ddmod.fits"
+    BANE --cores 1 --noclobber "${outname}_ddmod.fits"
     aegean --progress --seedclip=4 --maxsummits=5 --autoload --table="${outname}_ddmod.fits" --psf="${outname}_psf.fits" "${outname}_ddmod.fits"
 fi
 
