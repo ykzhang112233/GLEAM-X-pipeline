@@ -138,8 +138,7 @@ fi
 if [[ ! -e "${combined_im}_comp.fits" ]]
     then 
     BANE \
-    --cores ${GXNCPUS} \
-    --stripes $((${GXNCPUS}-1)) \
+    --cores 1 \
     --compress \
     --noclobber \
     "${combined_im}.fits"
