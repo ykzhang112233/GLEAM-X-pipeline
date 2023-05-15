@@ -13,6 +13,8 @@ echo "obs_apply_cal.sh [-p project] [-d dep] [-a account] [-c calid] [-z] [-t] o
                 Otherwise job will fail.
   -z          : Debugging mode: create a new CORRECTED_DATA column
                 instead of applying to the DATA column
+  -s          : Selfcal mode: looks for calid_selfsolutions.bin to apply
+                instead of default calfile 
   -t          : test. Don't submit job, just make the batch file
                 and then return the submission command
   obsnum      : the obsid to process, or a text file of obsids (newline separated)" 1>&2;
@@ -27,6 +29,7 @@ calid=
 tst=
 account=
 debug=
+selfcal=
 
 # parse args and set options
 while getopts ':tzd:a:c:p:' OPTION
@@ -40,6 +43,9 @@ do
 	    ;;
     p)
         project=${OPTARG}
+        ;;
+    s) 
+        selfcal=1
         ;;
     z)
         debug=1
@@ -106,6 +112,7 @@ cat "${GXBASE}/templates/apply_cal.tmpl" | sed -e "s:OBSNUM:${obsnum}:g" \
                                        -e "s:BASEDIR:${base}:g" \
                                        -e "s:DEBUG:${debug}:g" \
                                        -e "s:CALID:${calid}:g" \
+                                       -e "s:SELFCAL:${selfcal}:g" \
                                        -e "s:PIPEUSER:${pipeuser}:g"  > ${script}
 
 chmod 755 "${script}"

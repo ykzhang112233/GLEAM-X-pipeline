@@ -59,49 +59,51 @@ cd "${datadir}" || exit
 metafits="$(ls -t ${obsnum}*metafits* | head -1)"
 
 # Checking if there is a gross sidelobe: 
-# get_mwa_pb_lobes.py ${metafits} -mS > ${obsnum}_beamlobes.txt
-# if [[ $(cat ${obsnum}_beamlobes.txt | wc -l ) -eq 1 ]]
-# then 
-#     ra_sidelobe=$(cat ${obsnum}_beamlobes.txt | awk '{print $2}')
-#     dec_sidelobe=$(cat ${obsnum}_beamlobes.txt | awk '{print $3}')
+get_mwa_pb_lobes.py ${metafits} -mS > ${obsnum}_beamlobes.txt
+if [[ $(cat ${obsnum}_beamlobes.txt | wc -l ) -eq 1 ]]
+then 
+    ra_sidelobe=$(cat ${obsnum}_beamlobes.txt | awk '{print $2}')
+    dec_sidelobe=$(cat ${obsnum}_beamlobes.txt | awk '{print $3}')
 
-#     # check if crab or cyga in the side lobe 
-#     crab_lov=$(check_src_fov.py -p ${ra_mainlobe} ${dec_mainlobe} -s "Crab")
-#     cyga_lov=$(check_src_fov.py -p ${ra_mainlobe} ${dec_mainlobe} -s "CygA")
-#     if [[ "$crab_lov" == "False" ]] && [[ "$cyga_lov" == "False" ]] 
-#     then
-#         echo "There is neither Crab nor CygA in the sidelobe"
-#         self="False"
-#     else
-#         echo "Either Crab or CygA is in the sidelobe, carrying on with selfcal"
-#         echo "Crab: $crab_fov"
-#         echo "CygA: $cyga_fov"
-#     fi 
-# else
-#     echo "No major sidelobe, good stuff"
-#     self="False"
+    # check if crab or cyga in the side lobe 
+    crab_lov=$(check_src_fov.py -p ${ra_mainlobe} ${dec_mainlobe} -s "Crab")
+    cyga_lov=$(check_src_fov.py -p ${ra_mainlobe} ${dec_mainlobe} -s "CygA")
+    if [[ "$crab_lov" == "False" ]] && [[ "$cyga_lov" == "False" ]] 
+    then
+        echo "There is neither Crab nor CygA in the sidelobe"
+        self="False"
+    else
+        echo "Either Crab or CygA is in the sidelobe, carrying on with selfcal"
+        echo "Crab: $crab_fov"
+        echo "CygA: $cyga_fov"
+    fi 
+else
+    echo "No major sidelobe, good stuff"
+    self="False"
 
-# get_mwa_pb_lobes.py ${metafits} -mM > ${obsnum}_mainlobes.txt
-# ra_mainlobe=$(cat ${obsnum}_mainlobes.txt | awk '{print $2}')
-# dec_mainlobe=$(cat ${obsnum}_mainlobes.txt | awk '{print $3}')
-# # Check if crab or cyg is in the main fov
-# crab_fov=$(check_src_fov.py -p ${ra_mainlobe} ${dec_mainlobe} -s "Crab")
-# cyga_fov=$(check_src_fov.py -p ${ra_mainlobe} ${dec_mainlobe} -s "CygA")
+get_mwa_pb_lobes.py ${metafits} -mM > ${obsnum}_mainlobes.txt
+ra_mainlobe=$(cat ${obsnum}_mainlobes.txt | awk '{print $2}')
+dec_mainlobe=$(cat ${obsnum}_mainlobes.txt | awk '{print $3}')
 
-# if [[ "$crab_fov" == "False" ]] && [[ "$cyga_fov" == "False" ]] 
-# then
-#     echo "There is neither Crab nor CygA in the fov or sidelobe, no self cal needed!"
-#     self2="False"
-# else
-#     echo "Either Crab or CygA is in the FOV, carrying on with selfcal"
-#     echo "Crab: $crab_fov"
-#     echo "CygA: $cyga_fov"
-# fi 
 
-# if [[ "$self" == "False" ]] && [[ "${self2}" == "False" ]]
-# then 
-#     echo "There is no need to do selfcal here!"
-# fi 
+# Check if crab or cyg is in the main fov
+crab_fov=$(check_src_fov.py -p ${ra_mainlobe} ${dec_mainlobe} -s "Crab")
+cyga_fov=$(check_src_fov.py -p ${ra_mainlobe} ${dec_mainlobe} -s "CygA")
+
+if [[ "$crab_fov" == "False" ]] && [[ "$cyga_fov" == "False" ]] 
+then
+    echo "There is neither Crab nor CygA in the fov or sidelobe, no self cal needed!"
+    self2="False"
+else
+    echo "Either Crab or CygA is in the FOV, carrying on with selfcal"
+    echo "Crab: $crab_fov"
+    echo "CygA: $cyga_fov"
+fi 
+
+if [[ "$self" == "False" ]] && [[ "${self2}" == "False" ]]
+then 
+    echo "There is no need to do selfcal here!"
+fi 
 
 
 
@@ -130,12 +132,6 @@ centfreq="$(pyhead.py -p FREQCENT ${metafits} | awk '{print $3}')"
 chans="$(pyhead.py -p CHANNELS ${metafits} | awk '{print $3}' | sed 's/,/ /g')"
 chans=($chans)
 
-# if [[ $chan -eq 169 ]] || [[ $chan -eq 145 ]] || [[ $chan -eq 121 ]]
-# then 
-#     echo "Making larger imsize"
-#     imsize=15000
-# fi
-
 # Pixel scale
  # At least 4 pix per synth beam for each channel
 scale=$(echo "$basescale / $chan" | bc -l)
@@ -156,67 +152,10 @@ maxuvm=$(echo "390000 / (${chan} + 11)" | bc -l)
 # Found that multiscale cleaning recovers flux density in the extragalactic sky better than not, and doesn't add much to processing time
 multiscale="-multiscale -mgain 0.85 -multiscale-gain 0.15"
 
-# Create a template image that has all the same properties as our eventual WSClean image
-if [[ ! -e "${obsnum}_template.fits" ]]
-then
-    wsclean \
-            -abs-mem ${GXMEMORY} \
-            -mgain 1.0 \
-            -nmiter 1 \
-            -niter 0 \
-            -name ${obsnum}_template \
-            -size ${imsize} ${imsize} \
-            -scale ${scale:0:8} \
-            -pol XX \
-            -data-column ${datacolumn} \
-            -channel-range 4 5 \
-            -interval 4 5 \
-            -nwlayers ${GXNCPUS} \
-            "${obsnum}.ms"
-
-    rm "${obsnum}_template-dirty.fits"
-    mv "${obsnum}_template-image.fits" "${obsnum}_template.fits"
-fi
-
-# Check whether Crab or Cyg is in the fov and whether we need to run selfcal or not
-# crab_fov=$(check_src_fov.py -f "${obsnum}_template.fits" -s "Crab")
-# cyga_fov=$(check_src_fov.py -f "${obsnum}_template.fits" -s "CygA")
-
-# if [[ "$crab_fov" == "False" ]] && [[ "$cyga_fov" == "False" ]]
-# then
-#     echo "There is neither Crab nor CygA in the fov, no self cal needed!"
-#     exit 0
-# else
-#     echo "Either Crab or CygA is in the FOV, carrying on with selfcal"
-#     echo "Crab: $crab_fov"
-#     echo "CygA: $cyga_fov"
-# fi 
-
-# Hardcoding John's PB script location for now
-# Also hardcoding creating four sub-band beams
-pols="XX XXi XY XYi YX YXi YY YYi"
-
-for n in {0..3}
-do
-    i=$((n * 6))
-    cstart=${chans[$i]}
-    j=$((i + 5))
-    cend=${chans[$j]}
-    for pol in $pols
-    do 
-        if [[ ! -e "${obsnum}_000${n}-${pol}-beam.fits" ]]
-        then
-            lookup_jones.py ${obsnum} _template.fits ${obsnum}_000${n}- -c $cstart-$cend --wsclean_names
-        fi
-        ln -s "${obsnum}_000${n}-${pol}-beam.fits" "${obsnum}_initial-000${n}-beam-${pol}.fits"
-    done
-done
-
 # Initial shallow clean to populate the model column 
 # Set the pipefail so the test_fail does not test for tee
 set -o pipefail
-# shallow clean (for selfcal)
-# Note: the autothreshold is set to 3 instead of 1 for s/n point to stop (want only shallow clean) also note, currently just doing the I pol to make sure it works but realistically, should do per pol 
+# shallow clean (for selfcal) 
 if [[ ! -e "${obsnum}_initial-MFS-XX-image.fits" ]]
 then
     wsclean \
@@ -234,6 +173,7 @@ then
             -join-polarizations \
             -data-column ${datacolumn} \
             "${obsnum}.ms" | tee wsclean.log
+    
 else
     echo "Already have initial images, not reimaging shallow clean"
 fi 
@@ -266,5 +206,8 @@ then
     exit 1
 fi
 
+# clean up all unnecessary images
+
+rm "${obsnum}_initial*.fits"
 
 track_task.py finish --jobid="${jobid}" --taskid="${taskid}" --finish_time="$(date +%s)"

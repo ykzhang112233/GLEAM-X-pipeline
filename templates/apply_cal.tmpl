@@ -3,6 +3,7 @@
 pipeuser=PIPEUSER
 obsnum=OBSNUM
 calid=CALID
+selfcal=SELFCAL
 
 # If obsnum is a file, then we are in an array job
 if [[ -f ${obsnum} ]]
@@ -45,7 +46,13 @@ track_task.py start --jobid="${jobid}" --taskid="${taskid}" --start_time="$(date
 
 cd "${base}/${obsnum}" || exit
 
-calfile="${base}/${calid}/${calid}_local_gleam_model_solutions_initial_ref.bin"
+if [[ ! -z $selfcal ]]
+then 
+    calfile="${base}/${calid}/${calid}_selfsolutions.bin"
+else
+    calfile="${base}/${calid}/${calid}_local_gleam_model_solutions_initial_ref.bin"
+fi 
+
 
 if [[ ! -e "${calfile}" ]]
 then
