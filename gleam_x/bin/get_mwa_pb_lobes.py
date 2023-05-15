@@ -23,6 +23,8 @@ MWA = EarthLocation.from_geodetic(lat=-26.703319*u.deg,
 
 import logging
 
+__author__ = "Stefan Duchesne"
+
 
 class Lobe(object):
     """Class to hold information about a lobe of the primary beam."""
