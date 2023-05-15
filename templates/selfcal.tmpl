@@ -80,6 +80,7 @@ then
 else
     echo "No major sidelobe, good stuff"
     self="False"
+fi 
 
 get_mwa_pb_lobes.py ${metafits} -mM > ${obsnum}_mainlobes.txt
 ra_mainlobe=$(cat ${obsnum}_mainlobes.txt | awk '{print $2}')
