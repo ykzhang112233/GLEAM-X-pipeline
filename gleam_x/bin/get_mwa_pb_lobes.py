@@ -15,7 +15,7 @@ from astropy.coordinates import SkyCoord, EarthLocation, AltAz, FK5
 from astropy import units as u
 from astropy.wcs import WCS
 
-from mwa_pb.mwa_pb.primary_beam import MWA_Tile_full_EE
+from mwa_pb.primary_beam import MWA_Tile_full_EE
 
 MWA = EarthLocation.from_geodetic(lat=-26.703319*u.deg, 
                                   lon=116.67081*u.deg, 
