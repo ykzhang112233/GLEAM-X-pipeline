@@ -15,6 +15,7 @@ filter_badionosphere.py --refcat "${GXBASE}/models/NVSS_SUMSS_psfcal.fits" "${mo
 if [[ -e ${mosaicnm}_good_obsids.txt ]]
 then
     echo "Quality check successful!!"
+    exit 0
 else
     echo "Quality check failed, cannot find the txt file with good obsids"
     exit 1

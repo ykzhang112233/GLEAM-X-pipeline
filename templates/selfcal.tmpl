@@ -59,24 +59,18 @@ cd "${datadir}" || exit
 metafits="$(ls -t ${obsnum}*metafits* | head -1)"
 
 # Checking if there is a gross sidelobe: 
-get_mwa_pb_lobes.py ${metafits} -mS > ${obsnum}_beamlobes.txt
+if [[ ! -e "${obsnum}_beamlobes.txt" ]]
+then
+    get_mwa_pb_lobes.py ${metafits} -mS > ${obsnum}_beamlobes.txt
+else
+    echo "Already have the beam, not recalculating"
+fi 
+
+
 if [[ $(cat ${obsnum}_beamlobes.txt | wc -l ) -eq 1 ]]
 then 
     ra_sidelobe=$(cat ${obsnum}_beamlobes.txt | awk '{print $2}')
     dec_sidelobe=$(cat ${obsnum}_beamlobes.txt | awk '{print $3}')
-
-    # check if crab or cyga in the side lobe 
-    crab_lov=$(check_src_fov.py -p ${ra_mainlobe} ${dec_mainlobe} -s "Crab")
-    cyga_lov=$(check_src_fov.py -p ${ra_mainlobe} ${dec_mainlobe} -s "CygA")
-    if [[ "$crab_lov" == "False" ]] && [[ "$cyga_lov" == "False" ]] 
-    then
-        echo "There is neither Crab nor CygA in the sidelobe"
-        self="False"
-    else
-        echo "Either Crab or CygA is in the sidelobe, carrying on with selfcal"
-        echo "Crab: $crab_fov"
-        echo "CygA: $cyga_fov"
-    fi 
 else
     echo "No major sidelobe, good stuff"
     self="False"
@@ -86,11 +80,9 @@ get_mwa_pb_lobes.py ${metafits} -mM > ${obsnum}_mainlobes.txt
 ra_mainlobe=$(cat ${obsnum}_mainlobes.txt | awk '{print $2}')
 dec_mainlobe=$(cat ${obsnum}_mainlobes.txt | awk '{print $3}')
 
-
 # Check if crab or cyg is in the main fov
 crab_fov=$(check_src_fov.py -p ${ra_mainlobe} ${dec_mainlobe} -s "Crab")
 cyga_fov=$(check_src_fov.py -p ${ra_mainlobe} ${dec_mainlobe} -s "CygA")
-
 if [[ "$crab_fov" == "False" ]] && [[ "$cyga_fov" == "False" ]] 
 then
     echo "There is neither Crab nor CygA in the fov or sidelobe, no self cal needed!"
@@ -104,9 +96,9 @@ fi
 if [[ "$self" == "False" ]] && [[ "${self2}" == "False" ]]
 then 
     echo "There is no need to do selfcal here!"
+else
+    echo "Either there is a gross sidelobe or Crab/CygA is in the mainlobe, carrying on with selfcal"
 fi 
-
-
 
 # Set up telescope-configuration-dependent options
 if [[ $obsnum -lt 1151402936 ]] ; then
@@ -206,6 +198,8 @@ then
     echo "FAILED SELF CAL!"
     exit 1
 fi
+
+
 
 # clean up all unnecessary images
 

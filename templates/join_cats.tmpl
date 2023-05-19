@@ -47,6 +47,7 @@ join_catalogues.py --epochs "${mosaicnm}_catalogues_rescaled.csv" --refcat "${mo
 if [[ -e "${mosaicnm}_joined_rescaled_comp.vot" ]]
 then
     echo "Combined catalogues! Successful!!"
+    exit 0
 else
     echo "Failed! Could not join catalogues"
     exit 1

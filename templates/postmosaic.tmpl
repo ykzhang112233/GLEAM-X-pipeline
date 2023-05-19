@@ -190,6 +190,7 @@ prep_priorized_fitting.py --mosaic "${mosaicnm}"
 if [[ -e "${combined_im}_comp.fits" ]]
 then
     echo "Convolution and catalogue successful!"
+    exit 0
 else
     echo "Mosaic failed! Can't find catalogue for priorized fitting :( "
     exit 1

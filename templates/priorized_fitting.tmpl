@@ -98,6 +98,7 @@ mosaic_global_rescale.py "${imname}_ddmod_prior_comp.fits" "${imname}_ddmod.fits
 if [[ -e "${imname}_ddmod_prior_comp_rescaled.fits" ]]
 then
     echo "Created priorized fit! Successful!!"
+    exit 0
 else
     echo "Failed! Could not make catalogue"
     exit 1

@@ -118,8 +118,7 @@ then
 
 else
     echo "No major sidelobe, good stuff"
-    test_fail 1
-    exit 1
+    exit 0
 fi
 
 chgcentre "${obsnum}.ms" ${radec_lobe}
