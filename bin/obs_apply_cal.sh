@@ -32,7 +32,7 @@ debug=
 selfcal=
 
 # parse args and set options
-while getopts ':tzd:a:c:p:' OPTION
+while getopts ':tzsd:a:c:p:' OPTION
 do
     case "$OPTION" in
     d)
