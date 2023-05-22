@@ -37,7 +37,8 @@ if __name__ == "__main__":
     if args.file is not None and os.path.exists(args.file):
         hdu_in = fits.open(args.file)
     elif args.file is None: 
-        print("Not using file...")
+        pass
+        # print("Not using file...")
     else:
         print(args.file+" does not exist.")
         sys.exit(1)
@@ -45,11 +46,9 @@ if __name__ == "__main__":
     if args.position is not None: 
         try:
             ra_ref, dec_ref = float(args.position[0]), float(args.position[1])
-            print(ra_ref, dec_ref)
-
         except:
             print("Cannot understand coords?")
-        
+            sys.exit(1)        
 
 
     if args.source in sources:
