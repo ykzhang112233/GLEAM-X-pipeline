@@ -33,11 +33,6 @@ fi
 # Set version number
 base=BASEDIR
 debug=DEBUG
-# Which data column to image
-if [[ ! -z $debug ]]
-then
-    taql update ${obsnum}.ms set DATA=CORRECTED_DATA
-fi
 
 # WSClean suffixes for subchannels and MFS
 subchans="MFS 0000 0001 0002 0003"
@@ -52,6 +47,12 @@ track_task.py start --jobid="${jobid}" --taskid="${taskid}" --start_time="$(date
 
 datadir="${base}/${obsnum}"
 cd "${datadir}" || exit
+
+# Which data column to image
+if [[ ! -z $debug ]]
+then
+    taql update ${obsnum}.ms set DATA=CORRECTED_DATA
+fi
 
 # TODO: replace with find
 metafits="$(ls -t ${obsnum}*metafits* | head -1)"
