@@ -36,9 +36,7 @@ debug=DEBUG
 # Which data column to image
 if [[ ! -z $debug ]]
 then
-    datacolumn="CORRECTED_DATA"
-else
-    datacolumn="DATA"
+    taql update ${obsnum}.ms set DATA=CORRECTED_DATA
 fi
 
 # WSClean suffixes for subchannels and MFS
@@ -178,6 +176,7 @@ then
     echo 'Initial image did not generate! Something probs happened with WSClean'
     exit 1
 else
+
     calibrate \
             -j ${GXNCPUS} \
             -absmem ${GXABSMEMORY} \

@@ -5,8 +5,8 @@ usage()
 echo "obs_image.sh [-d dep] [-p project] [-a account] [-z] [-t] obsnum
   -d dep     : job number for dependency (afterok)
   -p project : project, (must be specified, no default)
-  -z         : Debugging mode: image the CORRECTED_DATA column
-                instead of imaging the DATA column
+  -z         : Debugging mode: different to others! Calibrate doesn't like
+               using the CORRECTED_DATA column, so if this is selected it assumes you've been using the corrected to this point and OVERWRITES THE DATA COLUMN with the corrected! USE WITH CAUTION!
   -t         : test. Don't submit job, just make the batch file
                and then return the submission command
   obsnum     : the obsid to process, or a text file of obsids (newline separated). 
