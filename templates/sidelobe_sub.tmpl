@@ -150,6 +150,8 @@ else
 fi 
 
 taql update ${obsnum}.ms set ${datacolumn}=${datacolumn}-MODEL_DATA
+# Also updating the model column to remove the model of the sidelobe so its not accidentally added later 
+taql alter table ${obsnum}.ms drop column MODEL_DATA
 
 echo "Have subtracted the model column from the ${datacolumn}, now to change back to original pointing and cleanup"
 
@@ -165,5 +167,6 @@ chgcentre \
 # clean up all unnecessary images
 
 rm "${obsnum}_sidelobe*.fits"
+
 
 track_task.py finish --jobid="${jobid}" --taskid="${taskid}" --finish_time="$(date +%s)"

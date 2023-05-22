@@ -53,6 +53,8 @@ if [[ ! -z $debug ]]
 then
     taql update ${obsnum}.ms set DATA=CORRECTED_DATA
 fi
+# Removing any previous model column to make sure its not accidentally included in the model for selfcal
+taql alter table ${obsnum}.ms drop column MODEL_DATA 
 
 # TODO: replace with find
 metafits="$(ls -t ${obsnum}*metafits* | head -1)"
