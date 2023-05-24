@@ -45,13 +45,57 @@ debug=DEBUG
 track_task.py start --jobid="${jobid}" --taskid="${taskid}" --start_time="$(date +%s)"
 
 cd "${base}/${obsnum}" || exit
+metafits="${obsnum}.metafits"
 
 if [[ ! -z $selfcal ]]
 then 
     calfile="${base}/${calid}/${calid}_selfsolutions.bin"
+    # Checking if there is a gross sidelobe: 
+    if [[ ! -e "${obsnum}_beamlobes.txt" ]]
+    then
+        get_mwa_pb_lobes.py ${metafits} -mS > ${obsnum}_beamlobes.txt
+    else
+        echo "Already have the beam, not recalculating"
+    fi 
+
+
+    if [[ $(cat ${obsnum}_beamlobes.txt | wc -l ) -eq 1 ]]
+    then 
+        ra_sidelobe=$(cat ${obsnum}_beamlobes.txt | awk '{print $2}')
+        dec_sidelobe=$(cat ${obsnum}_beamlobes.txt | awk '{print $3}')
+    else
+        echo "No major sidelobe, good stuff"
+        self="False"
+    fi 
+
+    get_mwa_pb_lobes.py ${metafits} -mM > ${obsnum}_mainlobes.txt
+    ra_mainlobe=$(cat ${obsnum}_mainlobes.txt | awk '{print $2}')
+    dec_mainlobe=$(cat ${obsnum}_mainlobes.txt | awk '{print $3}')
+
+    # Check if crab or cyg is in the main fov
+    crab_fov=$(check_src_fov.py -p ${ra_mainlobe} ${dec_mainlobe} -s "Crab")
+    cyga_fov=$(check_src_fov.py -p ${ra_mainlobe} ${dec_mainlobe} -s "CygA")
+    if [[ "$crab_fov" == "False" ]] && [[ "$cyga_fov" == "False" ]] 
+    then
+        echo "There is neither Crab nor CygA in the fov or sidelobe, no self cal needed!"
+        self2="False"
+    else
+        echo "Either Crab or CygA is in the FOV, carrying on with selfcal"
+        echo "Crab: $crab_fov"
+        echo "CygA: $cyga_fov"
+    fi 
+
+    if [[ "$self" == "False" ]] && [[ "${self2}" == "False" ]]
+    then 
+        echo "Don't want to apply the selfcal, no need!"
+        exit 0
+    else
+        echo "Either there is a gross sidelobe or Crab/CygA is in the mainlobe, carrying on with applying the selfcal"
+    fi 
 else
     calfile="${base}/${calid}/${calid}_local_gleam_model_solutions_initial_ref.bin"
 fi 
+
 
 
 if [[ ! -e "${calfile}" ]]
