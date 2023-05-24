@@ -97,6 +97,7 @@ fi
 if [[ "$self" == "False" ]] && [[ "${self2}" == "False" ]]
 then 
     echo "There is no need to do selfcal here!"
+    exit 0
 else
     echo "Either there is a gross sidelobe or Crab/CygA is in the mainlobe, carrying on with selfcal"
 fi 

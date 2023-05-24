@@ -18,7 +18,7 @@ fi
 cd "${base}" || exit 1
 nights=($(sort "${nightlist}"))
 
-echo "Nights listed are ${nights}"
+echo "Nights listed are ${nights[@]}"
 
 taskid=${SLURM_ARRAY_TASK_ID}
 jobid=${SLURM_ARRAY_JOB_ID}
