@@ -6,13 +6,15 @@ set -x
 
 base=BASEDIR
 obslist=OBSLIST
-mosaicnm=MOSAICNM 
+obslist=obslist 
 
 cd "${base}" || exit 1
 
-filter_badionosphere.py --refcat "${GXBASE}/models/NVSS_SUMSS_psfcal.fits" "${mosaicnm}.txt"
+filter_badionosphere.py --refcat "${GXBASE}/models/NVSS_SUMSS_psfcal.fits" "${obslist}"
 
-if [[ -e ${mosaicnm}_good_obsids.txt ]]
+good_obsidscheck=$(echo ${obslist} | cut -f1 -d".")
+
+if [[ -e  ]]
 then
     echo "Quality check successful!!"
     exit 0

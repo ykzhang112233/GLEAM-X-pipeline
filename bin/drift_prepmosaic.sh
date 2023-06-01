@@ -8,7 +8,7 @@ echo "drift_prepmosaic.sh [-p project] [-d dep] [-t] [-m mosaicdir] -o obslist
   -t          : test. Don't submit job, just make the batch file
                 and then return the submission command  
   -m mosaicdir: Directory name where mosaics stored (default=project/mosaic) 
-  -o obslist  : .txt file with the list of obsids in the mosaic (note it will use this to determine the drift name etc. " 1>&2;
+  -o obslist  : .txt file with the list of obsids in the mosaic (note it will use this to find the cenchan ones and name the mosaic" 1>&2;
 exit 1;
 }
 
@@ -53,7 +53,7 @@ script="${GXSCRIPT}/prepmosaic_${listbase}.sh"
 
 cat "${GXBASE}/templates/prepmosaic.tmpl" | sed -e "s:BASEDIR:${base}:g" \
                                                 -e "s:PIPEUSER:${pipeuser}:g" \
-                                                -e "s:MOSAICNM:${mosaicnm}:g" > ${script}
+                                                -e "s:OBSLIST:${obslist}:g" > ${script}
 
 
 output="${GXLOG}/prepmosaic_${listbase}.o%A"
