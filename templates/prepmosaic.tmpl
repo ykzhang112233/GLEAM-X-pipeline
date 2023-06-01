@@ -14,7 +14,7 @@ filter_badionosphere.py --refcat "${GXBASE}/models/NVSS_SUMSS_psfcal.fits" "${ob
 
 good_obsidscheck=$(echo ${obslist} | cut -f1 -d".")
 
-if [[ -e  ]]
+if [[ -e "${good_obsidscheck}_cenchan_169_good_obsids.txt" ]]
 then
     echo "Quality check successful!!"
     exit 0
