@@ -147,7 +147,7 @@ then
     "${obsnum}.ms"
     
     # Then you need to source-find the data... BANE would be expensive to run more than once, so just do it... once
-    BANE --cores ${GXNCPUS} --compress "${obsnum}_transient-t0020-image.fits"
+    BANE --compress "${obsnum}_transient-t0020-image.fits"
     test_fail $?
 fi
 

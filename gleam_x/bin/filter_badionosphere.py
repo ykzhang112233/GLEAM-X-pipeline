@@ -72,12 +72,12 @@ def remove_missing(obsids_chan, extra = ""):
     return obsids_chan, missing_mask 
 
 
-def cut_high_rms(obsids, extra = [""]):
+def cut_high_rms(obsids, rms_thresh, extra = [""], ):
 
     # TODO: currently hardcoding limit for bad std(rms) per channel!!! FIX!
     # TODO: Hard limit is ok, but doens't work for high dec (particularly +20, need to find new average)
     # rms_std_cutoff = [40, 40, 15, 15, 10, 10, 10, 10]
-    rms_std_cutoff = [80, 45, 30, 30, 30]
+    rms_std_cutoff=[80, 45, 30, 30, 30]
     rms_mask = []
     for i in range(len(obsids)):
         num_postmissing = ma.count(obsids[i])
@@ -102,7 +102,8 @@ def cut_high_rms(obsids, extra = [""]):
             logger.warning(f"The std of rms for chan {chans[i]} is HUGE! Flagging obsids for this channel using a hard cut, come back and inspect: {np.nanstd(rms_chan.compressed())}")
             cutoff = rms_std_cutoff[i]
         else: 
-            cutoff = np.nanmean(rms_chan.compressed())+np.nanstd(rms_chan.compressed())
+            cutoff = np.nanmean(rms_chan.compressed())+(rms_thresh*np.nanstd(rms_chan.compressed()))
+            logger.debug(f"The RMS cut off for chan {chans[i]} is: {cutoff}")
 
         rms_masked = ma.masked_greater_equal(rms_chan,cutoff)
         # obs[rms_masked.mask] = ma.masked
@@ -502,6 +503,12 @@ if __name__ == "__main__":
         default=0.125,
         help="Upper limit for std(int/peak) for an obsid, all obsids with a value higher than this are cut. (default=0.125)"
     )
+    parser.add_argument(
+        '--rms_thresh',
+        type=float,
+        default=3,
+        help="The s/n threshold to cut at for RMS only. I.e. if an image has an rms that is > threshold*std(rms_forchan) then it's flagged"
+    )
 
     parser.add_argument(
         '--flag_high_rms',
@@ -558,7 +565,7 @@ if __name__ == "__main__":
     txtfile = args.obsids 
     refcat=  args.refcat
     logger.debug(f"{txtfile}")
-
+    rms_thresh = args.rms_thresh 
 
     ref_cat_file = f"{args.refcat}"
     if os.path.exists(ref_cat_file):
@@ -668,7 +675,7 @@ if __name__ == "__main__":
 
     # Cutting obsids with high RMS in MFS image 
     if args.flag_high_rms is True: 
-        rms_mask = cut_high_rms(obsids, extra=extension)
+        rms_mask = cut_high_rms(obsids, rms_thresh=rms_thresh, extra=extension)
         for i in range(len(chans)):
             logger.warning(f"Number of obsids flagged for bad rms for {chans[i]}: {ma.count_masked(rms_mask[i])}")
     else: 
