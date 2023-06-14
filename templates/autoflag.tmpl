@@ -160,6 +160,13 @@ then
     flags="$flags 72 84"
 fi
 
+# 48 seems consistently gross on this 2020-10-12
+if [[ $obsnum -ge 1286536080 ]] && [[ $obsnum -le 1286571360 ]]
+then
+    flags="$flags 48"
+fi
+
+
 # 2020-10-05 seems to have a couple off antennas, flagging for good measure but may expand
 if [[ $obsnum -ge 1285326784 ]] && [[ $obsnum -le 1287693296 ]]
 then
