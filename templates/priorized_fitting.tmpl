@@ -79,7 +79,7 @@ if [[ ! -e "${imname}_ddmod_prior_comp.fits" ]]
 then 
     aegean \
     --regroup-eps 5 \
-    --cores 1 \
+    --cores ${GXNCPUS} \
     --background "${imname}_ddmod_bkg.fits" \
     --noise "${imname}_ddmod_rms.fits" \
     --psf "${imname}_projpsf_psf.fits" \
