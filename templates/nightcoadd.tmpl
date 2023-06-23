@@ -34,7 +34,7 @@ echo "taskid: ${taskid}"
 echo "subchan: ${freq}"
 
 # Define output mosaic name as the first part of the input text file
-baseoutname=$(echo ${nightslist} | cut -d "." -f1 | cut -d "_" -f-2)
+baseoutname=$(echo ${nightlist} | cut -d "." -f1 | cut -d "_" -f-2)
 outname="${baseoutname}-${freq}"
 
 for image in "" "_weights"; do 
