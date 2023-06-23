@@ -34,7 +34,8 @@ echo "taskid: ${taskid}"
 echo "subchan: ${freq}"
 
 # Define output mosaic name as the first part of the input text file
-outname="night_coadd-${freq}"
+baseoutname=$(echo ${nightslist} | cut -d "." -f1 | cut -d "_" -f-2)
+outname="${baseoutname}-${freq}"
 
 for image in "" "_weights"; do 
     if [ -e "${nightlist%.txt}_temp_${freq}${image}.txt" ]; then
@@ -230,10 +231,11 @@ if [[ ! -e "${outname}_combined_ddmod.fits" ]] ; then
     fi
 
     # Rerun source-finding on blur-corrected map with measured PSF map
-    BANE --noclobber "${outname}_combined_ddmod.fits"
+    BANE --noclobber --cores 1 "${outname}_combined_ddmod.fits"
     if [[ ! -e "${outname}_combined_ddmod_comp.fits" ]]
     then
         aegean \
+        --cores=${GXNCPUS} \
         --seedclip=4 \
         --maxsummits=5 \
         --autoload \
