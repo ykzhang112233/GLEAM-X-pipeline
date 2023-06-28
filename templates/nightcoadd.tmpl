@@ -72,6 +72,7 @@ for night in "${nights[@]}"
 do
     nightimg=$(ls "${night}"/*_"${freq}"_ddmod.fits)
     nightrms=$(ls "${night}"/*_"${freq}"_ddmod_rms.fits)
+    nightweight=$(ls "${night}"/*_"${freq}"_ddmod_rms.fits)
     nightpsf=$(ls "${night}"/*_"${freq}"_projpsf_psf.fits)
     
     if [[ -e "${nightimg}" ]] && \
@@ -93,6 +94,11 @@ do
         echo "Copying ${nightrms} to ${name}"
         cp "${nightrms}" "${mosaicdir}/${tmpimgdir}/${name}"
         nightrms="${tmpimgdir}/${name}"
+
+        name=$(echo "${nightweight}" | sed -e "s|\(.*\)/|${uid}_coadd_|")
+        echo "Copying ${nightweight} to ${name}"
+        cp "${nightweight}" "${mosaicdir}/${tmpimgdir}/${name}"
+        nightweight="${tmpimgdir}/${name}"
         
         name=$(echo "${nightpsf}" | sed -e "s|\(.*\)/|${uid}_coadd_|")
         echo "Copying ${nightpsf} to ${name}"
