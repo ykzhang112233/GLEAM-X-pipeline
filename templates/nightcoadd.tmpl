@@ -35,7 +35,7 @@ echo "subchan: ${freq}"
 
 # Define output mosaic name as the first part of the input text file
 baseoutname=$(echo ${nightlist} | cut -d "." -f1 | cut -d "_" -f-2)
-outname="${baseoutname}-${freq}"
+outname="${baseoutname}_${freq}"
 
 for image in "" "_weights"; do 
     if [ -e "${nightlist%.txt}_temp_${freq}${image}.txt" ]; then
@@ -72,10 +72,12 @@ for night in "${nights[@]}"
 do
     nightimg=$(ls "${night}"/*_"${freq}"_ddmod.fits)
     nightrms=$(ls "${night}"/*_"${freq}"_ddmod_rms.fits)
+    nightweight=$(ls "${night}"/*_"${freq}"_temp.weight.fits)
     nightpsf=$(ls "${night}"/*_"${freq}"_projpsf_psf.fits)
     
     if [[ -e "${nightimg}" ]] && \
        [[ -e "${nightrms}" ]] && \
+       [[ -e "${nightweight}" ]] && \
        [[ -e "${nightpsf}" ]]
     then
 
@@ -94,6 +96,12 @@ do
         cp "${nightrms}" "${mosaicdir}/${tmpimgdir}/${name}"
         nightrms="${tmpimgdir}/${name}"
         
+        name=$(echo "${nightweight}" | sed -e "s|\(.*\)/|${uid}_coadd_|")
+        echo "Copying ${nighteight} to ${name}"
+        cp "${nightweight}" "${mosaicdir}/${tmpimgdir}/${name}"
+        nightweight="${tmpimgdir}/${name}"
+
+
         name=$(echo "${nightpsf}" | sed -e "s|\(.*\)/|${uid}_coadd_|")
         echo "Copying ${nightpsf} to ${name}"
         cp "${nightpsf}" "${mosaicdir}/${tmpimgdir}/${name}"
@@ -102,7 +110,7 @@ do
         ((uid=uid+1))
 
         echo "${nightimg}" >> "${tmp}"
-        echo "${nightrms}" >> "${tmp_weights}"
+        echo "${nightweight}" >> "${tmp_weights}"
         echo "${nightpsf}" >> "${tmp_psfs}"
         
         racen=$(pyhead.py -p CRVAL1 "${mosaicdir}/${nightimg}" | awk '{print $3}')
@@ -222,33 +230,33 @@ else
 fi
 
 # Blur correction and final PSF generation
-if [[ ! -e "${outname}_combined_ddmod.fits" ]] ; then
+# if [[ ! -e "${outname}_ddmod.fits" ]] ; then
 
-    # Multiply by blur factor
-    if [[ ! -e "${outname}_ddmod.fits" ]]
-    then
-        dd_flux_mod.py "${outname}.fits" "${outname}_psfmap.fits" "${outname}_combined_ddmod.fits"
-    fi
+#     # Multiply by blur factor
+#     if [[ ! -e "${outname}_ddmod.fits" ]]
+#     then
+#         dd_flux_mod.py "${outname}.fits" "${outname}_psfmap.fits" "${outname}_ddmod.fits"
+#     fi
 
-    # Rerun source-finding on blur-corrected map with measured PSF map
-    BANE --noclobber --cores 1 "${outname}_combined_ddmod.fits"
-    if [[ ! -e "${outname}_combined_ddmod_comp.fits" ]]
-    then
-        aegean \
-        --cores=${GXNCPUS} \
-        --seedclip=4 \
-        --maxsummits=5 \
-        --autoload \
-        --table="${outname}_combined_ddmod.fits" \
-        --psf="${outname}_psfmap.fits" \
-        "${outname}_combined_ddmod.fits"
-    fi
-    # TODO: clean up intermediate files
-else
-    echo "Mosaic ${outname}_ddmod.fits for ${obslist} subband $subchan already created."
-fi
+#     # Rerun source-finding on blur-corrected map with measured PSF map
+#     BANE --noclobber --cores 1 "${outname}_ddmod.fits"
+#     if [[ ! -e "${outname}_ddmod_comp.fits" ]]
+#     then
+#         aegean \
+#         --cores=${GXNCPUS} \
+#         --seedclip=4 \
+#         --maxsummits=5 \
+#         --autoload \
+#         --table="${outname}_ddmod.fits" \
+#         --psf="${outname}_psfmap.fits" \
+#         "${outname}_ddmod.fits"
+#     fi
+#     # TODO: clean up intermediate files
+# else
+#     echo "Mosaic ${outname}_ddmod.fits for ${obslist} subband $subchan already created."
+# fi
 
-if [[ -e ${outname}_ddmod.fits ]]
+if [[ -e ${outname}.fits ]]
 then
     echo "Mosaic successful!"
     track_task.py finish_mosaic  --jobid="${jobid}" --taskid="${taskid}"  --finish_time="$(date +%s)"
