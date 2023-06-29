@@ -150,7 +150,7 @@ cd "${mosaicdir}" || exit 1
 cat "${GXBASE}"/mosaics/nightresamp.swarp.tmpl \
     | sed "s;OUTIMAGE;${imageout}.fits;" \
     | sed "s;OUTWEIGHT;${weightout};" \
-    | sed "s;WEIGHT_NAMES;${imagelist}.weights.list;" \
+    | sed "s;WEIGHT_NAMES;${imagelist}.rms.list;" \
     | sed "s;RESAMPDIR;${resampdir};" \
     | sed "s;RACENT;${racen};" \
     | sed "s;DECENT;${deccen};" > "${template}.resamp"
