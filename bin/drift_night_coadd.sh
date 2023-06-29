@@ -97,7 +97,7 @@ echo '#!/bin/bash' > "${script}.sbatch"
 echo "singularity run ${GXCONTAINER} ${script}" >> "${script}.sbatch"
 
 # Automatically runs a job array for each sub-band
-sub="sbatch  --begin=now --array=0-24  --export=ALL  --time=24:00:00 --mem=980G -M ${GXCOMPUTER} --output=${output} --error=${error}"
+sub="sbatch  --begin=now --array=0-24  --export=ALL  --time=24:00:00 --mem=512G -M ${GXCOMPUTER} --output=${output} --error=${error}"
 sub="${sub} ${GXNCPULINE} ${account} ${GXTASKLINE} ${depend} ${queue} ${script}.sbatch"
 if [[ ! -z ${tst} ]]
 then
