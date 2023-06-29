@@ -72,7 +72,7 @@ then
     account="--account=${GXACCOUNT}"
 fi
 
-queue="-p ${GXSTANDARDQ}"
+queue="-p highmem"
 base="${GXSCRATCH}/${project}"
 
 obss=($(sort "${nightlist}"))
