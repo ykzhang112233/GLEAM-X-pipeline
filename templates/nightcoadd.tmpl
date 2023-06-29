@@ -187,41 +187,50 @@ if [[ ! -e ${outname}.fits ]] || [[ ! -e ${outname}_psfmap.fits ]]; then
 
     done
 
-        
-    # fill in the co-addition template
-    cat "${GXBASE}/mosaics/nightcoadd.swarp.tmpl" \
-        | sed "s;OUTNAME;${imageout};" \
-        | sed "s;WEIGHT_NAMES;${imagelist}.weights.list.resamp;" \
-        | sed "s;RACENT;${racen};" \
-        | sed "s;DECENT;${deccen};" > "${template}.coadd"
+    # for extra in "" "_bmaj" "_bmin" "_bpa"; do
+    for extra in ""; do
+        # fill in the co-addition template
+        cat "${GXBASE}/mosaics/nightcoadd.swarp.tmpl" \
+            | sed "s;OUTNAME;${imageout}${extra};" \
+            | sed "s;WEIGHT_NAMES;${imagelist}.weights.list.resamp;" \
+            | sed "s;RACENT;${racen};" \
+            | sed "s;DECENT;${deccen};" > "${template}${extra}.coadd"
 
-    # we will rename the coadd.fits / coadd.weight.fits afterwards
-    echo "Generating mosaic ${outname}.fits for ${nightlist} subband ${freq}."
-    swarp -c "${template}.coadd" @"${imagelist}.list.resamp"
+        # we will rename the coadd.fits / coadd.weight.fits afterwards
+        echo "Generating mosaic ${outname}${extra}.fits for ${nightlist} subband ${freq}."
+        swarp -c "${template}${extra}.coadd" @"${imagelist}.list.resamp${extra}"
 
-    if [[ -e "${imageout}.fits" ]]
-    then
-        # will this ever trim something in one image but not in another? 
-        fits_trim.py "${imageout}.fits" "${outname}.fits"
-        if [[ -e ${outname}.fits ]]
+        if [[ -e "${imageout}${extra}.fits" ]]
         then
-            pyhead.py -u FREQ "${mid}" "${outname}.fits"
-            rm "${imageout}${image}.fits"
+            # will this ever trim something in one image but not in another? 
+            fits_trim.py "${imageout}${extra}.fits" "${outname}${extra}.fits"
+            if [[ -e ${outname}${extra}.fits ]]
+            then
+                pyhead.py -u FREQ "${mid}" "${outname}${extra}.fits"
+                rm "${imageout}${extra}.fits"
+            else
+                echo "Could not generate mosaic ${outname}${extra} for ${nightlist} subband ${freq}"
+                exit 1
+            fi
         else
-            echo "Could not generate mosaic ${outname} for ${nightlist} subband ${freq}"
+            echo "Could not generate mosaic ${outname}${extra} for ${nightlist} subband ${freq}"
             exit 1
         fi
-    else
-        echo "Could not generate mosaic ${outname} for ${nightlist} subband ${freq}"
-        exit 1
-    fi
+    done 
 
     psf_combine_nights.py \
         --psf $(ls "${tmpimgdir}"/*"projpsf_psf.fits") \
         --rms $(ls "${tmpimgdir}"/*"rms.fits") \
         --output "${outname}_psfmap.fits"
         
+    # make PSF map and remove BMAJ, BMIN, BPA maps
+    # psf_combine_axes.py "${outname}_bmaj.fits" \
+    #     "${outname}_bmin.fits" \
+    #     "${outname}_bpa.fits" \
+    #     -o "${outname}_psfmap.fits" \
+    #     --remove
 
+    
     rm -r "${resampdir}"
     rm -r "${tempimgdir}"
     # keep only one weight image
@@ -230,6 +239,26 @@ if [[ ! -e ${outname}.fits ]] || [[ ! -e ${outname}_psfmap.fits ]]; then
 else
     echo "Mosaic ${outname}.fits for ${nightlist} subband ${freq} already created."
 fi
+
+
+# Blur correction and final PSF generation
+if [[ ! -e "${outname}_comp.fits" ]] || [[ ! -e "${outname}_psf.fits" ]]; then
+    BANE --noclobber --cores 1 "${outname}.fits"
+
+    # To create the final PSF map that I will use later, run source-finding without any PSF input
+    if [[ ! -e "${outname}_comp.fits" ]]
+    then
+        aegean --progress --cores=${GXNCPUS} --seedclip=10 --maxsummits=5 --autoload --table="${outname}.fits" "${outname}.fits"
+    fi
+
+    # Generate a measured PSF map
+    if [[ ! -e "${outname}_psf.fits" ]]
+    then
+        psf_select.py --input="${outname}_comp.fits" --prefix="${low}-${high}"
+        psf_create.py --input="${outname}_comp_psfcat.fits"
+    fi
+
+    aegean --progress --cores=${GXNCPUS} --seedclip=4 --maxsummits=5 --autoload --table="${outname}.fits" --psf="${outname}_psf.fits" "${outname}.fits"
 
 # Blur correction and final PSF generation
 # if [[ ! -e "${outname}_comp.fits" ]] ; then
