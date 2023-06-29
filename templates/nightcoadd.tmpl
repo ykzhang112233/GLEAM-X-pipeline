@@ -78,6 +78,7 @@ do
     
     if [[ -e "${nightimg}" ]] && \
        [[ -e "${nightrms}" ]] && \
+       [[ -e "${nightweight}" ]] && \
        [[ -e "${nightpsf}" ]]
     then
 
@@ -140,6 +141,7 @@ resampdir="./resamp_${freq}"
 # Move the temporary image list to the mosaic directory and rename
 mv "$tmp" "${mosaicdir}/${imagelist}.list"
 mv "$tmp_weights" "${mosaicdir}/${imagelist}.weights.list"
+mv "$tmp_rms" "${mosaicdir}/${imagelist}.rms.list"
 mv "$tmp_psfs" "${mosaicdir}/${imagelist}.projpsfs.list"
 
 cd "${mosaicdir}" || exit 1
