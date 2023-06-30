@@ -83,7 +83,8 @@ do
         if [[ ! -f "${nightweight}" ]]
         then 
 
-            sigmoid_edge_weight.py ${nightimg} ${nightrms} ${nightweight}
+            sigmoid_edge_weight.py ${nightimg} ${nightrms} "${night}/${night}_${freq}_ddmod_weightmap.fits"
+            nightweight=$(ls "${night}"/*_"${freq}"_ddmod_weightmap.fits)
         fi
         # symlink to include a unique name in the filename, as night created from
         # drift_mosaic.sh will likely have a name tha tis not unique across nights
