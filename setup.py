@@ -54,6 +54,7 @@ scripts = [
     "gleam_x/bin/psf_projected.py",
     "gleam_x/bin/psf_select.py",
     "gleam_x/bin/pyhead.py",
+    "gleam_x/bin/sigmoid_edge_weight.py",
     "gleam_x/bin/track_task.py",
     "gleam_x/bin/vo2model.py",
     "gleam_x/bin/fits_trim.py",
