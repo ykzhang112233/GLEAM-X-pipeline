@@ -80,7 +80,7 @@ do
        [[ -e "${nightrms}" ]] && \
        [[ -e "${nightpsf}" ]]
     then
-        if [[! -e "${nightweight}" ]]
+        if [[ ! -f "${nightweight}" ]]
         then 
 
             sigmoid_edge_weight.py ${nightimg} ${nightrms} ${nightweight}
