@@ -92,7 +92,7 @@ def create_sigweight(infits):
 
     results = []
     i=0
-    while i < img_shape[0]:
+    while i < img_shape[1]:
         x_lin = np.arange(img_shape[0], dtype=np.int32)
         y_lin = np.arange(
                 i*strides,
