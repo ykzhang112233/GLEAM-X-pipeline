@@ -91,7 +91,8 @@ def create_sigweight(infits):
         ).astype(np.float16)
 
     results = []
-    for i in range(stripes + 1):
+    i=0
+    while i < img_shape[0]:
         x_lin = np.arange(img_shape[0], dtype=np.int32)
         y_lin = np.arange(
                 i*strides,
@@ -113,6 +114,7 @@ def create_sigweight(infits):
         print(xx.shape, xx.dtype, d.dtype)
 
         results.append(d)
+        i+=strides
 
 
     dd = np.hstack(results)
