@@ -96,9 +96,9 @@ def create_sigweight(infits):
         x_lin = np.arange(img_shape[0], dtype=np.int32)
         y_lin = np.arange(
                 i*strides,
-                np.min(
+                min(
                     ((i+1)*strides, 
-                    img_shape[1]-1)
+                    img_shape[1])
                 ),
                 dtype=np.int32)
         print(x_lin.max(), y_lin.max())
