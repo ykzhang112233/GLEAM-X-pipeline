@@ -114,7 +114,7 @@ def create_sigweight(infits):
         print(xx.shape, xx.dtype, d.dtype)
 
         results.append(d)
-        i+=strides
+        i+=1
 
 
     dd = np.hstack(results)
