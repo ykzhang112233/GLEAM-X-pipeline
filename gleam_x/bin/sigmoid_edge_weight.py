@@ -95,11 +95,7 @@ def create_sigweight(infits):
     while i < (img_shape[1]-2):
         x_lin = np.arange(img_shape[0], dtype=np.int32)
         y_lin = np.arange(
-                i*strides,
-                min(
-                    ((i+1)*strides, 
-                    img_shape[1])
-                ),
+                i*strides,(i+1)*strides,
                 dtype=np.int32)
         print(x_lin.max(), y_lin.max())
         yy, xx = np.meshgrid(y_lin, x_lin)
