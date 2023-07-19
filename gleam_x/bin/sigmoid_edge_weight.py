@@ -131,6 +131,8 @@ def create_sigweight(infits):
 def create_weightmap(sigmoidweight,rms):
 
     rms_fits = fits.open(rms)
+    rms_mask = np.where(rms_fits[0].data**2 <=5e-7)
+    rms_fits[0].data[rms_mask] = np.nan 
     weightmap = sigmoidweight * (1/(rms_fits[0].data**2))
 
     return weightmap
