@@ -29,14 +29,15 @@ PROJECTION_TYPE        ZEA             # Any WCS projection code or NONE
 PROJECTION_ERR         0.01           # Maximum projection error (in output
                                        # pixels), or 0 for no approximation
 CENTER_TYPE            MOST             # MANUAL, ALL or MOST
-PIXELSCALE_TYPE        FIT          # MANUAL,FIT,MIN,MAX or MEDIAN
+PIXELSCALE_TYPE        MANUAL          # MANUAL,FIT,MIN,MAX or MEDIAN
+PIXEL_SCALE            15.876
 IMAGE_SIZE             50314,29414    # Image size (0 = AUTOMATIC)
  
 #-------------------------------- Resampling ----------------------------------
  
 RESAMPLE               Y               # Resample input images (Y/N)?
 RESAMPLE_DIR           RESAMPDIR        # Directory path for resampled images
-RESAMPLE_SUFFIX        .fits    # filename extension for resampled images
+RESAMPLE_SUFFIX        _regrid.fits    # filename extension for resampled images
  
 RESAMPLING_TYPE        LANCZOS3        # NEAREST,BILINEAR,LANCZOS2,LANCZOS3
 #RESAMPLING_TYPE        BILINEAR        # NEAREST,BILINEAR,LANCZOS2,LANCZOS3
