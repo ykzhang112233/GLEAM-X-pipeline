@@ -12,8 +12,6 @@ HEADER_SUFFIX          .head           # Filename extension for additional heade
  
 WEIGHT_TYPE            MAP_WEIGHT            # BACKGROUND,MAP_RMS,MAP_VARIANCE
                                        # or MAP_WEIGHT
-WEIGHT_IMAGE          @WEIGHT_NAMES                 # Weightmap filename if suffix not used
-                                       # (all or for each weight-map)
 RESCALE_WEIGHTS        N               # Rescale input weights/variances (Y/N)?
 WEIGHT_THRESH          0.0               # Bad pixel weight-threshold
 
@@ -32,7 +30,7 @@ PROJECTION_ERR         0.01           # Maximum projection error (in output
                                        # pixels), or 0 for no approximation
 CENTER_TYPE            MANUAL             # MANUAL, ALL or MOST
 CENTER                 21.72494549398, -80.28776183298 # Coordinates of the image center
-PIXELSCALE_TYPE        MANUAL          # MANUAL,FIT,MIN,MAX or MEDIAN
+PIXELSCALE_TYPE        FIT          # MANUAL,FIT,MIN,MAX or MEDIAN
 IMAGE_SIZE             50314,29414    # Image size (0 = AUTOMATIC)
  
 #-------------------------------- Resampling ----------------------------------
