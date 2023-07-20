@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from astropy.io import fits
 from astropy.wcs import WCS
+from scipy import stats
 from astropy.coordinates import SkyCoord
 from scipy.interpolate import interp2d, RectBivariateSpline, interpn, griddata
 from argparse import ArgumentParser
@@ -131,7 +132,8 @@ def create_sigweight(infits):
 def create_weightmap(sigmoidweight,rms):
 
     rms_fits = fits.open(rms)
-    rms_mask = np.where(rms_fits[0].data**2 <=5e-7)
+    lowercut = np.nanpercentile(rms_fits[0].data, 0.1)
+    rms_mask = np.where(rms_fits[0].data <= lowercut)
     rms_fits[0].data[rms_mask] = np.nan 
     weightmap = sigmoidweight * (1/(rms_fits[0].data**2))
 
