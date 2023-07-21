@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from astropy.io import fits
 from astropy.wcs import WCS
-from scipy import stats
+from scipy import stats,ndimage
 from astropy.coordinates import SkyCoord
 from scipy.interpolate import interp2d, RectBivariateSpline, interpn, griddata
 from argparse import ArgumentParser
@@ -30,7 +30,7 @@ def create_sigweight(infits):
 
     keep = valid_mask[y_grid.flatten(), x_grid.flatten()].reshape(y_grid.shape)
     # keep = np.ones_like(y_sparse)
-
+        
     x_valid = x_grid[keep]
     y_valid = y_grid[keep]
 
@@ -132,9 +132,22 @@ def create_sigweight(infits):
 def create_weightmap(sigmoidweight,rms):
 
     rms_fits = fits.open(rms)
-    lowercut = np.nanpercentile(rms_fits[0].data, 0.1)
-    rms_mask = np.where(rms_fits[0].data <= lowercut)
-    rms_fits[0].data[rms_mask] = np.nan 
+    valid_mask = np.isfinite(rms_fits[0].data)
+    imshape_zeros = np.zeros(valid_mask.shape)
+    imshape_zeros[valid_mask] = 1.
+
+    dist_to_edge = ndimage.distance_transform_edt(imshape_zeros,sampling=[1000,1000])
+    edgemask = dist_to_edge <= np.nanmax(dist_to_edge)/4
+
+
+    lowercut = np.nanpercentile(rms_fits[0].data, 0.995)
+    rms_mask = rms_fits[0].data <= lowercut
+
+
+    combined_mask = np.logical_and(rms_mask,edgemask)
+    rms_fits[0].data[combined_mask] = np.nan 
+    
+    
     weightmap = sigmoidweight * (1/(rms_fits[0].data**2))
 
     return weightmap
