@@ -140,11 +140,13 @@ def create_weightmap(sigmoidweight,rms):
     edgemask = dist_to_edge <= np.nanmax(dist_to_edge)/5
 
 
-    lowercut = np.nanquantile(rms_fits[0].data, 0.4)
+    lowercut = np.nanquantile(rms_fits[0].data, 0.45)
+    uppercut = np.nanquantile(rms_fits[0].data,0.95)
     rms_mask = rms_fits[0].data <= lowercut
+    rms_mask2 = rms_fits[0].data >= uppercut
 
-
-    combined_mask = np.logical_and(rms_mask,edgemask)
+    combined_rms = np.logical_or(rms_mask,rms_mask2)
+    combined_mask = np.logical_and(combined_rms,edgemask)
     rms_fits[0].data[combined_mask] = np.nan 
     
     
