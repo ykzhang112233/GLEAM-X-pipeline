@@ -137,10 +137,10 @@ def create_weightmap(sigmoidweight,rms):
     imshape_zeros[valid_mask] = 1.
 
     dist_to_edge = ndimage.distance_transform_edt(imshape_zeros,sampling=[1000,1000])
-    edgemask = dist_to_edge <= np.nanmax(dist_to_edge)/4
+    edgemask = dist_to_edge <= np.nanmax(dist_to_edge)/5
 
 
-    lowercut = np.nanpercentile(rms_fits[0].data, 0.995)
+    lowercut = np.nanquantile(rms_fits[0].data, 0.4)
     rms_mask = rms_fits[0].data <= lowercut
 
 
