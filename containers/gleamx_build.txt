@@ -211,8 +211,8 @@ pip3 install --no-cache-dir \
             lmfit==1.0.2 \
             tifffile==2021.8.30 \
             jedi==0.17.2 \
-            pandas==1.2.1 \
-            numpy==1.20
+            pandas==1.5.3 \
+            numpy==1.20.3
 
 pip3 install --no-cache-dir \
             ipython \
@@ -228,7 +228,7 @@ pip3 install --no-cache-dir \
             requests \
             pillow \
             seaborn \
-            SQLAlchemy \
+            SQLAlchemy==1.4.49 \
             mysqlclient \
             reproject \
             git+https://github.com/PaulHancock/Aegean.git \
@@ -367,10 +367,11 @@ cargo install --force cargo-make
 # birli
 # ------------------------------------------------
 cd /opt && \
-    git clone https://github.com/MWATelescope/Birli.git && \
+    git clone https://github.com/MWATelescope/Birli.git@v0.9.1 && \
     cd Birli && \
+    git checkout v0.9.1 && \
     cargo make install_deps && \
-    cargo install --features=aoflagger --path .
+    cargo install --features=aoflagger --path . 
 # ------------------------------------------------
 
 # ------------------------------------------------
