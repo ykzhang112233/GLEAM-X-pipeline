@@ -72,7 +72,7 @@ then
     account="--account=${GXACCOUNT}"
 fi
 
-queue="-p work"
+queue="-p ${GXSTANDARDQ}"
 base="${GXSCRATCH}/${project}"
 
 obss=($(sort "${nightlist}"))
