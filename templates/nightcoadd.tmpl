@@ -71,6 +71,7 @@ used_nights=()
 uid=0
 for night in "${nights[@]}"
 do
+    # TODO: The psf for the deep coadd is called ddmod_projpsf_psf so heads up, will need to change if we're doing swarp of the projpsf 
     nightimg=$(ls "${night}"/*_"${freq}"_ddmod.fits)
     nightrms=$(ls "${night}"/*_"${freq}"_ddmod_rms.fits)
     nightweight=$(ls "${night}"/*_"${freq}"_ddmod_weightmap.fits)
@@ -300,3 +301,5 @@ else
     track_task.py fail_mosaic  --jobid="${jobid}" --taskid="${taskid}"  --finish_time="$(date +%s)"
     exit 1
 fi
+
+
