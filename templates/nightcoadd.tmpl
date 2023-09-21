@@ -143,6 +143,18 @@ imageout="${outname}_temp"
 # imageout="${outname}"
 resampdir="./resamp_${freq}"
 
+if [[ -z ${ra} ]]
+then
+    ra=${racen}
+fi
+
+if [[ -z ${dec} ]]
+then
+    dec=${deccen}
+fi 
+
+echo "night mosaic centered at: ${ra}, ${dec}"
+
 # Move the temporary image list to the mosaic directory and rename
 mv "$tmp" "${mosaicdir}/${imagelist}.list"
 mv "$tmp_weights" "${mosaicdir}/${imagelist}.weights.list"
