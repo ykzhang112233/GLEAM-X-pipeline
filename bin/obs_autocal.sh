@@ -117,13 +117,27 @@ then
    error="${error}_%a"
 fi
 
+if [[ ${GXCOMPUTER} == "garrawarla" ]]
+then
+    CPUSPERTASK=5
+    MEMPERTASK=30
+elif [[ ${GXCOMPUTER} == "setonix" ]]
+then 
+    CPUSPERTASK=15
+    MEMPERTASK=30
+else
+    CPUSPERTASK=${GXNCPUS}
+    MEMPERTASK=${GXABSMEMORY}
+fi
+
+
 chmod 755 "${script}"
 
 # sbatch submissions need to start with a shebang
 echo '#!/bin/bash' > ${script}.sbatch
-echo "srun --cpus-per-task=${GXNCPUS} --ntasks=1 --ntasks-per-node=1  singularity run ${GXCONTAINER} ${script}" >> ${script}.sbatch
+echo "srun --cpus-per-task=${CPUSPERTASK} --ntasks=1 --ntasks-per-node=1  singularity run ${GXCONTAINER} ${script}" >> ${script}.sbatch
 
-sub="sbatch --begin=now+5minutes --export=ALL  --time=02:00:00 --mem=${GXABSMEMORY}G -M ${GXCOMPUTER} --output=${output} --error=${error}"
+sub="sbatch --begin=now+5minutes --export=ALL  --time=02:00:00 --mem=${MEMBERTASK}G -M ${GXCOMPUTER} --output=${output} --error=${error}"
 sub="${sub} ${GXNCPULINE} ${account} ${GXTASKLINE} ${jobarray} ${depend} ${queue} ${script}.sbatch"
 if [[ ! -z ${tst} ]]
 then
