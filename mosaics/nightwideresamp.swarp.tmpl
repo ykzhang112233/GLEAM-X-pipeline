@@ -12,12 +12,13 @@ HEADER_SUFFIX          .head           # Filename extension for additional heade
  
 WEIGHT_TYPE            MAP_WEIGHT            # BACKGROUND,MAP_RMS,MAP_VARIANCE
                                        # or MAP_WEIGHT
+WEIGHT_IMAGE           @WEIGHT_NAMES
 RESCALE_WEIGHTS        N               # Rescale input weights/variances (Y/N)?
 WEIGHT_THRESH          0.0               # Bad pixel weight-threshold
 
 #------------------------------- Co-addition ----------------------------------
  
-COMBINE                N               # Combine resampled images (Y/N)?
+COMBINE                Y               # Combine resampled images (Y/N)?
 COMBINE_TYPE           WEIGHTED          # MEDIAN,AVERAGE,MIN,MAX,WEIGHTED,CHI2
                                        # or SUM
  
@@ -29,10 +30,10 @@ PROJECTION_TYPE        ZEA             # Any WCS projection code or NONE
 PROJECTION_ERR         0.01           # Maximum projection error (in output
                                        # pixels), or 0 for no approximation
 CENTER_TYPE            MANUAL             # MANUAL, ALL or MOST
-CENTER                 22.5, -27.0     # Coordinates of the image center,
-PIXELSCALE_TYPE        MANUAL          # MANUAL,FIT,MIN,MAX or MEDIAN
-PIXEL_SCALE            15.876
-IMAGE_SIZE             0    # Image size (0 = AUTOMATIC)
+CENTER                 RACEN, DECCEN     # Coordinates of the image center,
+PIXELSCALE_TYPE        MEDIAN          # MANUAL,FIT,MIN,MAX or MEDIAN
+#PIXEL_SCALE            15.876
+IMAGE_SIZE             60000, 30000    # Image size (0 = AUTOMATIC)
  
 #-------------------------------- Resampling ----------------------------------
  

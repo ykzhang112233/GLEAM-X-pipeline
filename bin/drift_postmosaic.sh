@@ -2,15 +2,17 @@
 
 usage()
 {
-echo "drift_postmosaic.sh [-p project] [-d dep] [-t] [-m mosaicdir] [-l lowres_freq] [-r highres_freq] [-c comb_freq] -n mosaic_name
+echo "drift_postmosaic.sh [-p project] [-d dep] [-t] [-m mosaicdir] [-l lowres_freq] [-i highres_freq] [-c comb_freq] [-r racen] [-e deccen] -n mosaic_name
   -p project  : project, (must be specified, no default)
   -d dep      : job number for dependency (afterok)
   -t          : test. Don't submit job, just make the batch file
                 and then return the submission command  
   -m mosaicdir: Directory name where mosaics stored (default=project/mosaic) 
   -l lowres   : Frequency range of the lowres image. (default=170-200MHz)
-  -r highres  : Frequency range of the highres image (default=200-231MHz)
+  -i highres  : Frequency range of the highres image (default=200-231MHz)
   -c comb     : Frequency range of combined image (default=170-231MHz)
+  -r racen    : Central RA for final combined mosaic (default use highf image)
+  -e deccen   : Central Dec for final combined mosaic (default use highf image)
   -n mosaicnm : Name of the mosaic, typically the drift name e.g. XG_D-27_20201015 (no default, must be specified)" 1>&2;
 exit 1;
 }
@@ -25,9 +27,11 @@ mosaicdir=
 lowres_freq=
 highres_freq=
 comb_freq=
+racen=
+deccen=
 
 # parse args and set options
-while getopts ':td:p:b:m:l:r:c:n:' OPTION
+while getopts ':td:p:b:m:l:r:c:n:i:e:' OPTION
 do
     case "$OPTION" in
     d)
@@ -40,10 +44,14 @@ do
         tst=1 ;;
     l)
         lowres_freq=${OPTARG} ;;
-    r)
+    i)
         highres_freq=${OPTARG} ;;
     c)
         comb_freq=${OPTARG} ;;
+    r)
+        racen=${OPTARG} ;;
+    e)
+        deccen=${OPTARG} ;;
     n)
         mosaicnm=${OPTARG} ;;
     ? | : | h)
@@ -78,7 +86,10 @@ cat "${GXBASE}/templates/postmosaic.tmpl" | sed -e "s:BASEDIR:${base}:g" \
                                                 -e "s:MOSAICDIR:${mosaicdir}:g" \
                                                 -e "s:LOWRES_FREQ:${lowres_freq}:g" \
                                                 -e "s:HIGHRES_FREQ:${highres_freq}:g" \
-                                                -e "s:COMB_FREQ:${comb_freq}:g" > ${script}
+                                                -e "s:COMB_FREQ:${comb_freq}:g" \
+                                                -e "s:RACEN:${racen}:g"  \
+                                                -e "s:DECCEN:${deccen}:g" 
+                                                > ${script}
 
 
 output="${GXLOG}/postmosaic_${listbase}.o%A"
