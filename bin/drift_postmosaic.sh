@@ -31,7 +31,7 @@ racen=
 deccen=
 
 # parse args and set options
-while getopts ':td:p:b:m:l:r:c:n:i:e:' OPTION
+while getopts ':td:p:m:l:i:c:r:e:n:' OPTION
 do
     case "$OPTION" in
     d)
@@ -88,8 +88,7 @@ cat "${GXBASE}/templates/postmosaic.tmpl" | sed -e "s:BASEDIR:${base}:g" \
                                                 -e "s:HIGHRES_FREQ:${highres_freq}:g" \
                                                 -e "s:COMB_FREQ:${comb_freq}:g" \
                                                 -e "s:RACEN:${racen}:g"  \
-                                                -e "s:DECCEN:${deccen}:g" 
-                                                > ${script}
+                                                -e "s:DECCEN:${deccen}:g" > ${script}
 
 
 output="${GXLOG}/postmosaic_${listbase}.o%A"
