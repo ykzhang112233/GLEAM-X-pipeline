@@ -90,6 +90,9 @@ mkdir temp_img_white
 tmp="${combined_im}.list"
 tmp_weights="${combined_im}.weights.txt"
 
+rm ${tmp}
+rm ${tmp_weights}
+
 lowres_im_weight="${lowres_im}_weightmap.fits" 
 highres_im_weight="${highres_im}_weightmap.fits"
 
