@@ -9,8 +9,8 @@ mosaicdir=MOSAICDIR
 lowres_freq=LOWRES_FREQ
 highres_freq=HIGHRES_FREQ
 combined_freq=COMB_FREQ
-racen=RAPOINT
-deccen=DECPOINT
+ra=RAPOINT
+dec=DECPOINT
 
 cd "${base}" || exit 1
 
@@ -75,15 +75,17 @@ lowres_im="${mosaicnm}_${lowres_freq}_ddmod"
 highres_im="${mosaicnm}_${highres_freq}_ddmod"
 combined_im="${mosaicnm}_${combined_freq}_ddmod"
 
-if [[ -z $racen ]]
+if [[ -z $ra ]]
 then 
-    racen=$(pyhead.py -p CRVAL1 "${highres_im}.fits" | awk '{print $3}')
+    ra=$(pyhead.py -p CRVAL1 "${highres_im}.fits" | awk '{print $3}')
 fi
 
-if [[ -z $deccen ]]
+if [[ -z $dec ]]
 then 
-    deccen=$(pyhead.py -p CRVAL2 "${highres_im}.fits" | awk '{print $3}')
+    dec=$(pyhead.py -p CRVAL2 "${highres_im}.fits" | awk '{print $3}')
 fi
+
+echo "Centre point: ${ra},${dec}"
 
 tempimgdir="./temp_img_white"
 mkdir temp_img_white
@@ -126,8 +128,8 @@ then
         | sed "s;OUTWEIGHT;${weightout};" \
         | sed "s;WEIGHT_NAMES;${weightnms};" \
         | sed "s;RESAMPDIR;${resampdir};" \
-        | sed "s;RACENT;${racen};" \
-        | sed "s;DECENT;${deccen};" > ${template}.resamp 
+        | sed "s;RACENT;${ra};" \
+        | sed "s;DECENT;${dec};" > ${template}.resamp 
 
     swarp -c "${template}.resamp" @"${imagelist}"
 fi

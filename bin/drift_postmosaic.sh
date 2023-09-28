@@ -87,7 +87,7 @@ cat "${GXBASE}/templates/postmosaic.tmpl" | sed -e "s:BASEDIR:${base}:g" \
                                                 -e "s:LOWRES_FREQ:${lowres_freq}:g" \
                                                 -e "s:HIGHRES_FREQ:${highres_freq}:g" \
                                                 -e "s:COMB_FREQ:${comb_freq}:g" \
-                                                -e "s:RAPOPINT:${racen}:g"  \
+                                                -e "s:RAPOINT:${racen}:g"  \
                                                 -e "s:DECPOINT:${deccen}:g" > ${script}
 
 
