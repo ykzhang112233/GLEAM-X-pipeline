@@ -112,9 +112,12 @@ echo "${highres_im_weight}" >> "${tmp_weights}"
 
 imagelist="${combined_im}.list"
 template="${combined_im}.template"
+rm "${template}.resamp"
 weightout="${combined_im}_temp_weight.fits"
 resampdir="${tempimgdir}"
 weightnms="${tmp_weights}"
+
+
 
 if [[ ! -e "${combined_im}_temp.fits" ]]
 then 
@@ -243,6 +246,9 @@ mosaic_global_rescale.py \
 # TODO: Check output of the mosaic global rescale, I think it just changes so the ending is _rescaled.fits from whatever the imagenm is, checked Tims nextflow business and noticed an updated name but that's just ot name it with the drift name not the generic name
 
 prep_priorized_fitting.py --mosaic "${mosaicnm}"
+
+# time to cleanup: 
+
 
 if [[ -e "${combined_im}_comp.fits" ]]
 then
