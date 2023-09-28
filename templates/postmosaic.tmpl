@@ -95,11 +95,11 @@ highres_im_weight="${highres_im}_weightmap.fits"
 
 if [[ ! -f ${lowres_im_weight} ]]
 then 
-    sigmoid_edge_weight.py ${lowres_im} "${lowres_im}_rms.fits" ${lowres_im_weight}
+    sigmoid_edge_weight.py "${lowres_im}.fits" "${lowres_im}_rms.fits" ${lowres_im_weight}
 fi 
 if [[ ! -f ${highres_im_weight} ]]
 then 
-    sigmoid_edge_weight.py ${highres_im} "${highres_im}_rms.fits" ${highres_im_weight}
+    sigmoid_edge_weight.py "${highres_im}.fits" "${highres_im}_rms.fits" ${highres_im_weight}
 fi 
 
 echo "${lowres_im}.fits" >> "${tmp}" 
