@@ -109,7 +109,7 @@ then
 elif [[ ${GXCOMPUTER} == "setonix" ]]
 then 
     CPUSPERTASK=5
-    MEMPERTASK=10
+    MEMPERTASK=20
 else
     CPUSPERTASK=${GXNCPUS}
     MEMPERTASK=${GXABSMEMORY}

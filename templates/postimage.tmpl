@@ -131,7 +131,7 @@ do
 
         BANE --cores 1 --compress --noclobber "${obsnum}_deep-${subchan}-image-pb.fits"
         # TODO: Replace the redirection
-        aegean  --autoload --table="./${obsnum}_deep-${subchan}-image-pb.fits" "./${obsnum}_deep-${subchan}-image-pb.fits" > >(tee -a "${obsnum}_deep-${subchan}_aegean.log") 2> >(tee -a "${obsnum}_deep-${subchan}_aegean.log" >&2)
+        aegean  --autoload ${GXNPCPUS} --table="./${obsnum}_deep-${subchan}-image-pb.fits" "./${obsnum}_deep-${subchan}-image-pb.fits" > >(tee -a "${obsnum}_deep-${subchan}_aegean.log") 2> >(tee -a "${obsnum}_deep-${subchan}_aegean.log" >&2)
     fi
     nsrc=$(grep "INFO found" "${obsnum}_deep-${subchan}_aegean.log" | head -1 | awk '{print $3}')
     if [[ $nsrc -lt $minsrcs ]]
@@ -247,7 +247,7 @@ do
         # rerun the source-finding -- don't save to the log this time as the numbers should not have changed
         if [[ ! -e "${obsnum}_deep-${subchan}-image-pb_warp_comp.fits" ]]
         then
-            aegean --autoload --table="./${obsnum}_deep-${subchan}-image-pb_warp.fits" "./${obsnum}_deep-${subchan}-image-pb_warp.fits"
+            aegean --autoload --cores=${GXNPCPUS} --table="./${obsnum}_deep-${subchan}-image-pb_warp.fits" "./${obsnum}_deep-${subchan}-image-pb_warp.fits"
         fi
         if [[ ! -e "${obsnum}_deep-${subchan}-image-pb_warp_weight.fits" ]]
         then
