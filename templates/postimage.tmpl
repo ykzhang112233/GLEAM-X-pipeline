@@ -131,7 +131,7 @@ do
 
         BANE --cores 1 --compress --noclobber "${obsnum}_deep-${subchan}-image-pb.fits"
         # TODO: Replace the redirection
-        aegean  --autoload ${GXNPCPUS} --table="./${obsnum}_deep-${subchan}-image-pb.fits" "./${obsnum}_deep-${subchan}-image-pb.fits" > >(tee -a "${obsnum}_deep-${subchan}_aegean.log") 2> >(tee -a "${obsnum}_deep-${subchan}_aegean.log" >&2)
+        aegean  --autoload --cores=${GXNPCPUS} --table="./${obsnum}_deep-${subchan}-image-pb.fits" "./${obsnum}_deep-${subchan}-image-pb.fits" > >(tee -a "${obsnum}_deep-${subchan}_aegean.log") 2> >(tee -a "${obsnum}_deep-${subchan}_aegean.log" >&2)
     fi
     nsrc=$(grep "INFO found" "${obsnum}_deep-${subchan}_aegean.log" | head -1 | awk '{print $3}')
     if [[ $nsrc -lt $minsrcs ]]
