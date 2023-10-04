@@ -131,14 +131,14 @@ def create_sigweight(infits):
 
     return dd, ddd
 
-def create_weightmap(sigmoidweight,rms, mask= False):
+def create_weightmap(sigmoidweight,rms):
 
     rms_fits = fits.open(rms)
     valid_mask = np.isfinite(rms_fits[0].data)
     imshape_zeros = np.zeros(valid_mask.shape)
     imshape_zeros[valid_mask] = 1.
 
-    if mask is True: 
+    if args.do_mask is True: 
         dist_to_edge = ndimage.distance_transform_edt(imshape_zeros,sampling=[1000,1000])
         edgemask = dist_to_edge <= np.nanmax(dist_to_edge)/5
 
@@ -173,6 +173,13 @@ if __name__ == "__main__":
     parser.add_argument(
         "outfits",
         help="Outfile to save the map to"
+    )
+    parser.add_argument(
+        "--mask",
+        action="store_true",
+        default=False,
+        dest="do_mask",
+        help="Add a mask for the edges of the weightmap"
     )
     args = parser.parse_args()
     dd, ddd = create_sigweight(args.infits)
