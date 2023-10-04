@@ -83,8 +83,12 @@ do
     then
         if [[ ! -f "${nightweight}" ]]
         then 
-
-            sigmoid_edge_weight.py ${nightimg} ${nightrms} "${night}/${night}_${freq}_ddmod_weightmap.fits"
+            if [[ "-27" == *"${night}"* ]] || [[ "-13" == *"${night}"* ]] || [[ "+3" == *"${night}"* ]]
+            then 
+                sigmoid_edge_weight.py --mask ${nightimg} ${nightrms} "${night}/${night}_${freq}_ddmod_weightmap.fits"
+            else
+                sigmoid_edge_weight.py ${nightimg} ${nightrms} "${night}/${night}_${freq}_ddmod_weightmap.fits"
+            fi 
             nightweight=$(ls "${night}"/*_"${freq}"_ddmod_weightmap.fits)
         fi
         # symlink to include a unique name in the filename, as night created from
