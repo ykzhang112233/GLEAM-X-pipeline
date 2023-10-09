@@ -83,8 +83,9 @@ do
     then
         if [[ ! -f "${nightweight}" ]]
         then 
-            if [[ "-27" == *"${night}"* ]] || [[ "-13" == *"${night}"* ]] || [[ "+3" == *"${night}"* ]]
+            if [[ "${night}" == *"-27"* ]] || [[ "${night}" == *"-13"* ]] || [[ "${night}" == *"+3"* ]]
             then 
+                echo "Using the mask for weighting"
                 sigmoid_edge_weight.py --mask ${nightimg} ${nightrms} "${night}/${night}_${freq}_ddmod_weightmap.fits"
             else
                 sigmoid_edge_weight.py ${nightimg} ${nightrms} "${night}/${night}_${freq}_ddmod_weightmap.fits"
