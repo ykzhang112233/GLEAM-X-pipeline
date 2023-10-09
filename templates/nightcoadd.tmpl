@@ -174,8 +174,8 @@ cat "${GXBASE}"/mosaics/nightresamp.swarp.tmpl \
     | sed "s;OUTWEIGHT;${weightout};" \
     | sed "s;WEIGHT_NAMES;${imagelist}.weights.list;" \
     | sed "s;RESAMPDIR;${resampdir};" \
-    | sed "s;RACENT;${racen};" \
-    | sed "s;DECENT;${deccen};" > "${template}.resamp"
+    | sed "s;RACENT;${ra};" \
+    | sed "s;DECENT;${dec};" > "${template}.resamp"
 
 if [[ ! -e ${outname}.fits ]] || [[ ! -e ${outname}_psfmap.fits ]]; then
 
@@ -215,8 +215,8 @@ if [[ ! -e ${outname}.fits ]] || [[ ! -e ${outname}_psfmap.fits ]]; then
         cat "${GXBASE}/mosaics/nightcoadd.swarp.tmpl" \
             | sed "s;OUTNAME;${imageout}${extra};" \
             | sed "s;WEIGHT_NAMES;${imagelist}.weights.list.resamp;" \
-            | sed "s;RACENT;${racen};" \
-            | sed "s;DECENT;${deccen};" > "${template}${extra}.coadd"
+            | sed "s;RACENT;${ra};" \
+            | sed "s;DECENT;${dec};" > "${template}${extra}.coadd"
 
         # we will rename the coadd.fits / coadd.weight.fits afterwards
         echo "Generating mosaic ${outname}${extra}.fits for ${nightlist} subband ${freq}."
