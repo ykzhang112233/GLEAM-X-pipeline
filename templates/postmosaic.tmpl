@@ -100,10 +100,12 @@ highres_im_weight="${highres_im}_weightmap.fits"
 
 if [[ ! -f ${lowres_im_weight} ]]
 then 
+    BANE --cores=1 --noclobber "${lowres_im}.fits"
     sigmoid_edge_weight.py "${lowres_im}.fits" "${lowres_im}_rms.fits" ${lowres_im_weight}
 fi 
 if [[ ! -f ${highres_im_weight} ]]
 then 
+    BANE --cores=1 --noclobber "${highres_im}.fits"
     sigmoid_edge_weight.py "${highres_im}.fits" "${highres_im}_rms.fits" ${highres_im_weight}
 fi 
 
