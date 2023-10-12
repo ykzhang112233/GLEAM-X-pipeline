@@ -30,15 +30,13 @@ dec=
 mosaicdir=
 
 # parse args and set options
-while getopts ':td:p:o:r:e:m:' OPTION
+while getopts ':td:p:r:e:m:' OPTION
 do
     case "$OPTION" in
     d)
         dep=${OPTARG} ;;
     p)
         project=${OPTARG} ;;
-	o)
-	    obslist=${OPTARG} ;;
     r)
         ra=${OPTARG} ;;
     e)

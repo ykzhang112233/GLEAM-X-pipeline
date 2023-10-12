@@ -43,8 +43,8 @@ freqs=(
 )
 channel=${freqs[$SLURM_ARRAY_TASK_ID]}
 
-imname="${mosaicnm}-${channel}MHz"
-prior_cat="${mosaicnm}-${combined_freq}_comp.fits"
+imname="${mosaicnm}_${channel}MHz"
+prior_cat="${mosaicnm}_${combined_freq}_comp.fits"
 
 echo "jobid: ${jobid}"
 echo "taskid: ${taskid}"

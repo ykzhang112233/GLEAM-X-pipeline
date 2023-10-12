@@ -263,26 +263,28 @@ else
 fi
 
 
-# # Blur correction and final PSF generation
-# if [[ ! -e "${outname}_comp.fits" ]] || [[ ! -e "${outname}_psf.fits" ]]; then
-#     BANE --noclobber --cores 1 "${outname}.fits"
+# Blur correction and final PSF generation
+if [[ ! -e "${outname}_comp.fits" ]] || [[ ! -e "${outname}_psf.fits" ]]; then
+    BANE --noclobber --cores 1 "${outname}.fits"
 
-#     # To create the final PSF map that I will use later, run source-finding without any PSF input
-#     if [[ ! -e "${outname}_comp.fits" ]]
-#     then
-#         aegean --progress --cores=${GXNCPUS} --seedclip=10 --maxsummits=5 --autoload --table="${outname}.fits" "${outname}.fits"
-#     fi
+    # To create the final PSF map that I will use later, run source-finding without any PSF input
+    if [[ ! -e "${outname}_comp.fits" ]]
+    then
+        aegean --progress --cores=${GXNCPUS} --seedclip=10 --maxsummits=5 --autoload --table="${outname}.fits" "${outname}.fits"
+    fi
 
-#     # Generate a measured PSF map
-#     if [[ ! -e "${outname}_psf.fits" ]]
-#     then
-#         psf_select.py --input="${outname}_comp.fits" --prefix="${low}-${high}"
-#         psf_create.py --input="${outname}_comp_psfcat.fits"
-#     fi
+    # Generate a measured PSF map
+    if [[ ! -e "${outname}_psf.fits" ]]
+    then
+        psf_select.py --input="${outname}_comp.fits" --prefix="${low}-${high}"
+        psf_create.py --input="${outname}_comp_psfcat.fits"
+    fi
 
-#     aegean --progress --cores=${GXNCPUS} --seedclip=4 --maxsummits=5 --autoload --table="${outname}.fits" --psf="${outname}_psf.fits" "${outname}.fits"
+    aegean --progress --cores=${GXNCPUS} --seedclip=4 --maxsummits=5 --autoload --table="${outname}.fits" --psf="${outname}_psf.fits" "${outname}.fits"
+fi
 
-Blur correction and final PSF generation
+
+# Blur correction and final PSF generation
 if [[ ! -e "${outname}_rms.fits" ]] ; then
 
     # # Multiply by blur factor
