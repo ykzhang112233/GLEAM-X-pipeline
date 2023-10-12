@@ -8,7 +8,8 @@ echo "drift_priorized_fitting.sh [-p project] [-d dep] [-t] [-m mosaicdir] [-c c
   -t          : test. Don't submit job, just make the batch file
                 and then return the submission command  
   -m mosaicdir: Directory name where mosaics stored (default=project/mosaic) 
-  -c comb     : Frequency range of combined image (default=170-231MHz)
+  -c priorcat : Name of the catalogue to use for prior fits (default=mosaicnm_170-231MHz_comp_rescaled.fits depending on extension)
+  -e extension : Extension for hte image name (e.g ddmod for blur corrected) (default=none)
   -n mosaicnm : Name of the mosaic, typically the drift name e.g. XG_D-27_20201015 (no default, must be specified)" 1>&2;
 exit 1;
 }
@@ -20,10 +21,10 @@ dep=
 queue="-p ${GXSTANDARDQ}"
 tst=
 mosaicdir=
-comb_freq=
-
+prior_cat=
+extension=
 # parse args and set options
-while getopts ':td:p:b:m:l:r:c:n:' OPTION
+while getopts ':td:p:m:c:e:n:' OPTION
 do
     case "$OPTION" in
     d)
@@ -32,10 +33,12 @@ do
         project=${OPTARG} ;;
     m) 
         mosaicdir=${OPTARG} ;;
+    e)
+        extension=${OPTARG} ;;
     t)
         tst=1 ;;
     c)
-        comb_freq=${OPTARG} ;;
+        prior_cat=${OPTARG} ;;
     n)
         mosaicnm=${OPTARG} ;;
     ? | : | h)
@@ -68,7 +71,8 @@ cat "${GXBASE}/templates/priorized_fitting.tmpl" | sed -e "s:BASEDIR:${base}:g" 
                                                 -e "s:PIPEUSER:${pipeuser}:g" \
                                                 -e "s:MOSAICNM:${mosaicnm}:g" \
                                                 -e "s:MOSAICDIR:${mosaicdir}:g" \
-                                                -e "s:COMB_FREQ:${comb_freq}:g" > ${script}
+                                                -e "s:EXTENSION:${extension}:g" \
+                                                -e "s:PRIORCAT:${prior_cat}:g" > ${script}
 
 output="${GXLOG}/priorized_fitting_${listbase}.o%A_%a"
 error="${GXLOG}/priorized_fitting_${listbase}.e%A_%a"
