@@ -189,9 +189,9 @@ if __name__ == '__main__':
     if options.metafits is not None:
         if os.path.exists(options.metafits):
             # Plotting on a single frequency, single pol on map because it's impossible otherwise
-            diffs = diffs[:, 0, 15]
+            # diffs = diffs[:, 0, 15]
             # Could also take the average of a few frequencies, but it doesn't change anything
-            # diffs = np.average(diffs[:, 0, 12:20], axis=1)
+            diffs = np.nanmean(diffs[:, 0,20:100], axis=1)
             phase_map(diffs, options.metafits, options.names, obsid)
             phase_wrt_East(diffs, options.metafits, options.names, obsid)
     # New option: plot RMS
