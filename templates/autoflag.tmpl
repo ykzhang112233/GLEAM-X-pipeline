@@ -1,10 +1,13 @@
 #! /bin/bash -l
 
-#SBATCH --mem=24G
 #SBATCH -M ${GXCOMPUTER}
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=1
 #SBATCH --ntasks=1
+#SBATCH --time=01:00:00
+#SBATCH --account=${GXACCOUNT}
+
+echo $SLURM_JOB_NAME
 
 pipeuser=PIPEUSER
 obsnum=OBSNUM
