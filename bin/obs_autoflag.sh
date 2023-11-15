@@ -95,7 +95,7 @@ chmod 755 "${script}"
 # sbatch submissions need to start with a shebang
 # echo '#!/bin/bash' > ${script}.sbatch
 # echo "srun --cpus-per-task=1 --ntasks=1 --ntasks-per-node=1 singularity run ${GXCONTAINER} ${script}" >> ${script}.sbatch
-sub="sbatch --begin=now+5minutes --export=ALL --jobname=autoflag_${obsnum} --output=${output} --error=${error} "
+sub="sbatch --begin=now+5minutes --export=ALL --account=${GXACCOUNT} --partition=${GXSTANDARDQ} --jobname=autoflag_${obsnum} --output=${output} --error=${error} "
 sub="${sub} ${jobarray} ${depend} ${script}"
 
 if [[ ! -z ${tst} ]]
