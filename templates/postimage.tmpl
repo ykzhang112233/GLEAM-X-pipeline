@@ -127,6 +127,7 @@ do
         --apply-mask -v
 
         # move into place the new masked image
+        # TODO: this will delete the -image-pb.fits but if mask didn't work you're just left with original and not -pb.fits: fix 
         rm "${obsnum}_deep-${subchan}-image-pb.fits" && mv "${obsnum}_deep-${subchan}-image-pb_mask.fits" "${obsnum}_deep-${subchan}-image-pb.fits"
 
         BANE --cores 1 --compress --noclobber "${obsnum}_deep-${subchan}-image-pb.fits"

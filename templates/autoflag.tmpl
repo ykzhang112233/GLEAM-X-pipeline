@@ -1,7 +1,16 @@
 #! /bin/bash -l
 
+#SBATCH --mem=24G
+#SBATCH -M ${GXCOMPUTER}
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=1
+#SBATCH --ntasks=1
+
 pipeuser=PIPEUSER
 obsnum=OBSNUM
+datadir=DATADIR
+
+
 
 # If obsnum is a file, then we are in an array job
 if [[ -f ${obsnum} ]]
@@ -23,16 +32,15 @@ echo "taskid: ${taskid}"
 function test_fail {
 if [[ $1 != 0 ]]
 then
-    track_task.py fail --jobid=${jobid} --taskid=${taskid} --finish_time=`date +%s`
+    srun singularity run ${GXCONTAINER} track_task.py fail --jobid=${jobid} --taskid=${taskid} --finish_time=`date +%s`
     exit $1
 fi
 }
 
 # start
-track_task.py start --jobid=${jobid} --taskid=${taskid} --start_time=`date +%s`
+srun singularity run ${GXCONTAINER} track_task.py start --jobid=${jobid} --taskid=${taskid} --start_time=`date +%s`
 
 #cores=`grep -P '^core id\t' /proc/cpuinfo  | wc -l`
-datadir=DATADIR
 
 cd "${datadir}/${obsnum}" || exit 1
 
@@ -291,7 +299,7 @@ fi
 if [[ ! -z ${flags} ]]
 then
     echo "Flagging tiles $flags"
-    flagantennae ${obsnum}.ms $flags
+    srun singularity run ${GXCONTAINER} flagantennae ${obsnum}.ms $flags
 fi
 
 track_task.py finish --jobid=${jobid} --taskid=${taskid} --finish_time=`date +%s`

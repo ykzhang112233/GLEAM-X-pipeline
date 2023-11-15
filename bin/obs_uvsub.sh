@@ -10,6 +10,7 @@ echo "obs_uvsub.sh [-d dep] [-a account] [-t] obsnum
   -t         : test. Don't submit job, just make the batch file
                and then return the submission command
   -z         : Debug mode, so adjusts the CORRECTED_DATA column
+  -i         : IDG mode, give either reference obsnum for position or .txt file of obsids same length as obsnum for each pair 
   obsnum     : the obsid to process, or a text file of obsids (newline separated). 
                A job-array task will be submitted to process the collection of obsids. " 1>&2;
 exit 1;
@@ -20,7 +21,7 @@ pipeuser=${GXUSER}
 dep=
 tst=
 debug=
-
+idg=
 # parse args and set options
 while getopts ':ta:d:p:z' OPTION
 do
@@ -34,6 +35,9 @@ do
 	p)
 	    project=${OPTARG}
 	    ;;
+    i)
+        idg=${OPTARG}
+        ;;
 	t)
 	    tst=1
 	    ;;
@@ -89,6 +93,7 @@ script="${GXSCRIPT}/uvsub_${obsnum}.sh"
 cat "${GXBASE}/templates/uvsub.tmpl" | sed -e "s:OBSNUM:${obsnum}:g" \
                                      -e "s:DATADIR:${datadir}:g" \
                                      -e "s:DEBUG:${debug}:g" \
+                                     -e "s:IDG:${idg}:g" \
                                      -e "s:PIPEUSER:${pipeuser}:g" > "${script}"
 
 
@@ -113,7 +118,7 @@ then
     GXNCPULINE="--ntasks-per-node=1"
 fi
 
-sub="sbatch --begin=now+5minutes --export=ALL  --time=06:00:00 --mem=50G -M ${GXCOMPUTER} --output=${output} --error=${error}"
+sub="sbatch --begin=now+5minutes --export=ALL  --time=06:00:00 -M ${GXCOMPUTER} --output=${output} --error=${error}"
 sub="${sub} ${GXNCPULINE} ${account} ${GXTASKLINE} ${jobarray} ${depend} ${queue} ${script}.sbatch"
 if [[ ! -z ${tst} ]]
 then

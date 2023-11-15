@@ -98,7 +98,7 @@ then
     "${imname}.fits"
 fi
 
-
+# TODO: add backup that if freq isn't there, will add 
 mosaic_global_rescale.py "${imname}_prior_comp.fits" "${imname}.fits" "${GXBASE}/models/GGSM_sparse_unresolved.fits" --plot --verbose --apply --sigma-thres 75
 
 # TODO: Add check if successful, need to knwo what the output of globalrescale will be 
