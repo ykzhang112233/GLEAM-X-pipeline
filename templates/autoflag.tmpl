@@ -302,5 +302,5 @@ then
     srun singularity run ${GXCONTAINER} flagantennae ${obsnum}.ms $flags
 fi
 
-track_task.py finish --jobid=${jobid} --taskid=${taskid} --finish_time=`date +%s`
+srun singularity run ${GXCONTAINER} track_task.py finish --jobid=${jobid} --taskid=${taskid} --finish_time=`date +%s`
 
