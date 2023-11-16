@@ -132,10 +132,10 @@ then
     # Remove duplicate obsnum
     solutions="${solutions/${obsnum}_${obsnum}_/${obsnum}_}"
     
-    srun --cpus-per-task=${SRUN_CPUS_PER_TASK} -n 1 --mem ${SLURM_MEM_PER_NODE} singularity run ${GXCONTAINER} calibrate \
+    srun --cpus-per-task=${GXNCPUS} -n 1 --mem ${GXABSMEMORY} singularity run ${GXCONTAINER} calibrate \
             -t ${ts} \
-            -j ${SRUN_CPUS_PER_TASK} \
-            -absmem ${SLURM_MEM_PER_NODE} \
+            -j ${GXNCPUS} \
+            -absmem ${GXABSMEMORY} \
             -m "${calmodel}" \
             -minuv ${minuvm} \
             -maxuv ${maxuvm} \
