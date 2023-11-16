@@ -34,7 +34,6 @@ then
 fi
 }
 
-cores=${GXNCPUS}
 datadir=DATADIR
 if [[ $obsnum -gt 1300000000 ]] && [[ $obsnum -lt 1342950000 ]]
 then
@@ -133,9 +132,9 @@ then
     # Remove duplicate obsnum
     solutions="${solutions/${obsnum}_${obsnum}_/${obsnum}_}"
     
-    srun --cpus-per-task=${cores} -n 1 --mem ${GXABSMEMORY} singularity run ${GXCONTAINER} calibrate \
+    srun --cpus-per-task=${GXNCPUS} -n 1 --mem ${GXABSMEMORY} singularity run ${GXCONTAINER} calibrate \
             -t ${ts} \
-            -j ${cores} \
+            -j ${GXNCPUS} \
             -absmem ${GXMEMORY} \
             -m "${calmodel}" \
             -minuv ${minuvm} \
@@ -156,8 +155,8 @@ solutions="${obsnum}_${calmodel%%.txt}_solutions_initial.bin"
 solutions="${solutions/${obsnum}_${obsnum}_/${obsnum}_}"
 
 # calibrate
-srun --cpus-per-task=${cores} -n 1 --mem ${GXABSMEMORY}  singularity run ${GXCONTAINER} calibrate \
-        -j ${cores} \
+srun --cpus-per-task=${GXNCPUS} -n 1 --mem ${GXABSMEMORY}  singularity run ${GXCONTAINER} calibrate \
+        -j ${GXNCPUS} \
         -absmem ${GXMEMORY} \
         -m "${calmodel}" \
         -minuv $minuvm \
