@@ -134,6 +134,11 @@ then
     flags="$flags 72"
 fi
 
+if [[ ${obsnum} -gt 1210327216 ]] && [[ $obsnum -lt 1210370720 ]]
+then 
+    flags="$flags 22"
+fi 
+
 # Rx7 has fibre problem throughout March 2018
 if [[ $obsnum -ge 1203300000 ]] && [[ $obsnum -le 1205500000 ]]
 then
