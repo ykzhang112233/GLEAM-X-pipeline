@@ -131,11 +131,11 @@ then
     solutions="${obsnum}_${calmodel%%.txt}_solutions_ts${ts}.bin"
     # Remove duplicate obsnum
     solutions="${solutions/${obsnum}_${obsnum}_/${obsnum}_}"
-    
+
     export FI_CXI_DEFAULT_VNI=$(od -vAn -N4 -tu < /dev/urandom)
     srun -N 1 -n $SLURM_NTASKS -c $SLURM_CPUS_PER_TASK -m block:block:block singularity run ${GXCONTAINER} calibrate \
             -t ${ts} \
-            -j ${GXNCPUS} \
+            -j ${SLURM_CPUS_PER_TASK} \
             -absmem ${GXABSMEMORY} \
             -m "${calmodel}" \
             -minuv ${minuvm} \
