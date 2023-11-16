@@ -302,7 +302,7 @@ if [[ ! -z ${flags} ]]
 then
     echo "Flagging tiles $flags"
     export FI_CXI_DEFAULT_VNI=$(od -vAn -N4 -tu < /dev/urandom)
-    srun -N $SLURM_JOB_NUM_NODES -n $SLURM_NTASKS -c $OMP_NUM_THREADS singularity run ${GXCONTAINER} flagantennae ${obsnum}.ms $flags
+    srun -N $SLURM_JOB_NUM_NODES -n $SLURM_NTASKS -c $SLURM_CPUS_PER_TASK singularity run ${GXCONTAINER} flagantennae ${obsnum}.ms $flags
 fi
 
 singularity run ${GXCONTAINER} track_task.py finish --jobid=${jobid} --taskid=${taskid} --finish_time=`date +%s`
