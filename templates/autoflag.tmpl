@@ -34,13 +34,13 @@ echo "taskid: ${taskid}"
 function test_fail {
 if [[ $1 != 0 ]]
 then
-    srun singularity run ${GXCONTAINER} track_task.py fail --jobid=${jobid} --taskid=${taskid} --finish_time=`date +%s`
+    singularity run ${GXCONTAINER} track_task.py fail --jobid=${jobid} --taskid=${taskid} --finish_time=`date +%s`
     exit $1
 fi
 }
 
 # start
-srun singularity run ${GXCONTAINER} track_task.py start --jobid=${jobid} --taskid=${taskid} --start_time=`date +%s`
+singularity run ${GXCONTAINER} track_task.py start --jobid=${jobid} --taskid=${taskid} --start_time=`date +%s`
 
 #cores=`grep -P '^core id\t' /proc/cpuinfo  | wc -l`
 
@@ -301,8 +301,9 @@ fi
 if [[ ! -z ${flags} ]]
 then
     echo "Flagging tiles $flags"
-    srun singularity run ${GXCONTAINER} flagantennae ${obsnum}.ms $flags
+    export FI_CXI_DEFAULT_VNI=$(od -vAn -N4 -tu < /dev/urandom)
+    srun -N $SLURM_JOB_NUM_NODES -n $SLURM_NTASKS -c $OMP_NUM_THREADS singularity run ${GXCONTAINER} flagantennae ${obsnum}.ms $flags
 fi
 
-srun singularity run ${GXCONTAINER} track_task.py finish --jobid=${jobid} --taskid=${taskid} --finish_time=`date +%s`
+singularity run ${GXCONTAINER} track_task.py finish --jobid=${jobid} --taskid=${taskid} --finish_time=`date +%s`
 
