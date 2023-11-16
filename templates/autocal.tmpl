@@ -1,4 +1,9 @@
 #!/bin/bash -l
+#SBATCH --time=02:00:00
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --ntasks-per-node=1
+
 set -x
 
 pipeuser=PIPEUSER
@@ -24,7 +29,7 @@ echo "taskid: ${taskid}"
 function test_fail {
 if [[ $1 != 0 ]]
 then
-    track_task.py fail --jobid="${jobid}" --taskid="${taskid}" --finish_time="$(date +%s)"
+    srun singularity run ${GXCONTAINER} track_task.py fail --jobid="${jobid}" --taskid="${taskid}" --finish_time="$(date +%s)"
     exit "$1"
 fi
 }
@@ -61,7 +66,7 @@ ion=IONOTEST
 ts=10
 
 # start
-track_task.py start --jobid="${jobid}" --taskid="${taskid}" --start_time="$(date +%s)"
+srun singularity run ${GXCONTAINER} track_task.py start --jobid="${jobid}" --taskid="${taskid}" --start_time="$(date +%s)"
 
 cd "${datadir}/${obsnum}" || exit
 
@@ -85,10 +90,10 @@ then
     # crop_catalogue.py --ra="${RA}" --dec="${Dec}" --radius=30 --minflux=1.0 --metafits="${metafits}" \
     #                     --catalogue="${catfile}" --fluxcol=S_200 --plot "${obsnum}_local_gleam_model.png" \
     #                     --output "${obsnum}_cropped_catalogue.fits"
-    crop_catalogue.py --ra="${RA}" --dec="${Dec}" --radius=30 --top-bright=250 --metafits="${metafits}" \
+    srun singularity run ${GXCONTAINER} crop_catalogue.py --ra="${RA}" --dec="${Dec}" --radius=30 --top-bright=250 --metafits="${metafits}" \
                         --catalogue="${catfile}" --fluxcol=S_200 --plot "${obsnum}_local_gleam_model.png" \
                         --output "${obsnum}_cropped_catalogue.fits"
-    vo2model.py --catalogue="${obsnum}_cropped_catalogue.fits" --point --output="${obsnum}_local_gleam_model.txt" \
+    srun singularity run ${GXCONTAINER} vo2model.py --catalogue="${obsnum}_cropped_catalogue.fits" --point --output="${obsnum}_local_gleam_model.txt" \
                 --racol=RAJ2000 --decol=DEJ2000 --acol=a --bcol=b --pacol=pa --fluxcol=S_200 --alphacol=alpha
 fi
 calmodel="${obsnum}_local_gleam_model.txt"
@@ -104,7 +109,7 @@ then
     echo "Detected that this measurement set has undergone a denormal shift; this must be undone before calibration."
     coords=$($GXBASE/gleam_x/bin/calc_optimum_pointing.py --metafits "${metafits}")
     echo "Optimally shifting co-ordinates of measurement set to $coords, without zenith shiftback."
-    chgcentre \
+    srun singularity run ${GXCONTAINER} chgcentre \
             "${obsnum}.ms" \
             ${coords}
 else
@@ -128,7 +133,7 @@ then
     # Remove duplicate obsnum
     solutions="${solutions/${obsnum}_${obsnum}_/${obsnum}_}"
     
-    calibrate \
+    srun --cpus-per-task=${cores} -n 1 --mem ${GXABSMEMORY} singularity run ${GXCONTAINER} calibrate \
             -t ${ts} \
             -j ${cores} \
             -absmem ${GXMEMORY} \
@@ -140,9 +145,9 @@ then
             "${solutions}"
     
     echo "Ionospheric calibration finished. Creating plots and statistics. "
-    aocal_plot.py --refant="${refant}" --amp_max=2 "${solutions}"
-    aocal_diff.py --metafits="${metafits}" --names "${solutions}" --refant="${refant}"
-    iono_update.py --ionocsv "${obsnum}_ionodiff.csv"
+    srun singularity run ${GXCONTAINER} aocal_plot.py --refant="${refant}" --amp_max=2 "${solutions}"
+    srun singularity run ${GXCONTAINER} aocal_diff.py --metafits="${metafits}" --names "${solutions}" --refant="${refant}"
+    srun singularity run ${GXCONTAINER} iono_update.py --ionocsv "${obsnum}_ionodiff.csv"
 fi
 
 # At the moment, assume that the ionosphere is OK, and derive some real solutions
@@ -151,7 +156,7 @@ solutions="${obsnum}_${calmodel%%.txt}_solutions_initial.bin"
 solutions="${solutions/${obsnum}_${obsnum}_/${obsnum}_}"
 
 # calibrate
-calibrate \
+srun --cpus-per-task=${cores} -n 1 --mem ${GXABSMEMORY}  singularity run ${GXCONTAINER} calibrate \
         -j ${cores} \
         -absmem ${GXMEMORY} \
         -m "${calmodel}" \
@@ -164,10 +169,10 @@ test_fail $?
 
 # Create a version divided through by the reference antenna, so that all observations have the same relative XY phase, allowing polarisation calibration solutions to be transferred
 # This also sets the cross-terms to zero by default
-aocal_phaseref.py "${solutions}" "${solutions%.bin}_ref.bin" "${refant}" --xy -2.806338586067941065e+01 --dxy -4.426533296449057023e-07  --ms "${obsnum}.ms"
+srun singularity run ${GXCONTAINER} aocal_phaseref.py "${solutions}" "${solutions%.bin}_ref.bin" "${refant}" --xy -2.806338586067941065e+01 --dxy -4.426533296449057023e-07  --ms "${obsnum}.ms"
 
 # plot calibration solutions
-aocal_plot.py --refant="${refant}" --amp_max=2 "${solutions%.bin}_ref.bin"
+srun singularity run ${GXCONTAINER} aocal_plot.py --refant="${refant}" --amp_max=2 "${solutions%.bin}_ref.bin"
 test_fail $?
 
 # Test to see if the calibration solution meets minimum quality control. At the moment
@@ -180,4 +185,4 @@ then
     test_fail 1
 fi
 
-track_task.py finish --jobid="${jobid}" --taskid="${taskid}" --finish_time="$(date +%s)"
+srun singularity run ${GXCONTAINER} track_task.py finish --jobid="${jobid}" --taskid="${taskid}" --finish_time="$(date +%s)"
