@@ -29,7 +29,7 @@ echo "taskid: ${taskid}"
 function test_fail {
 if [[ $1 != 0 ]]
 then
-    srun ${GXBASE}/gleam_x/bin/track_task.py fail --jobid="${jobid}" --taskid="${taskid}" --finish_time="$(date +%s)"
+    srun singularity run ${GXCONTAINER} track_task.py fail --jobid="${jobid}" --taskid="${taskid}" --finish_time="$(date +%s)"
     exit "$1"
 fi
 }
@@ -65,7 +65,7 @@ ion=IONOTEST
 ts=10
 
 # start
-srun ${GXBASE}/gleam_x/bin/track_task.py start --jobid="${jobid}" --taskid="${taskid}" --start_time="$(date +%s)"
+srun singularity run ${GXCONTAINER} track_task.py start --jobid="${jobid}" --taskid="${taskid}" --start_time="$(date +%s)"
 
 cd "${datadir}/${obsnum}" || exit
 
@@ -76,13 +76,13 @@ then
     test_fail $?
 fi
 
-calibrator=$(${GXBASE}/gleam_x/bin/pyhead.py -p CALIBSRC "$metafits" | awk '{print $3}' )
+calibrator=$(singularity run $GXCONTAINER pyhead.py -p CALIBSRC "$metafits" | awk '{print $3}' )
 echo "Calibrator is $calibrator"
 
 echo "Running infield calibration for $obsnum"
-RA=$(${GXBASE}/gleam_x/bin/pyhead.py -p RA "$metafits" | awk '{print $3}' )
-Dec=$(${GXBASE}/gleam_x/bin/pyhead.py -p DEC "$metafits" | awk '{print $3}' )
-chan=$(${GXBASE}/gleam_x/bin/pyhead.py -p CENTCHAN "$metafits" | awk '{print $3}' )
+RA=$(singularity run $GXCONTAINER pyhead.py -p RA "$metafits" | awk '{print $3}' )
+Dec=$(singularity run $GXCONTAINER pyhead.py -p DEC "$metafits" | awk '{print $3}' )
+chan=$(singularity run $GXCONTAINER pyhead.py -p CENTCHAN "$metafits" | awk '{print $3}' )
 
 if [[ ! -e "${obsnum}_local_gleam_model.txt" ]]
 then
@@ -106,7 +106,7 @@ current=$(singularity run $GXCONTAINER chgcentre "${obsnum}.ms")
 if [[ $current == *"shift"* ]] 
 then
     echo "Detected that this measurement set has undergone a denormal shift; this must be undone before calibration."
-    coords=$(${GXBASE}/gleam_x/bin/calc_optimum_pointing.py --metafits "${metafits}")
+    coords=$(singularity run $GXCONTAINER calc_optimum_pointing.py --metafits "${metafits}")
     echo "Optimally shifting co-ordinates of measurement set to $coords, without zenith shiftback."
     srun singularity run ${GXCONTAINER} chgcentre \
             "${obsnum}.ms" \
