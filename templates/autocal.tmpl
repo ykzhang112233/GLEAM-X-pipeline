@@ -9,6 +9,9 @@ set -x
 pipeuser=PIPEUSER
 obsnum=OBSNUM
 
+echo $SLURM_MEM_PER_NODE
+
+
 # If obsnum is a file, then we are in an array job
 if [[ -f "${obsnum}" ]]
 then
@@ -136,7 +139,7 @@ then
     srun -N 1 -n $SLURM_NTASKS -c $SLURM_CPUS_PER_TASK -m block:block:block singularity run ${GXCONTAINER} calibrate \
             -t ${ts} \
             -j ${SLURM_CPUS_PER_TASK} \
-            -absmem ${GXABSMEMORY} \
+            -absmem 30G \
             -m "${calmodel}" \
             -minuv ${minuvm} \
             -maxuv ${maxuvm} \
@@ -159,7 +162,7 @@ solutions="${solutions/${obsnum}_${obsnum}_/${obsnum}_}"
 export FI_CXI_DEFAULT_VNI=$(od -vAn -N4 -tu < /dev/urandom)
 srun -N 1 -n $SLURM_NTASKS -c $SLURM_CPUS_PER_TASK -m block:block:block singularity run ${GXCONTAINER} calibrate \
         -j ${SLURM_CPUS_PER_TASK} \
-        -absmem ${GXMEMORY} \
+        -absmem 30G \
         -m "${calmodel}" \
         -minuv $minuvm \
         -maxuv $maxuvm \
