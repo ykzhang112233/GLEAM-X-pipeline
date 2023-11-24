@@ -36,6 +36,7 @@ if __name__ == "__main__":
 
     if args.file is not None and os.path.exists(args.file):
         hdu_in = fits.open(args.file)
+        w = wcs.WCS(hdu_in[0].header,naxis=2)
     elif args.file is None: 
         pass
         # print("Not using file...")
@@ -46,27 +47,58 @@ if __name__ == "__main__":
     if args.position is not None: 
         try:
             ra_ref, dec_ref = float(args.position[0]), float(args.position[1])
+            w=SkyCoord(ra_ref,dec_ref, frame="icrs", unit="deg")
         except:
             print("Cannot understand coords?")
             sys.exit(1)        
 
-
-    if args.source in sources:
+    if args.source is None: 
+        # print("No source provided! going to go through all and see if any are in the fov")
+        checks = []
+        for src, coords in sources.items():
+            pos = SkyCoord([sources[src]], unit=(u.hourangle, u.deg))
+            if args.position is None: 
+                checks.append(check_coords(w,pos))
+            elif args.file is None: 
+                sep=w.separation(pos)
+                if float(sep.deg) <= 30:
+                    checks.append(True)
+                else: 
+                    checks.append(False)
+        if any(checks):
+            print("True")
+        else:
+            print("False")
+    elif args.source in sources:
         pos = SkyCoord([sources[args.source]], unit=(u.hourangle, u.deg))
+        if args.position is None:
+            checks = check_coords(w,pos)
+        elif args.file is None: 
+            sep=w.separation(pos)
+            if float(sep.deg) <= 30:
+                checks = True
+            else: 
+                checks = False
+        if checks:
+            print("True")
+        else: 
+            print("False")
     else:
         print(args.source+" not found in dictionary, which only contains: ", sources.keys())
         sys.exit(1)
 
-    if args.position is None: 
-        w = wcs.WCS(hdu_in[0].header,naxis=2)
-        if check_coords(w, pos):
-            print("True")
-        else:
-            print("False")
-    elif args.file is None: 
-        w=SkyCoord(ra_ref,dec_ref, frame="icrs", unit="deg")
-        sep=w.separation(pos)
-        if float(sep.deg) <= 30:
-            print("True")
-        else: 
-            print("False")
+
+
+    # if args.position is None: 
+    #     w = wcs.WCS(hdu_in[0].header,naxis=2)
+    #     if check_coords(w, pos):
+    #         print("True")
+    #     else:
+    #         print("False")
+    # elif args.file is None: 
+    #     w=SkyCoord(ra_ref,dec_ref, frame="icrs", unit="deg")
+    #     sep=w.separation(pos)
+    #     if float(sep.deg) <= 30:
+    #         print("True")
+    #     else: 
+    #         print("False")
