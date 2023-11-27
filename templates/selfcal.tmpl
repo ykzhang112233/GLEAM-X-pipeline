@@ -48,6 +48,14 @@ track_task.py start --jobid="${jobid}" --taskid="${taskid}" --start_time="$(date
 datadir="${base}/${obsnum}"
 cd "${datadir}" || exit
 
+# Adding a check to see if there are any selfsolutions already, will not recalculated
+if [[ -e ${obsnum}_selfsolutions.bin ]] || [[ -e ${obsnum}_selfsolutions_failed.bin ]]
+then 
+    echo "There is already a selfsolutions file?? Check what you want to do first, but i am exiting without doing anything!!! "
+    exit 1
+fi 
+
+
 # Which data column to image
 if [[ ! -z $debug ]]
 then
@@ -81,17 +89,16 @@ get_mwa_pb_lobes.py ${metafits} -mM > ${obsnum}_mainlobes.txt
 ra_mainlobe=$(cat ${obsnum}_mainlobes.txt | awk '{print $2}')
 dec_mainlobe=$(cat ${obsnum}_mainlobes.txt | awk '{print $3}')
 
-# Check if crab or cyg is in the main fov
-crab_fov=$(check_src_fov.py -p ${ra_mainlobe} ${dec_mainlobe} -s "Crab")
-cyga_fov=$(check_src_fov.py -p ${ra_mainlobe} ${dec_mainlobe} -s "CygA")
-if [[ "$crab_fov" == "False" ]] && [[ "$cyga_fov" == "False" ]] 
+# Check if any a-team source is in the main fov
+ateam_fov=$(check_src_fov.py -p ${ra_mainlobe} ${dec_mainlobe})
+# crab_fov=$(check_src_fov.py -p ${ra_mainlobe} ${dec_mainlobe} -s "Crab")
+# cyga_fov=$(check_src_fov.py -p ${ra_mainlobe} ${dec_mainlobe} -s "CygA")
+if [[ "$ateam_fov" == "False" ]]
 then
     echo "There is neither Crab nor CygA in the fov or sidelobe, no self cal needed!"
     self2="False"
 else
-    echo "Either Crab or CygA is in the FOV, carrying on with selfcal"
-    echo "Crab: $crab_fov"
-    echo "CygA: $cyga_fov"
+    echo "Something bright in the main fov, going to do self-cal"
 fi 
 
 if [[ "$self" == "False" ]] && [[ "${self2}" == "False" ]]
