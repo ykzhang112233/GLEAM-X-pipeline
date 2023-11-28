@@ -73,11 +73,10 @@ then
     dec_mainlobe=$(cat ${obsnum}_mainlobes.txt | awk '{print $3}')
 
     # Check if crab or cyg is in the main fov
-    crab_fov=$(check_src_fov.py -p ${ra_mainlobe} ${dec_mainlobe} -s "Crab")
-    cyga_fov=$(check_src_fov.py -p ${ra_mainlobe} ${dec_mainlobe} -s "CygA")
-    if [[ "$crab_fov" == "False" ]] && [[ "$cyga_fov" == "False" ]] 
+    ateam_fov=$(check_src_fov.py -p ${ra_mainlobe} ${dec_mainlobe})
+    if [[ "$ateam_fov" == "False" ]]
     then
-        echo "There is neither Crab nor CygA in the fov or sidelobe, no self cal needed!"
+        echo "There is no bright thing in main FOV, no self-cal needed!!"
         self2="False"
     else
         echo "Either Crab or CygA is in the FOV, carrying on with selfcal"
