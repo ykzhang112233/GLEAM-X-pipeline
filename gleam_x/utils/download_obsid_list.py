@@ -33,8 +33,8 @@ def get_observations(
 
     if all_obs is True and only_calobs is True:
         raise ValueError("Both all_obs and only_calobs can not be True.")
-
-    df = pd.read_sql_table("observation", mdb.dbconn)
+    with mdb.dbconn.connect() as conn: 
+        df = pd.read_sql_table("observation", conn)
 
     # The default behaviour of this script is to only return the 
     # GLEAM-X science fields, not the MWA calibration scans. 
