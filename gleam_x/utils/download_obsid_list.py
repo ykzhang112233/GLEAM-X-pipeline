@@ -33,7 +33,7 @@ def get_observations(
 
     if all_obs is True and only_calobs is True:
         raise ValueError("Both all_obs and only_calobs can not be True.")
-    with mdb.dbconn.connect() as conn: 
+    with mdb.connect() as conn: 
         df = pd.read_sql_table("observation", conn)
 
     # The default behaviour of this script is to only return the 
