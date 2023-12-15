@@ -8,6 +8,7 @@ import astropy.units as u
 from argparse import ArgumentParser
 from astropy.time import Time
 from astropy.coordinates import SkyCoord, EarthLocation
+from sqlalchemy import create_engine
 
 from gleam_x.db import mysql_db as mdb
 
@@ -33,8 +34,9 @@ def get_observations(
 
     if all_obs is True and only_calobs is True:
         raise ValueError("Both all_obs and only_calobs can not be True.")
-    with mdb.connect() as conn: 
-        df = pd.read_sql_table("observation", conn)
+    
+    engine_cloud = create_engine(mdb.dbconn)
+    df = pd.read_sql_table("observation", engine_cloud.connect())
 
     # The default behaviour of this script is to only return the 
     # GLEAM-X science fields, not the MWA calibration scans. 
