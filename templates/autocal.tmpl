@@ -161,6 +161,7 @@ then
     srun -N 1 -n $SLURM_NTASKS -c $SLURM_CPUS_PER_TASK -m block:block:block singularity run $GXCONTAINER hyperdrive \
         di-calibrate \
         --uvw-min "${minuv}lambda" \
+        --timesteps-per-timeblock 10 \
         --uvw-max 1667lambda \
         --beam-file "${MWAPATH}/mwa_full_embedded_element_pattern.h5" \
         --outputs "${solutions}" \
@@ -222,8 +223,8 @@ then
     # echo "Ionospheric calibration finished. Creating plots and statistics. "
 
 
-    # singularity run ${GXCONTAINER} aocal_diff.py --metafits="${metafits}" --names "${solutions}" --refant="${refant}"
-    # singularity run ${GXCONTAINER} iono_update.py --ionocsv "${obsnum}_ionodiff.csv"
+    singularity run ${GXCONTAINER} aocal_diff.py --metafits="${metafits}" --names "${solutions}" --refant="${refant}"
+    singularity run ${GXCONTAINER} iono_update.py --ionocsv "${obsnum}_ionodiff.csv"
 fi
 
 # At the moment, assume that the ionosphere is OK, and derive some real solutions
