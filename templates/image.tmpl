@@ -100,6 +100,26 @@ minuvm=$(echo "234 * $minuv / $chan" | bc -l)
 # Found that multiscale cleaning recovers flux density in the extragalactic sky better than not, and doesn't add much to processing time
 multiscale="-multiscale -mgain 0.85 -multiscale-gain 0.15"
 
+if [[ ! -e ${obsnum}_mainlobes.txt ]]
+then 
+    get_mwa_pb_lobes.py ${metafits} -mM > ${obsnum}_mainlobes.txt
+    ra_mainlobe=$(cat ${obsnum}_mainlobes.txt | awk '{print $2}')
+    dec_mainlobe=$(cat ${obsnum}_mainlobes.txt | awk '{print $3}')
+else
+    ra_mainlobe=$(cat ${obsnum}_mainlobes.txt | awk '{print $2}')
+    dec_mainlobe=$(cat ${obsnum}_mainlobes.txt | awk '{print $3}')
+fi
+
+gal_check=$(check_src_fov.py -p ${ra_mainlobe} ${dec_mainlobe} -g)
+vira_check=$(check_src_fov.py -p ${ra_mainlobe} ${dec_mainlobe} -s "VirA")
+
+if [[ "$gal_check" == "True" ]] || [[ "$vira_check" == "True" ]]
+then 
+    echo "There is either gal plane or VirA in FoV so changing multiscale scale bias" 
+    scalebias="-multiscale-scale-bias 0.7"
+else
+    scalebias="-multiscale-scale-bias 0.6"
+
 # Check whether the phase centre has already changed
 current=$(chgcentre "${obsnum}.ms")
 
@@ -171,6 +191,7 @@ set -o pipefail
 wsclean \
         -abs-mem ${GXMEMORY} \
         $multiscale \
+        $scalebias \
         -nmiter 5 \
         -niter 10000000 \
         -reuse-primary-beam \
