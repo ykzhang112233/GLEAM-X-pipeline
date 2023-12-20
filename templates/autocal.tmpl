@@ -51,7 +51,8 @@ fraction=FRACTION
 sthresh=STHRESH
 
 # GLEAM-X sky model
-calmodel="${GXBASE}/models/GGSM.txt"
+catfile="${GXBASE}/models/GGSM.txt"
+
 
 # MWA beam information
 MWAPATH="${GXMWAPB}"
@@ -87,8 +88,10 @@ RA=$(singularity run $GXCONTAINER pyhead.py -p RA "$metafits" | awk '{print $3}'
 Dec=$(singularity run $GXCONTAINER pyhead.py -p DEC "$metafits" | awk '{print $3}' )
 chan=$(singularity run $GXCONTAINER pyhead.py -p CENTCHAN "$metafits" | awk '{print $3}' )
 
-# if [[ ! -e "${obsnum}_local_gleam_model.txt" ]]
-# then
+if [[ ! -e "${obsnum}_local_gleam_model.txt" ]]
+then
+    ln -s ${catfile} "${obsnum}_local_gleam_model.txt"
+
 #     singularity run ${GXCONTAINER} crop_catalogue.py \
 #         --ra="${RA}" \
 #         --dec="${Dec}" \
@@ -111,8 +114,8 @@ chan=$(singularity run $GXCONTAINER pyhead.py -p CENTCHAN "$metafits" | awk '{pr
 #         --pacol=pa \
 #         --fluxcol=S_200 \
 #         --alphacol=alpha
-# fi
-# calmodel="${obsnum}_local_gleam_model.txt"
+fi
+calmodel="${obsnum}_local_gleam_model.txt"
 
 
 cd "${datadir}/${obsnum}" || exit
@@ -148,7 +151,7 @@ then
     # Ionospheric triage
     solutions1="${obsnum}_${calmodel%%.txt}_solutions_ts10.bin"
     # Remove duplicate obsnum
-    solutions1="${solutions/${obsnum}_${obsnum}_/${obsnum}_}"
+    solutions1="${solutions1/${obsnum}_${obsnum}_/${obsnum}_}"
 
     export FI_CXI_DEFAULT_VNI=$(od -vAn -N4 -tu < /dev/urandom)
     srun -N 1 -n $SLURM_NTASKS -c $SLURM_CPUS_PER_TASK -m block:block:block singularity run $GXCONTAINER hyperdrive \
@@ -215,7 +218,7 @@ then
     echo "Ionospheric calibration finished. Creating plots and statistics. "
 
 
-    singularity run ${GXCONTAINER} aocal_diff.py --metafits="${metafits}" --names --lastsol "${solutions}" "${solutions1}" --refant="${refant}"
+    singularity run ${GXCONTAINER} python ${GXBASE}/gleam_x/bin/aocal_diff.py --metafits="${metafits}" --names --lastsol "${solutions}" "${solutions1}" --refant="${refant}"
     singularity run ${GXCONTAINER} iono_update.py --ionocsv "${obsnum}_ionodiff.csv"
 fi
 
