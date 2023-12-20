@@ -39,7 +39,7 @@ def diff_multi(ao_start, ao_end, refant):
         temp = []
         for pol in 0,3:
             temp.append(np.angle(ao_end[0, antenna, :, pol] / ao_start[0, antenna, :, pol], deg=True))
-        diff.append(temp)
+        diffs.append(temp)
 
     return diffs 
 
