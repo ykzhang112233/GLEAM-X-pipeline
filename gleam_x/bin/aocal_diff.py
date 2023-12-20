@@ -29,7 +29,7 @@ def get_tile_info(metafits):
 
 def diff_multi(ao_start, ao_end, refant):
     diffs = []
-    ant_iter = ao_start.n_ant
+    ant_iter = np.arange(ao_start.n_ant)
 
     # dividing both start and end by reference antenna 
     ao_start = ao_start/ao_start[:, refant, :, :][:, np.newaxis, :, :]
