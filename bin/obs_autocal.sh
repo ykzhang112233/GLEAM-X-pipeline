@@ -1,7 +1,5 @@
 #! /bin/bash
 
-# set -x
-
 usage()
 {
 echo "obs_autocal.sh [-d dep] [-a account] [-t] obsnum
@@ -119,12 +117,12 @@ fi
 
 if [[ ${GXCOMPUTER} == "garrawarla" ]]
 then
-    CPUSPERTASK=5
-    MEMPERTASK=30
+    CPUSPERTASK=3
+    MEMPERTASK=15
 elif [[ ${GXCOMPUTER} == "setonix" ]]
 then 
-    CPUSPERTASK=15
-    MEMPERTASK=30
+    CPUSPERTASK=8
+    MEMPERTASK=15
 else
     CPUSPERTASK=${GXNCPUS}
     MEMPERTASK=${GXABSMEMORY}
@@ -134,11 +132,11 @@ fi
 chmod 755 "${script}"
 
 # sbatch submissions need to start with a shebang
-echo '#!/bin/bash' > ${script}.sbatch
-echo "srun --cpus-per-task=${CPUSPERTASK} --ntasks=1 --ntasks-per-node=1  singularity run ${GXCONTAINER} ${script}" >> ${script}.sbatch
+# echo '#!/bin/bash' > ${script}.sbatch
+# echo "srun --cpus-per-task=${CPUSPERTASK} --ntasks=1 --ntasks-per-node=1  singularity run ${GXCONTAINER} ${script}" >> ${script}
 
-sub="sbatch --begin=now+5minutes --export=ALL  --time=02:00:00 --mem=${MEMPERTASK}G -M ${GXCOMPUTER} --output=${output} --error=${error}"
-sub="${sub} ${GXNCPULINE} ${account} ${GXTASKLINE} ${jobarray} ${depend} ${queue} ${script}.sbatch"
+sub="sbatch --begin=now+5minutes --export=ALL --cpus-per-task=${CPUSPERTASK}  --mem=${MEMPERTASK}G  --partition=${GXSTANDARDQ} --output=${output} --error=${error}"
+sub="${sub} ${account} ${jobarray} ${depend} ${queue} ${script}"
 if [[ ! -z ${tst} ]]
 then
     echo "script is ${script}"

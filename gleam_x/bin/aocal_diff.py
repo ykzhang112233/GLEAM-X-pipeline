@@ -27,7 +27,23 @@ def get_tile_info(metafits):
     East = tiles["East"]
     return Names, North, East
 
-def diff(ao, metafits, refant):
+def diff_multi(ao_start, ao_end, refant):
+    diffs = []
+    ant_iter = np.arange(ao_start.n_ant)
+
+    # dividing both start and end by reference antenna 
+    ao_start = ao_start/ao_start[:, refant, :, :][:, np.newaxis, :, :]
+    ao_end = ao_end/ao_end[:, refant, :, :][:, np.newaxis, :, :]
+
+    for a, antenna in enumerate(ant_iter): 
+        temp = []
+        for pol in 0,3:
+            temp.append(np.angle(ao_end[0, antenna, :, pol] / ao_start[0, antenna, :, pol], deg=True))
+        diffs.append(temp)
+
+    return diffs 
+
+def diff(ao, refant, ao_last=None):
     diffs = []
     non_nan_intervals = np.where([not np.isnan(ao[i, refant, :, 0]).all() for i in range(ao.n_int)])[0]
     t_start = non_nan_intervals.min()
@@ -163,6 +179,7 @@ if __name__ == '__main__':
     parser.add_option("--outdir", default=None, dest="outdir", help="output directory [default: same as binfile]")
     parser.add_option("--names", action="store_true", default=False, dest="names", help="Plot tile names on phase map")
     parser.add_option("--rms", action="store_true", default=False, dest="rms", help="Plot rms histogram as well as del_phi")
+    parser.add_option("--lastsol", default=None, help="if using Hyperdrive, still have to have separate solution files for two timeblocks, if this is provided will use this as last solution to divide by" )
 # TO ADD: LOG HISTOGRAMS OPTION
 #    parser.add_option("--output", default=None, dest="output", help="output names [default: OBSID_histogram.png and OBSID_phasemap.png")
 #    parser.add_option("--marker", default=',', dest="marker", type="string", help="matplotlib marker [default: %default]")
@@ -180,7 +197,11 @@ if __name__ == '__main__':
         sys.exit(1)
 
     obsid = filename[0:10]
-    diffs = np.array(diff(ao, options.metafits, options.refant))
+    if options.lastsol is not None: 
+        ao_last = aocal.fromfile(options.lastsol)
+        diffs = np.array(diff_multi(ao,ao_last,options.refant))
+    else: 
+        diffs = np.array(diff(ao, options.refant))
     
     # Flatten array and delete NaNs for histogram
     median, peak, std = histo_diffs(diffs[np.logical_not(np.isnan(diffs))].flatten(), obsid)
