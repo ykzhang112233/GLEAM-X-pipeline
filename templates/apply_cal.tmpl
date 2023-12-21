@@ -33,7 +33,7 @@ echo "taskid: ${taskid}"
 function test_fail {
 if [[ $1 != 0 ]]
 then
-    singularity run ${GXCONTAINER} track_task.py fail --jobid="${jobid}" --taskid="${taskid}" --finish_time="$(date +%s)"
+    track_task.py fail --jobid="${jobid}" --taskid="${taskid}" --finish_time="$(date +%s)"
     exit "$1"
 fi
 }
@@ -42,7 +42,7 @@ base=BASEDIR
 debug=DEBUG
 
 # apply calibration
-singularity run ${GXCONTAINER} track_task.py start --jobid="${jobid}" --taskid="${taskid}" --start_time="$(date +%s)"
+track_task.py start --jobid="${jobid}" --taskid="${taskid}" --start_time="$(date +%s)"
 
 cd "${base}/${obsnum}" || exit
 metafits="${obsnum}.metafits"
@@ -53,7 +53,7 @@ then
     # Checking if there is a gross sidelobe: 
     if [[ ! -e "${obsnum}_beamlobes.txt" ]]
     then
-        singularity run ${GXCONTAINER} get_mwa_pb_lobes.py ${metafits} -mS > ${obsnum}_beamlobes.txt
+        get_mwa_pb_lobes.py ${metafits} -mS > ${obsnum}_beamlobes.txt
     else
         echo "Already have the beam, not recalculating"
     fi 
@@ -68,7 +68,7 @@ then
         self="False"
     fi 
 
-    singularity run ${GXCONTAINER} get_mwa_pb_lobes.py ${metafits} -mM > ${obsnum}_mainlobes.txt
+    get_mwa_pb_lobes.py ${metafits} -mM > ${obsnum}_mainlobes.txt
     ra_mainlobe=$(cat ${obsnum}_mainlobes.txt | awk '{print $2}')
     dec_mainlobe=$(cat ${obsnum}_mainlobes.txt | awk '{print $3}')
 
@@ -99,7 +99,7 @@ fi
 if [[ ! -e "${calfile}" ]]
 then
     echo "Could not find calibrator file ${calid}"
-    singularity run ${GXCONTAINER} track_task.py fail --jobid="${jobid}" --taskid="${taskid}" --finish_time="$(date +%s)"
+    track_task.py fail --jobid="${jobid}" --taskid="${taskid}" --finish_time="$(date +%s)"
     exit 1
 fi
 
@@ -108,7 +108,7 @@ echo "Calibration file is ${calfile}"
 # If in debugging mode, apply to the CORRECTED_DATA column
 # if [[ ! -z $debug ]]
 # then 
-#     singularity run ${GXCONTAINER} hyperdrive \
+#     hyperdrive \
 #     solutions-apply \
     
 
@@ -129,5 +129,5 @@ fi
 
 test_fail $?
 
-singularity run ${GXCONTAINER} track_task.py finish --jobid="${jobid}" --taskid="${taskid}" --finish_time="$(date +%s)"
-singularity run ${GXCONTAINER} track_task.py obs_calibrator --obs_id "${obsnum}" --cal_id "${calid}"
+track_task.py finish --jobid="${jobid}" --taskid="${taskid}" --finish_time="$(date +%s)"
+track_task.py obs_calibrator --obs_id "${obsnum}" --cal_id "${calid}"
