@@ -117,12 +117,12 @@ fi
 
 if [[ ${GXCOMPUTER} == "garrawarla" ]]
 then
-    CPUSPERTASK=5
-    MEMPERTASK=30
+    CPUSPERTASK=3
+    MEMPERTASK=15
 elif [[ ${GXCOMPUTER} == "setonix" ]]
 then 
-    CPUSPERTASK=15
-    MEMPERTASK=30
+    CPUSPERTASK=8
+    MEMPERTASK=15
 else
     CPUSPERTASK=${GXNCPUS}
     MEMPERTASK=${GXABSMEMORY}
