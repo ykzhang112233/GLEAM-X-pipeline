@@ -163,6 +163,13 @@ then
     flags="$flags 22"
 fi
 
+# Something seems off consistent for Tile 123 on 2019-02-01
+if [[ $obsnum -ge 1242468400 ]] && [[ $obsnum -le 1242511664 ]]
+then
+    flags="$flags 123"
+fi
+
+
 # Rx7 has a fibre problem on 2019-01-08 and 2019-06
 if [[ $obsnum -ge 1244300000 ]] && [[ $obsnum -le 1244849032 ]]
 then
