@@ -163,10 +163,10 @@ then
     flags="$flags 22"
 fi
 
-# Something seems off consistent for Tile 123 on 2019-02-01
+# Something seems off consistent for Tile 123 and  56 later in night on 2019-02-01
 if [[ $obsnum -ge 1242468400 ]] && [[ $obsnum -le 1242511664 ]]
 then
-    flags="$flags 123"
+    flags="$flags 123 56"
 fi
 
 
