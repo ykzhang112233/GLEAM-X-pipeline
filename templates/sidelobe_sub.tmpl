@@ -147,7 +147,7 @@ wsclean \
         "${obsnum}.ms" | tee wsclean.log
 
 
-if [[ ! -e "${obsnum}_sidelobe-MFS-XX-image.fits" ]]
+if [[ -e "${obsnum}_sidelobe-MFS-XX-image.fits" ]]
 then
     taql update ${obsnum}.ms set ${datacolumn}=${datacolumn}-MODEL_DATA
 # Also updating the model column to remove the model of the sidelobe so its not accidentally added later 
