@@ -126,26 +126,27 @@ chgcentre "${obsnum}.ms" ${radec_lobe}
 # Initial shallow clean to populate the model column 
 # Set the pipefail so the test_fail does not test for tee
 set -o pipefail
-# shallow clean (for selfcal) 
-taql alter table ${obsnum}.ms drop column MODEL_DATA
-wsclean \
-        -abs-mem ${GXMEMORY} \
-        $multiscale \
-        -nmiter 1 \
-        -niter 10000 \
-        -auto-threshold 1 \
-        -stop-negative \
-        -auto-mask 3 \
-        -name ${obsnum}_sidelobe \
-        -size ${lobe_image_size} ${lobe_image_size} \
-        -scale ${scale:0:8} \
-        -weight briggs ${robust} \
-        -pol XX,YY,XY,YX \
-        -channels-out 4 \
-        -join-polarizations \
-        -data-column ${datacolumn} \
-        "${obsnum}.ms" | tee wsclean.log
-
+if [[ ! -e "${obsnum}_sidelobe-MFS-XX-image.fits" ]]
+then
+    taql alter table ${obsnum}.ms drop column MODEL_DATA
+    wsclean \
+            -abs-mem ${GXMEMORY} \
+            $multiscale \
+            -nmiter 1 \
+            -niter 10000 \
+            -auto-threshold 1 \
+            -stop-negative \
+            -auto-mask 3 \
+            -name ${obsnum}_sidelobe \
+            -size ${lobe_image_size} ${lobe_image_size} \
+            -scale ${scale:0:8} \
+            -weight briggs ${robust} \
+            -pol XX,YY,XY,YX \
+            -channels-out 4 \
+            -join-polarizations \
+            -data-column ${datacolumn} \
+            "${obsnum}.ms" | tee wsclean.log
+fi  
 
 if [[ -e "${obsnum}_sidelobe-MFS-XX-image.fits" ]]
 then
