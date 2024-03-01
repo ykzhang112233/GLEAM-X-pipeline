@@ -5,3 +5,9 @@ queue/*
 */*pyc
 *pyc
 .vscode
+log*
+log*/*
+ssh_keys/*
+script_setonix/*
+data/*
+
