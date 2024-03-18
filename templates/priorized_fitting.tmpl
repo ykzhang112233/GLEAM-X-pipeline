@@ -30,7 +30,7 @@ fi
 
 if [[ -z ${prior_cat} ]]
 then 
-    if [[ -z ${extension} ]]
+    if [[ ! -z ${extension} ]]
     then
         prior_cat="${mosaicnm}_170-231MHz_${extension}_comp_rescaled.fits"
     else
