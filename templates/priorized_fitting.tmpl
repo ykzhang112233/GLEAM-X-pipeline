@@ -90,7 +90,7 @@ then
     --cores ${GXNCPUS} \
     --background "${imname}_bkg.fits" \
     --noise "${imname}_rms.fits" \
-    --psf "${imname}_projpsf_psf.fits" \
+    --psf "${mosaicnm}_${channel}MHz_projpsf_psf.fits" \
     --table "${imname}_prior.fits" \
     --priorized 1 \
     --input "${prior_cat}" \
