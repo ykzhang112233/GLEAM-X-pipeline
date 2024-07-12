@@ -333,34 +333,46 @@ def wsclean_script(
         ):
             datacolumn = "DATA" if corrected_data is False else "CORRECTED_DATA"
 
-            taql = f"taql alter table ${tempdir}/{obsid}.ms drop column MODEL_DATA\n\n"
+            taql = f"taql alter table {tempdir}{obsid}.ms drop column MODEL_DATA\n\n"
             out.write(taql)
 
             chg = (
                 f"chgcentre "
-                f"${tempdir}/{obsid}.ms "
+                f"{tempdir}{obsid}.ms "
                 f"{phasecenter.replace('J2000 ', '')} \n"
                 f"chgcentre "
                 f"-zenith "
                 f"-shiftback "
-                f"${tempdir}/{obsid}.ms \n\n"
+                f"{tempdir}{obsid}.ms \n\n"
             )
             out.write(chg)
+            if tempdir == "":
+                spec_fit = "-join-channels -channels-out 64 -fit-spectral-pol 4"
+                wsclean = (
+                    f"wsclean "
+                    f"-mgain 0.8 -abs-mem {mem} -nmiter 10 -niter 100000 -size 128 128 -pol XXYY "
+                    f"-data-column {datacolumn} -name {imagename} -scale 10arcsec "
+                    f"-weight briggs 0.5  -auto-mask 3 -auto-threshold 1 "
+                    f" {spec_fit} "
+                    f"{tempdir}{obsid}.ms \n\n"
+                )
 
-            spec_fit = "-join-channels -channels-out 64 -fit-spectral-pol 4"
-            wsclean = (
-                f"wsclean "
-                f"-mgain 0.8 -abs-mem {mem} -nmiter 10 -niter 100000 -size 128 128 -pol XXYY "
-                f"-data-column {datacolumn} -name {imagename} -scale 10arcsec "
-                f"-weight briggs 0.5  -auto-mask 3 -auto-threshold 1 "
-                f"-temp-dir ${tempdir}/ "
-                f" {spec_fit} "
-                f"${tempdir}/{obsid}.ms \n\n"
-            )
+            else: 
+                spec_fit = "-join-channels -channels-out 64 -fit-spectral-pol 4"
+                wsclean = (
+                    f"wsclean "
+                    f"-mgain 0.8 -abs-mem {mem} -nmiter 10 -niter 100000 -size 128 128 -pol XXYY "
+                    f"-data-column {datacolumn} -name {imagename} -scale 10arcsec "
+                    f"-weight briggs 0.5  -auto-mask 3 -auto-threshold 1 "
+                    f"-temp-dir {tempdir} "
+                    f" {spec_fit} "
+                    f"{tempdir}{obsid}.ms \n\n"
+                )
+            
             out.write(wsclean)
 
             taql = (
-                f"taql update ${tempdir}/{obsid}.ms set {datacolumn}={datacolumn}-MODEL_DATA\n\n"
+                f"taql update {tempdir}{obsid}.ms set {datacolumn}={datacolumn}-MODEL_DATA\n\n"
             )
             out.write(taql)
 
@@ -369,12 +381,12 @@ def wsclean_script(
 
         chg = (
             f"chgcentre "
-            f"${tempdir}/{obsid}.ms "
+            f"{tempdir}{obsid}.ms "
             f"$coords \n"
             f"chgcentre "
             f"-zenith "
             f"-shiftback "
-            f"${tempdir}/{obsid}.ms \n\n"
+            f"{tempdir}{obsid}.ms \n\n"
         )
         out.write(chg)
 
@@ -559,10 +571,6 @@ if __name__ == "__main__":
     except:
         GGSM = ""
 
-    try: 
-        tempdir = f"{os.environ['GXTEMP']}"
-    except:
-        tempdir = "./"
 
     parser = ArgumentParser(description="Simple test script to figure out peeling")
     parser.add_argument("metafits", nargs="+", help="metafits file of observation")
@@ -648,7 +656,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--tempdir",
-        default=tempdir,
+        default="",
         type=str,
         help="wsclean is way faster if you use ramdisk or nvme, do you want me to put temp files and/or the ms there too? If so what's te tempdir, default will be GXTEMP",        
     )
