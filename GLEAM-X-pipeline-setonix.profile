@@ -8,8 +8,9 @@ echo "loading gleam-x profile"
 unset SINGULARITYENV_LD_LIBRARY_PATH
 unset SINGULARITY_PRELOAD
 # Any system module file should be loaded here. Aside from singularity and slurm there are
+module load pawseyenv/2024.05
 # no additional modules that are expected to be needed
-module load singularity/3.11.4-slurm
+module load singularity/4.1.0-slurm
 # Before running obs_*.sh scripts ensure the completed configuration file has been sourced. 
 # As a convention when specifying paths below, please ensure that they do not end with a trailing '/', as
 # this assists in readability when combining paths. 
