@@ -33,7 +33,7 @@ export GXHOME="${GXSCRATCH}"    # HOME space for some tasks. In some system conf
                                 # one to be available to cache folders. This does not have to be an actual $HOME directory, just a folder with read and write access. 
                                 # Suggestion is the same path as the scratch space, e.g. $GXSCRATCH. Although if the HPC is configured correctly it could be set to HOME. 
                                 # This variable is not used in any tasks -- but it used in the creation of the SINGULARITY_BINDPATH variable.
-export GXCONTAINER="/software/projects/pawsey0272/kross/GLEAM-X-pipeline/gleamx_container.img"  # Absolute path to the GLEAM-X singularity container, including the file name, e.g. "${GXSCRATCH}/gleamx.img"
+export GXCONTAINER="/software/projects/pawsey0272/ykzhang/container/gleamx_container_21Mar25.img"  # Absolute path to the GLEAM-X singularity container, including the file name, e.g. "${GXSCRATCH}/gleamx.img"
                                               # This container is still being evaluated and available when requested from Tim Galvin. In a future update
                                               # the container will be automatically downloaded alongside other data dependencies. 
 
