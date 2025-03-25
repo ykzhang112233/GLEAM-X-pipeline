@@ -82,6 +82,11 @@ do
         exit 1
     fi
     
+    if [[ ! -e "${obsnum}_deep-${subchan}-image-pb_rms.fits" ]]
+    then
+        BANE --cores 1 --compress --noclobber "${obsnum}_deep-${subchan}-image-pb.fits"
+    fi
+
     if [[ ! -e "${obsnum}_deep-${subchan}-image-pb_comp.fits"  ]]
     then
         # The mask_image.py operation will destructively remove the pixels. I can not think of a case 
@@ -101,7 +106,6 @@ do
             fi
             cp -v "${obsnum}_deep-${subchan}-image-pb_original.fits" "${obsnum}_deep-${subchan}-image-pb.fits"
         fi
-        
 
         # Generate a weight map for mosaicking
         chans=($( pyhead.py -p CHANNELS "${obsnum}.metafits" | awk '{print $3}' | sed "s/,/ /g" ))
@@ -240,6 +244,11 @@ do
         
         # The RMS and BKG maps will not have changed much from the ionospheric warping, so I can just
         # rename them and update BSCALE
+        if [[ ! -e "${obsnum}_deep-${subchan}-image-pb_rms.fits" ]]
+        then
+            BANE --cores 1 --compress --noclobber "${obsnum}_deep-${subchan}-image-pb.fits"
+        fi
+        
         mv "${obsnum}_deep-${subchan}-image-pb_rms.fits" "${obsnum}_deep-${subchan}-image-pb_warp_rms.fits"
         mv "${obsnum}_deep-${subchan}-image-pb_bkg.fits" "${obsnum}_deep-${subchan}-image-pb_warp_bkg.fits"
         pyhead.py -u BSCALE "$factor" "${obsnum}_deep-${subchan}-image-pb_warp_bkg.fits"

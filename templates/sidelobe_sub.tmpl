@@ -55,6 +55,10 @@ track_task.py start --jobid="${jobid}" --taskid="${taskid}" --start_time="$(date
 datadir="${base}/${obsnum}"
 cd "${datadir}" || exit
 
+mkdir -p /tmp/slurm_wsclean/${SLURM_JOB_ID}
+cp -rf ${obsnum}.ms /tmp/slurm_wsclean/${SLURM_JOB_ID}/
+
+
 # TODO: replace with find
 metafits="$(ls -t ${obsnum}*metafits* | head -1)"
 
@@ -121,20 +125,23 @@ else
     exit 0
 fi
 
-chgcentre "${obsnum}.ms" ${radec_lobe}
+chgcentre "/tmp/slurm_wsclean/${SLURM_JOB_ID}/${obsnum}.ms" ${radec_lobe}
 
 # Initial shallow clean to populate the model column 
 # Set the pipefail so the test_fail does not test for tee
 set -o pipefail
-# shallow clean (for selfcal) 
 if [[ ! -e "${obsnum}_sidelobe-MFS-XX-image.fits" ]]
 then
+    taql alter table ${obsnum}.ms drop column MODEL_DATA
     wsclean \
             -abs-mem ${GXMEMORY} \
+            -temp-dir /tmp/slurm_wsclean/${SLURM_JOB_ID}/ \
             $multiscale \
             -nmiter 1 \
-            -niter 40000 \
+            -niter 10000 \
+            -auto-threshold 1 \
             -stop-negative \
+            -auto-mask 3 \
             -name ${obsnum}_sidelobe \
             -size ${lobe_image_size} ${lobe_image_size} \
             -scale ${scale:0:8} \
@@ -143,15 +150,22 @@ then
             -channels-out 4 \
             -join-polarizations \
             -data-column ${datacolumn} \
-            "${obsnum}.ms" | tee wsclean.log
+            "/tmp/slurm_wsclean/${SLURM_JOB_ID}/${obsnum}.ms" | tee wsclean.log
+fi  
+
+if [[ -e "${obsnum}_sidelobe-MFS-XX-image.fits" ]]
+then
+    taql update /tmp/slurm_wsclean/${SLURM_JOB_ID}/${obsnum}.ms set ${datacolumn}=${datacolumn}-MODEL_DATA
+# Also updating the model column to remove the model of the sidelobe so its not accidentally added later 
+    taql alter table /tmp/slurm_wsclean/${SLURM_JOB_ID}/${obsnum}.ms drop column MODEL_DATA
+    rm -rf ${obsnum}.ms && cp -rf /tmp/slurm_wsclean/${SLURM_JOB_ID}/${obsnum}.ms ./
+else 
+    echo "There is no sidelobe image so I haven't subtracted anything because I'm not sure what's wrong" 
+    rm -rf /tmp/slurm_wsclean/${SLURM_JOB_ID}/${obsnum}.ms
+    exit 1
     
-else
-    echo "Already have initial images, not reimaging shallow clean"
 fi 
 
-taql update ${obsnum}.ms set ${datacolumn}=${datacolumn}-MODEL_DATA
-# Also updating the model column to remove the model of the sidelobe so its not accidentally added later 
-taql alter table ${obsnum}.ms drop column MODEL_DATA
 
 echo "Have subtracted the model column from the ${datacolumn}, now to change back to original pointing and cleanup"
 
@@ -164,9 +178,6 @@ chgcentre \
         -shiftback \
         "${obsnum}.ms"
 
-# clean up all unnecessary images
-
-rm "${obsnum}_sidelobe*.fits"
 
 
 track_task.py finish --jobid="${jobid}" --taskid="${taskid}" --finish_time="$(date +%s)"
