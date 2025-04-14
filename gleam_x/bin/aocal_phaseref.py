@@ -104,7 +104,11 @@ if opts.xy != 0.0 or opts.dxy != 0.0:
     assert (
         len(freqs) == ao.n_chan
     ), f"Number of frequency solutions in the calibration file does not match the number of channels in {opts.ms}"
+<<<<<<< HEAD
     # this should be updated with complex
+=======
+
+>>>>>>> d78879c1d18a05867012b5ccfe79a5c43d2a43d7
     xy_phasor0 = complex(np.cos(np.radians(opts.xy)), np.sin(np.radians(opts.xy)))
     xy_phasor1 = np.zeros((1, 1, ao.n_chan), dtype=np.complex128)
     xy_phasor1.real += np.cos(np.radians(opts.dxy * freqs)).reshape(1, 1, ao.n_chan)
