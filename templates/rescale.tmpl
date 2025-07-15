@@ -74,8 +74,7 @@ do
         if [[ -e "${file}/${file}_deep-${subchan}-image-pb_warp_comp.fits" ]] && \
         [[ -e "${file}/${file}_deep-${subchan}-image-pb_warp_weight.fits" ]] && \
         [[ -e "${file}/${file}_deep-${subchan}-image-pb_warp_rms.fits" ]] && \
-        [[ -e "${file}/${file}_deep-${subchan}-image-pb_warp_bkg.fits" ]] && \
-        [[ -e "${file}/${file}_deep-${subchan}-image-pb_warp_comp.fits" ]]
+        [[ -e "${file}/${file}_deep-${subchan}-image-pb_warp_bkg.fits" ]]
         then
             echo "${file}/${file}_deep-${subchan}-image-pb_warp.fits" >> ${sublist}
         else
